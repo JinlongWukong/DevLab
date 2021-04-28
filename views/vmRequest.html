@@ -1,0 +1,40 @@
+<form action="/vm-request" method="POST">
+    <p>VM Selector: </p>
+
+    <label for="cecid">CEC ID: </label>
+    <input type="text" id="cecid" name="cecid"><br>
+
+    <span>Select OS type: </span>
+    <select name="os_type">
+        <option value="centos7">Centos7</option>
+        <option value="ubuntu18">Ubuntu18</option>
+    </select>
+    <br>
+
+    <span>Select VM Size: </span>
+    <select name="os_flavor">
+        <option value="small">small</option>
+        <option value="middle">middle</option>
+        <option value="large">large</option>
+    </select>
+    <br>
+
+    <span>Select numbers of VM: </span>
+    <select name="os_numbers">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+    </select>
+
+    <br>
+    <span>Select VM duration: </span>
+    <input type="radio" id="one-day" name="os_duration" value="1", checked="checked">
+    <label for="one-day">one day</label>
+    <input type="radio" id="one-week" name="os_duration" value="7">
+    <label for="one-week">one week</label>
+    <input type="radio" id="two-week" name="os_duration" value="14">
+    <label for="two-week">two week</label><br>
+    <br>
+
+    <input type="submit" />
+</form>
