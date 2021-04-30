@@ -25,15 +25,15 @@ var flavorDetails = map[string]map[string]int{
 }
 
 type VirtualMachine struct {
-	Name      string
-	CPU       int
-	Memory    int
-	Disk      int
-	IpAddress string
-	Status    string
-	Type      string
-	Host      node.ComputeNode
-	Lifetime  time.Duration
+	Name      string           `json:"Name"`
+	CPU       int              `json:"CPU"`
+	Memory    int              `json:"Mem"`
+	Disk      int              `json:"Disk"`
+	IpAddress string           `json:"Address"`
+	Status    string           `json:"Status"`
+	Type      string           `json:"Type"`
+	Host      node.ComputeNode `json:"Host"`
+	Lifetime  time.Duration    `json:"LifeTime"`
 }
 
 type VmRequest struct {
@@ -42,6 +42,11 @@ type VmRequest struct {
 	Flavor   string `form:"os_flavor"`
 	Number   int    `form:"os_numbers"`
 	Duration int    `form:"os_duration"`
+}
+
+type VmRequestGetVm struct {
+	Account string `form:"cecid"`
+	Name    string `form:"vm_name"`
 }
 
 type VmLiveStatus struct {

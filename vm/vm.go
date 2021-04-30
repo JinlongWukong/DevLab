@@ -34,7 +34,7 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 	})
 
 	log.Println("Remote http call to create vm")
-	err := utils.HttpSendJsonData("http://xxxxxx:9134/vm", "POST", payload)
+	err := utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -64,7 +64,7 @@ func GetVirtualMachineLiveStatus(name string, host node.ComputeNode) VmLiveStatu
 	}
 
 	var vmStatus VmLiveStatus
-	err, reponse_data := utils.HttpGetJsonData("http://xxxxxx:9134/vm", query)
+	err, reponse_data := utils.HttpGetJsonData("http://10.124.44.167:9134/vm", query)
 	if err == nil {
 		json.Unmarshal(reponse_data, &vmStatus)
 		return vmStatus

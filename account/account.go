@@ -1,6 +1,8 @@
 package account
 
 import (
+	"fmt"
+
 	"github.com/JinlongWukong/CloudLab/vm"
 )
 
@@ -24,4 +26,15 @@ func (a Account) GetVmNameList() []string {
 	}
 
 	return vmNames
+}
+
+func (a Account) GetVmByName(name string) (vm.VirtualMachine, error) {
+
+	for _, v := range a.VM {
+		if v.Name == name {
+			return *v, nil
+		}
+	}
+
+	return vm.VirtualMachine{}, fmt.Errorf("VM %v not found", name)
 }
