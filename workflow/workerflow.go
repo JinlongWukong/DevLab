@@ -67,10 +67,7 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 			//task2: Get VM Info
 			retry := 1
 			for retry <= VmStatusRetry {
-				vmStatus := vm.GetVirtualMachineLiveStatus(
-					newVm.Name,
-					newVm.Host,
-				)
+				vmStatus := vm.GetVirtualMachineLiveStatus(*newVm)
 
 				if vmStatus.Name == newVm.Name && vmStatus.Address != "" {
 					newVm.IpAddress = vmStatus.Address
