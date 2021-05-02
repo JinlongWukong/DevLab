@@ -51,14 +51,14 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 // Return:
 //    nil    -> success
 //    error  -> failed
-func genericActionVirtualMachine(vm VirtualMachine, action string) error {
+func (myvm VirtualMachine) genericActionVirtualMachine(action string) error {
 
 	payload, _ := json.Marshal(map[string]interface{}{
-		"vmName":   vm.Name,
+		"vmName":   myvm.Name,
 		"vmAction": action,
-		"hostIp":   vm.Host.IpAddress,
-		"hostPass": vm.Host.Passwd,
-		"hostUser": vm.Host.UserName,
+		"hostIp":   myvm.Host.IpAddress,
+		"hostPass": myvm.Host.Passwd,
+		"hostUser": myvm.Host.UserName,
 	})
 
 	log.Printf("Remote http call to %v vm", action)
@@ -71,52 +71,58 @@ func genericActionVirtualMachine(vm VirtualMachine, action string) error {
 	return nil
 }
 
-func DeleteVirtualMachine(vm VirtualMachine) error {
+func (myvm VirtualMachine) DeleteVirtualMachine() error {
 
-	log.Printf("Deleting vm %v on Host %v", vm.Name, vm.Host.Name)
+	log.Printf("Deleting vm %v on Host %v", myvm.Name, myvm.Host.Name)
 
-	return genericActionVirtualMachine(vm, "delete")
+	return myvm.genericActionVirtualMachine("delete")
 }
 
-func StartUpVirtualMachine(vm VirtualMachine) error {
+func (myvm VirtualMachine) StartUpVirtualMachine() error {
 
-	log.Printf("Starting vm %v on Host %v", vm.Name, vm.Host.Name)
+	log.Printf("Starting vm %v on Host %v", myvm.Name, myvm.Host.Name)
 
-	return genericActionVirtualMachine(vm, "start")
+	return myvm.genericActionVirtualMachine("start")
 }
 
-func ShutDownVirtualMachine(vm VirtualMachine) error {
+func (myvm VirtualMachine) ShutDownVirtualMachine() error {
 
-	log.Printf("Shuting down vm %v on Host %v", vm.Name, vm.Host.Name)
+	log.Printf("Shuting down vm %v on Host %v", myvm.Name, myvm.Host.Name)
 
-	return genericActionVirtualMachine(vm, "shutdown")
+	return myvm.genericActionVirtualMachine("shutdown")
 }
 
-func RebootVirtualMachine(vm VirtualMachine) error {
+func (myvm VirtualMachine) RebootVirtualMachine() error {
 
-	log.Printf("Rebooting vm %v on Host %v", vm.Name, vm.Host.Name)
+	log.Printf("Rebooting vm %v on Host %v", myvm.Name, myvm.Host.Name)
 
-	return genericActionVirtualMachine(vm, "reboot")
+	return myvm.genericActionVirtualMachine("reboot")
 }
 
-func GetVirtualMachineLiveStatus(vm VirtualMachine) VmLiveStatus {
+// Sync up VM status
+func (myvm *VirtualMachine) GetVirtualMachineLiveStatus() error {
 
-	log.Printf("Fetching vm  %v status on Host %v", vm.Name, vm.Host.Name)
+	log.Printf("Fetching vm  %v status on Host %v", myvm.Name, myvm.Host.Name)
 
-	//vmName=test\&hostIp=127.0.0.1\&hostPass=xxxxx\&hostUser=root
+	//vmName=test-1\&hostIp=127.0.0.1\&hostPass=xxxxx\&hostUser=root
 	query := map[string]string{
-		"vmName":   vm.Name,
-		"hostIp":   vm.Host.IpAddress,
-		"hostUser": vm.Host.UserName,
-		"hostPass": vm.Host.Passwd,
+		"vmName":   myvm.Name,
+		"hostIp":   myvm.Host.IpAddress,
+		"hostUser": myvm.Host.UserName,
+		"hostPass": myvm.Host.Passwd,
 	}
 
 	var vmStatus VmLiveStatus
 	err, reponse_data := utils.HttpGetJsonData("http://10.124.44.167:9134/vm", query)
-	if err == nil {
-		json.Unmarshal(reponse_data, &vmStatus)
-		return vmStatus
+	if err != nil {
+		log.Println(err)
+		return err
 	}
+	json.Unmarshal(reponse_data, &vmStatus)
 
-	return vmStatus
+	myvm.Status = vmStatus.Status
+	myvm.IpAddress = vmStatus.Address
+	log.Printf("Fetched vm %v status -> %v, address -> %v", myvm.Name, myvm.Status, myvm.IpAddress)
+
+	return nil
 }

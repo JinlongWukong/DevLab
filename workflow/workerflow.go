@@ -16,6 +16,10 @@ import (
 // VM live status retry times and interval(unit seconds) setting
 const VmStatusRetry, vmStatusInterval = 10, 15
 
+// Create VMs
+// Args:
+//   account: account
+//   vmRequest: vm request body
 func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 	myaccount.StatusVm = "running"
 	defer func() {
@@ -67,16 +71,13 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 			//task2: Get VM Info
 			retry := 1
 			for retry <= VmStatusRetry {
-				vmStatus := vm.GetVirtualMachineLiveStatus(*newVm)
-
-				if vmStatus.Name == newVm.Name && vmStatus.Address != "" {
-					newVm.IpAddress = vmStatus.Address
-					newVm.Status = vmStatus.Status
-					log.Printf("Get VM -> %v live status -> %v, address -> %v", vmStatus.Name, vmStatus.Status, vmStatus.Address)
-					break
+				if err := newVm.GetVirtualMachineLiveStatus(); err == nil {
+					if newVm.Status != "" && newVm.IpAddress != "" {
+						log.Printf("Get new VM -> %v news: status -> %v, address -> %v", newVm.Name, newVm.Status, newVm.IpAddress)
+						break
+					}
 				}
-
-				log.Println("VM Live status empty, will try again")
+				log.Println("VM get live status failed or empty, will try again")
 				time.Sleep(time.Second * vmStatusInterval)
 				retry++
 			}
@@ -91,4 +92,38 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 	}
 	wg.Wait()
 	log.Println("VM creation done")
+}
+
+func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string) error {
+
+	var action_err error
+	switch action {
+	case "start":
+		action_err = myVM.StartUpVirtualMachine()
+	case "shutdown":
+		action_err = myVM.ShutDownVirtualMachine()
+	case "reboot":
+		action_err = myVM.RebootVirtualMachine()
+	case "delete":
+		action_err = myVM.DeleteVirtualMachine()
+		//TODO remove from proxy
+		if action_err == nil {
+			if err := myAccount.RemoveVmByName(myVM.Name); err != nil {
+				log.Println(err)
+			}
+		}
+	}
+
+	// Post action, sync up vm status
+	switch action {
+	case "start", "shutdown", "reboot":
+		go func() {
+			time.Sleep(time.Second * 3)
+			if err := myVM.GetVirtualMachineLiveStatus(); err != nil {
+				log.Printf("sync up vm -> %v status after action -> %v, failed -> %v", myVM.Name, action, err)
+			}
+		}()
+	}
+
+	return action_err
 }

@@ -3,11 +3,12 @@ package main
 import (
 	"log"
 
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/vm"
 	"github.com/JinlongWukong/CloudLab/workflow"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 )
 
 var account_db = make(map[string]*account.Account)
@@ -21,10 +22,10 @@ func main() {
 
 	//vm related api
 	r.GET("/vm-request", vmRequestIndexHandler)
-	r.GET("/vm-request/vm", vmRequestGetHandler)
+	r.GET("/vm-request/vm", vmRequestGetVmHandler)
 
-	r.POST("/vm-request", vmRequestPostHandler)
-	r.POST("/vm-request/vm", vmRequestPostActionHandler)
+	r.POST("/vm-request", vmRequestCreateVmHandler)
+	r.POST("/vm-request/vm", vmRequestVmActionHandler)
 
 	r.Run(":8088")
 }
@@ -34,24 +35,32 @@ func indexHandler(c *gin.Context) {
 	c.HTML(200, "index.html", nil)
 }
 
-// VM reqeust head page
+// VM reqeust index page
 func vmRequestIndexHandler(c *gin.Context) {
 	c.HTML(200, "vmRequest.html", nil)
 }
 
-func vmRequestGetHandler(c *gin.Context) {
+// Get VMs of specify account
+// Args:
+//   VM Name or empty(means get all vm)
+// Return:
+//   20x: success with VM info
+//   40x: fail Account/VM not found
+func vmRequestGetVmHandler(c *gin.Context) {
 	var g vm.VmRequestGetVm
 	c.Bind(&g)
 
 	myaccount, exists := account_db[g.Account]
 	if exists == true {
 		if g.Name == "" {
+			// return all vm
+			log.Println(myaccount.VM)
 			c.JSON(200, myaccount.VM)
 		} else {
-			if vmInfo, err := myaccount.GetVmByName(g.Name); err == nil {
-				c.JSON(200, vmInfo)
+			if myVM, err := myaccount.GetVmByName(g.Name); err == nil {
+				c.JSON(200, myVM)
 			} else {
-				c.JSON(404, gin.H{"VM": err})
+				c.JSON(404, "VM not found")
 			}
 		}
 	} else {
@@ -59,8 +68,8 @@ func vmRequestGetHandler(c *gin.Context) {
 	}
 }
 
-// VM reqeust POST handler, create VM
-func vmRequestPostHandler(c *gin.Context) {
+// VM reqeust POST handler, Create VM
+func vmRequestCreateVmHandler(c *gin.Context) {
 	var vmRequest vm.VmRequest
 	c.Bind(&vmRequest)
 	log.Println(vmRequest.Account, vmRequest.Type, vmRequest.Number, vmRequest.Duration)
@@ -83,11 +92,11 @@ func vmRequestPostHandler(c *gin.Context) {
 	c.JSON(200, "VM creation request accepted")
 }
 
-// VM request POST action handler, start/stop/reboot/delete VM
+// VM request VM action handler, start/stop/reboot/delete VM
 // Return:
 //     20x     -> success
 //     40x/50x -> failed
-func vmRequestPostActionHandler(c *gin.Context) {
+func vmRequestVmActionHandler(c *gin.Context) {
 	var vmRequestAction vm.VmRequestPostAction
 	c.Bind(&vmRequestAction)
 	log.Printf("Get VM action request: Account -> %v, VM -> %v, Action -> %v ", vmRequestAction.Account, vmRequestAction.Name, vmRequestAction.Action)
@@ -100,14 +109,8 @@ func vmRequestPostActionHandler(c *gin.Context) {
 		if myVM, err := myaccount.GetVmByName(vmRequestAction.Name); err == nil {
 			var action_err error
 			switch vmRequestAction.Action {
-			case "start":
-				action_err = vm.StartUpVirtualMachine(myVM)
-			case "shutdown":
-				action_err = vm.ShutDownVirtualMachine(myVM)
-			case "reboot":
-				action_err = vm.RebootVirtualMachine(myVM)
-			case "delete":
-				action_err = vm.DeleteVirtualMachine(myVM)
+			case "start", "shutdown", "reboot", "delete":
+				action_err = workflow.ActionVM(myaccount, myVM, vmRequestAction.Action)
 			default:
 				c.JSON(400, "Action not support")
 			}
