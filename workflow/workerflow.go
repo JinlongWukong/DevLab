@@ -94,6 +94,13 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 	log.Println("VM creation done")
 }
 
+// Take specify action on VM(start/delete/shutdown/reboot)
+// Args:
+//   account pointer, vm pointer
+//   action -> start/shutdown/reboot/delete
+// Return:
+//   error -> action error messages
+//   nil -> action success
 func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string) error {
 
 	var action_err error
