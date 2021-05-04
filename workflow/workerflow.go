@@ -9,12 +9,13 @@ import (
 	"time"
 
 	"github.com/JinlongWukong/CloudLab/account"
+	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/vm"
 )
 
 // VM live status retry times and interval(unit seconds) setting
-const VmStatusRetry, vmStatusInterval = 10, 15
+const VmStatusRetry, vmStatusInterval = 10, 6
 
 // Create VMs
 // Args:
@@ -63,6 +64,7 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 
 			if newVm != nil {
 				myaccount.VM = append(myaccount.VM, newVm)
+				db.NotifyToDB("account", newVm.Name)
 			} else {
 				log.Println("Create VM failed, return")
 				return
@@ -73,7 +75,8 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 			for retry <= VmStatusRetry {
 				if err := newVm.GetVirtualMachineLiveStatus(); err == nil {
 					if newVm.Status != "" && newVm.IpAddress != "" {
-						log.Printf("Get new VM -> %v news: status -> %v, address -> %v", newVm.Name, newVm.Status, newVm.IpAddress)
+						log.Printf("Get new VM -> %v info: status -> %v, address -> %v", newVm.Name, newVm.Status, newVm.IpAddress)
+						db.NotifyToDB("account", newVm.Name)
 						break
 					}
 				}
@@ -119,6 +122,7 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 				log.Println(err)
 			}
 		}
+		db.NotifyToDB("account", myVM.Name)
 	}
 
 	// Post action, sync up vm status
@@ -129,6 +133,7 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			if err := myVM.GetVirtualMachineLiveStatus(); err != nil {
 				log.Printf("sync up vm -> %v status after action -> %v, failed -> %v", myVM.Name, action, err)
 			}
+			db.NotifyToDB("account", myVM.Name)
 		}()
 	}
 

@@ -7,13 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/JinlongWukong/CloudLab/account"
+	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/vm"
 	"github.com/JinlongWukong/CloudLab/workflow"
 )
 
-var account_db = make(map[string]*account.Account)
-
 func main() {
+
+	//Start db control loop
+	db.Manager()
+
 	r := gin.Default()
 	r.Use(cors.Default())
 
@@ -50,11 +53,10 @@ func vmRequestGetVmHandler(c *gin.Context) {
 	var g vm.VmRequestGetVm
 	c.Bind(&g)
 
-	myaccount, exists := account_db[g.Account]
+	myaccount, exists := account.Account_db[g.Account]
 	if exists == true {
 		if g.Name == "" {
 			// return all vm
-			log.Println(myaccount.VM)
 			c.JSON(200, myaccount.VM)
 		} else {
 			if myVM, err := myaccount.GetVmByName(g.Name); err == nil {
@@ -74,10 +76,11 @@ func vmRequestCreateVmHandler(c *gin.Context) {
 	c.Bind(&vmRequest)
 	log.Println(vmRequest.Account, vmRequest.Type, vmRequest.Number, vmRequest.Duration)
 
-	myaccount, exists := account_db[vmRequest.Account]
+	myaccount, exists := account.Account_db[vmRequest.Account]
 	if exists == false {
+		// Acount not existed, add new
 		myaccount = &account.Account{Name: vmRequest.Account, Role: "guest"}
-		account_db[vmRequest.Account] = myaccount
+		account.Account_db[vmRequest.Account] = myaccount
 	}
 
 	if myaccount.StatusVm == "running" {
@@ -101,7 +104,7 @@ func vmRequestVmActionHandler(c *gin.Context) {
 	c.Bind(&vmRequestAction)
 	log.Printf("Get VM action request: Account -> %v, VM -> %v, Action -> %v ", vmRequestAction.Account, vmRequestAction.Name, vmRequestAction.Action)
 
-	myaccount, exists := account_db[vmRequestAction.Account]
+	myaccount, exists := account.Account_db[vmRequestAction.Account]
 	if exists == true {
 		if vmRequestAction.Name == "" || vmRequestAction.Action == "" {
 			c.JSON(400, "VM name or Action empty")

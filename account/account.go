@@ -7,6 +7,8 @@ import (
 	"github.com/JinlongWukong/CloudLab/vm"
 )
 
+var Account_db = make(map[string]*Account)
+
 type Account struct {
 	Name     string
 	Role     string

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -52,4 +53,32 @@ func HttpGetJsonData(uri string, query map[string]string) (error, []byte) {
 	} else {
 		return fmt.Errorf("unexpected status-code returned %v", resp.StatusCode), nil
 	}
+}
+
+// Save a representation of v to the file at path
+func WriteJsonFile(path string, v interface{}) error {
+
+	file, err := json.MarshalIndent(v, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path, file, 0644)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// Load Json data from file path
+func ReadJsonFile(path string) ([]byte, error) {
+
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Printf("Read json file failed: %v", err)
+		return nil, err
+	}
+
+	return data, nil
 }
