@@ -16,6 +16,15 @@ label[for="one-day"], label[for="one-week"], label[for="two-week"] {
   width: 5%;
 }
 
+select.table {
+  width: 25%;
+  margin-top: 6px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
 input[type=text], select {
   width: 10%;
   margin-top: 6px;
@@ -192,7 +201,7 @@ function CreateVMTableFromJSON(myVmList) {
             } else if (col[j] == "Action"){
                 tabCell.innerHTML = `
                 <form action="/vm-request/vm" method="POST">
-                   <select name="vm_action">
+                   <select class="table" name="vm_action">
                        <option value="start">start</option>
                        <option value="shutdown">shutdown</option>
                        <option value="reboot">reboot</option>

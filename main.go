@@ -27,6 +27,9 @@ func main() {
 	r.GET("/vm-request", vmRequestIndexHandler)
 	r.GET("/vm-request/vm", vmRequestGetVmHandler)
 
+	r.POST("/vm-request", vmRequestCreateVmHandler)
+	r.POST("/vm-request/vm", vmRequestVmActionHandler)
+
 	//TODO api
 	r.GET("/k8s-request", toDoHandler)
 	r.GET("/container-request", toDoHandler)
@@ -107,7 +110,7 @@ func vmRequestCreateVmHandler(c *gin.Context) {
 //     40x/50x -> failed
 func vmRequestVmActionHandler(c *gin.Context) {
 	var vmRequestAction vm.VmRequestPostAction
-	c.Bind(&vmRequestAction)
+	c.ShouldBind(&vmRequestAction)
 	log.Printf("Get VM action request: Account -> %v, VM -> %v, Action -> %v ", vmRequestAction.Account, vmRequestAction.Name, vmRequestAction.Action)
 
 	myaccount, exists := account.Account_db[vmRequestAction.Account]

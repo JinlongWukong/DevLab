@@ -120,9 +120,10 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 		if action_err == nil {
 			if err := myAccount.RemoveVmByName(myVM.Name); err != nil {
 				log.Println(err)
+			} else {
+				db.NotifyToDB("account", myVM.Name)
 			}
 		}
-		db.NotifyToDB("account", myVM.Name)
 	}
 
 	// Post action, sync up vm status
