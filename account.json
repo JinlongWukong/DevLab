@@ -1,0 +1,47 @@
+{
+    "jinlliu": {
+        "Name": "jinlliu",
+        "Role": "guest",
+        "VM": [
+            {
+                "Name": "jinlliu-1",
+                "CPU": 2,
+                "Mem": 2048,
+                "Disk": 30,
+                "Address": "192.168.122.34/24",
+                "Status": "running",
+                "Type": "centos7",
+                "Host": {
+                    "Name": "",
+                    "CPU": 0,
+                    "Memory": 0,
+                    "IpAddress": "127.0.0.1",
+                    "Status": "",
+                    "UserName": "root",
+                    "Passwd": "Cisco123!"
+                },
+                "LifeTime": 86400000000000
+            },
+            {
+                "Name": "jinlliu-2",
+                "CPU": 2,
+                "Mem": 2048,
+                "Disk": 30,
+                "Address": "192.168.122.114/24",
+                "Status": "running",
+                "Type": "centos7",
+                "Host": {
+                    "Name": "",
+                    "CPU": 0,
+                    "Memory": 0,
+                    "IpAddress": "127.0.0.1",
+                    "Status": "",
+                    "UserName": "root",
+                    "Passwd": "Cisco123!"
+                },
+                "LifeTime": 86400000000000
+            }
+        ],
+        "StatusVm": "idle"
+    }
+}

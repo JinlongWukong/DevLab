@@ -1,3 +1,77 @@
-<button onclick="document.location='/vm-request'">Create VM</button><br>
-<button onclick="document.location='/k8s-request'">Create K8S</button><br>
-<button onclick="document.location='/nso-request'">Create NSO</button><br>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CloudLab</title>
+    <style>
+.first-container {
+    border: 3px solid #fff;
+}
+
+.IaaS {
+    width: 50%;
+    height: 300px;
+    float: left;
+    padding: 20px;
+    border: 2px solid;
+    display: grid;
+    background-color: lightgreen;
+}
+
+.PaaS {
+    margin-top: 5px;
+    width: 50%;
+    height: 300px;
+    float: left;
+    padding: 20px;
+    border: 2px solid;
+    display: grid;
+    background-color: lightblue;
+}
+
+.SaaS {
+    width: 44%;
+    float: right;
+    height: 650px;
+    padding: 20px;
+    border: 2px solid;
+    display: grid;
+    background-color: Tomato;
+    opacity: 0.8;
+}
+
+button {
+    width: 40%;
+    background-color: yellow;
+    color: black;
+    font-size: 20px;
+    text-align: center;
+    display: inline-block;
+    margin: auto;
+    opacity: 0.6;
+    transition: 0.3s;
+}
+button:hover {opacity: 1}
+
+    </style>
+</head>
+<body>
+<div class="first-container">
+<div class=IaaS>
+<button onclick="document.location='/vm-request'">Create VM</button>
+</div>
+
+<div class=SaaS>
+<button onclick="document.location='/container-request'">Create NSO</button>
+<button onclick="document.location='/container-request'">Create redis</button>
+<button onclick="document.location='/container-request'">Create kafka</button>
+<button onclick="document.location='/container-request'">Create mongodb</button>
+<button onclick="document.location='/container-request'">Create jenkins</button>
+</div>
+
+<div class=PaaS>
+<button onclick="document.location='/k8s-request'">Create K8S</button>
+
+</div>
+
+</div>
+</body>
