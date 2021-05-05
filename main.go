@@ -27,8 +27,9 @@ func main() {
 	r.GET("/vm-request", vmRequestIndexHandler)
 	r.GET("/vm-request/vm", vmRequestGetVmHandler)
 
-	r.POST("/vm-request", vmRequestCreateVmHandler)
-	r.POST("/vm-request/vm", vmRequestVmActionHandler)
+	//TODO api
+	r.GET("/k8s-request", toDoHandler)
+	r.GET("/container-request", toDoHandler)
 
 	r.Run(":8088")
 }
@@ -36,6 +37,11 @@ func main() {
 // Head Page
 func indexHandler(c *gin.Context) {
 	c.HTML(200, "index.html", nil)
+}
+
+// Todo Page
+func toDoHandler(c *gin.Context) {
+	c.JSON(200, "not implemented yet")
 }
 
 // VM reqeust index page
