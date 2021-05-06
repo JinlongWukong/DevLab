@@ -31,6 +31,7 @@ type VirtualMachine struct {
 	Disk      int              `json:"Disk"`
 	IpAddress string           `json:"Address"`
 	Status    string           `json:"Status"`
+	VncPort   string           `json:"VncPort"`
 	Type      string           `json:"Type"`
 	Host      node.ComputeNode `json:"Host"`
 	Lifetime  time.Duration    `json:"LifeTime"`
@@ -59,4 +60,5 @@ type VmLiveStatus struct {
 	Name    string `json:"name"`
 	Status  string `json:"status"`
 	Address string `json:"address"`
+	VncPort string `json:"vnc_port"`
 }

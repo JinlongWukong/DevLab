@@ -40,8 +40,8 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 		return nil
 	}
 
-	ipadd, status := "", "unknow"
-	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vm_type, host, Duration}
+	ipadd, status, vncPort := "unknow", "unknow", "unknow"
+	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vncPort, vm_type, host, Duration}
 }
 
 // Generic action(start/delete/shutdown/reboot)
@@ -122,7 +122,8 @@ func (myvm *VirtualMachine) GetVirtualMachineLiveStatus() error {
 
 	myvm.Status = vmStatus.Status
 	myvm.IpAddress = vmStatus.Address
-	log.Printf("Fetched vm %v status -> %v, address -> %v", myvm.Name, myvm.Status, myvm.IpAddress)
+	myvm.VncPort = vmStatus.VncPort
+	log.Printf("Fetched vm %v status -> %v, address -> %v, vnc port -> %v", myvm.Name, myvm.Status, myvm.IpAddress, myvm.VncPort)
 
 	return nil
 }
