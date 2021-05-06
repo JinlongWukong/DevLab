@@ -198,6 +198,8 @@ function CreateVMTableFromJSON(myVmList) {
             console.log(col[j])
             if (col[j] == "Host") {
                 tabCell.innerHTML = myVmList[i][col[j]]["Name"];
+            } else if (col[j] == "Vnc"){
+                tabCell.innerHTML = myVmList[i][col[j]]["Port"];
             } else if (col[j] == "Action"){
                 tabCell.innerHTML = `
                 <form action="/vm-request/vm" method="POST">

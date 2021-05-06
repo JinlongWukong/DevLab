@@ -21,6 +21,11 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 		disk = detail["disk"]
 	}
 
+	vnc := VncInfo{
+		Port: "unknow",
+		Pass: utils.RandomString(8),
+	}
+
 	payload, _ := json.Marshal(map[string]interface{}{
 		"vmName":   name,
 		"vmAction": "create",
@@ -28,6 +33,7 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 		"vmVcpus":  cpu,
 		"vmDisk":   disk,
 		"vmType":   vm_type,
+		"vncPass":  vnc.Pass,
 		"hostIp":   host.IpAddress,
 		"hostPass": host.Passwd,
 		"hostUser": host.UserName,
@@ -40,8 +46,8 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 		return nil
 	}
 
-	ipadd, status, vncPort := "unknow", "unknow", "unknow"
-	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vncPort, vm_type, host, Duration}
+	ipadd, status := "unknow", "unknow"
+	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, host, Duration}
 }
 
 // Generic action(start/delete/shutdown/reboot)
@@ -122,8 +128,8 @@ func (myvm *VirtualMachine) GetVirtualMachineLiveStatus() error {
 
 	myvm.Status = vmStatus.Status
 	myvm.IpAddress = vmStatus.Address
-	myvm.VncPort = vmStatus.VncPort
-	log.Printf("Fetched vm %v status -> %v, address -> %v, vnc port -> %v", myvm.Name, myvm.Status, myvm.IpAddress, myvm.VncPort)
+	myvm.Vnc.Port = vmStatus.VncPort
+	log.Printf("Fetched vm %v status -> %v, address -> %v, vnc port -> %v", myvm.Name, myvm.Status, myvm.IpAddress, myvm.Vnc.Port)
 
 	return nil
 }

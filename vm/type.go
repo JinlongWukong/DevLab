@@ -24,6 +24,11 @@ var flavorDetails = map[string]map[string]int{
 	},
 }
 
+type VncInfo struct {
+	Port string `json:"Port"`
+	Pass string `json:"Passwd"`
+}
+
 type VirtualMachine struct {
 	Name      string           `json:"Name"`
 	CPU       int              `json:"CPU"`
@@ -31,7 +36,7 @@ type VirtualMachine struct {
 	Disk      int              `json:"Disk"`
 	IpAddress string           `json:"Address"`
 	Status    string           `json:"Status"`
-	VncPort   string           `json:"VncPort"`
+	Vnc       VncInfo          `json:"Vnc"`
 	Type      string           `json:"Type"`
 	Host      node.ComputeNode `json:"Host"`
 	Lifetime  time.Duration    `json:"LifeTime"`
