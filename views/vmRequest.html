@@ -173,7 +173,9 @@ function CreateVMTableFromJSON(myVmList) {
     }
 
     // ADD NEW COL, DEFINE ACTION
-    col.push("Action")
+    if (myVmList.length > 0) {
+        col.push("Action")
+    }
 
     // CREATE DYNAMIC TABLE.
     var table = document.createElement("table");
