@@ -13,7 +13,7 @@ type Account struct {
 	Name     string
 	Role     string
 	VM       []*vm.VirtualMachine
-	StatusVm string
+	StatusVm string `json:"-"`
 }
 
 func (a Account) GetNumbersOfVm() int {
