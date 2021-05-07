@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"fmt"
 	"log"
 	"sort"
 	"strconv"
@@ -58,13 +59,13 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 				vmRequest.Flavor,
 				vmRequest.Type,
 				1, 2048, 20, // if flavor not give, use cpu: 1, mem: 2048M, disk: 20G as default
-				node.ComputeNode{IpAddress: "127.0.0.1", UserName: "root", Passwd: "Cisco123!"},
+				"localhost",
 				time.Hour*24*time.Duration(vmRequest.Duration),
 			)
 
 			if newVm != nil {
 				myaccount.VM = append(myaccount.VM, newVm)
-				db.NotifyToDB("account", newVm.Name)
+				db.NotifyToDB("account", newVm.Name, "create")
 			} else {
 				log.Println("Create VM failed, return")
 				return
@@ -76,7 +77,7 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 				if err := newVm.GetVirtualMachineLiveStatus(); err == nil {
 					if newVm.Status != "" && newVm.IpAddress != "" {
 						log.Printf("Get new VM -> %v info: status -> %v, address -> %v", newVm.Name, newVm.Status, newVm.IpAddress)
-						db.NotifyToDB("account", newVm.Name)
+						db.NotifyToDB("account", newVm.Name, "update")
 						break
 					}
 				}
@@ -121,7 +122,7 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			if err := myAccount.RemoveVmByName(myVM.Name); err != nil {
 				log.Println(err)
 			} else {
-				db.NotifyToDB("account", myVM.Name)
+				db.NotifyToDB("account", myVM.Name, "delete")
 			}
 		}
 	}
@@ -134,9 +135,56 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			if err := myVM.GetVirtualMachineLiveStatus(); err != nil {
 				log.Printf("sync up vm -> %v status after action -> %v, failed -> %v", myVM.Name, action, err)
 			}
-			db.NotifyToDB("account", myVM.Name)
+			db.NotifyToDB("account", myVM.Name, "update")
 		}()
 	}
 
 	return action_err
+}
+
+// Add node(remove/reboot)
+// Args:
+//   NodeRequest
+// Return:
+//   error -> add node error messages
+//   nil -> add node success
+func AddNode(nodeRequest node.NodeRequest) error {
+
+	myNode, err := node.NewNode(nodeRequest)
+	node.Node_db[myNode.Name] = myNode
+	db.NotifyToDB("node", myNode.Name, "create")
+
+	if err != nil {
+		log.Printf("Add node failed, %v %v", myNode.Name, err)
+		return err
+	} else {
+		log.Printf("Add node successfully, %v %v", myNode.Name, myNode.IpAddress)
+	}
+
+	//TODO, post check, change status to ready
+	return nil
+}
+
+// Take specify action on Node(remove/reboot)
+// Args:
+//   NodeRequest
+// Return:
+//   error -> action error messages
+//   nil -> action success
+func ActionNode(nodeRequest node.NodeRequest) error {
+
+	_, exists := node.Node_db[nodeRequest.Name]
+	if exists == false {
+		return fmt.Errorf("node not existed")
+	}
+
+	if nodeRequest.Action == "remove" {
+		//TODO ,check whether vm existed on node
+		delete(node.Node_db, nodeRequest.Name)
+		db.NotifyToDB("node", nodeRequest.Name, "delete")
+	} else if nodeRequest.Action == "reboot" {
+
+	}
+
+	return nil
 }

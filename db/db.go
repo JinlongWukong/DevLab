@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/JinlongWukong/CloudLab/account"
+	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/utils"
 )
 
@@ -17,6 +18,7 @@ var requestChan chan message
 type message struct {
 	collection string
 	name       string
+	action     string
 }
 
 //Init chan size
@@ -33,17 +35,17 @@ func init() {
 }
 
 //Send notfication to DB chan to sync up
-func NotifyToDB(collection string, name string) {
+func NotifyToDB(collection string, name string, action string) {
 	if database == "file" {
 		log.Println("Saving to file db")
 		//non-blocking sends, keep only one message received
 		select {
-		case requestChan <- message{collection, name}:
+		case requestChan <- message{collection, name, action}:
 		default:
 		}
 	} else if database == "mongo" {
 		log.Println("Saving to mongdo db")
-		requestChan <- message{collection, name}
+		requestChan <- message{collection, name, action}
 	} else {
 		return
 	}
@@ -57,8 +59,16 @@ func SaveToDB() {
 			err := utils.WriteJsonFile("account.json", account.Account_db)
 			if err != nil {
 				log.Println(err)
+			} else {
+				log.Println("Saved to file db account.json")
 			}
-			log.Println("Saved to file db")
+		} else if request.collection == "node" {
+			err := utils.WriteJsonFile("node.json", node.Node_db)
+			if err != nil {
+				log.Println(err)
+			} else {
+				log.Println("Saved to file db node.json")
+			}
 		}
 	}
 }
@@ -66,13 +76,22 @@ func SaveToDB() {
 //Load data from database into map
 func LoadFromDB() {
 	if database == "file" {
-		jsonData, err := utils.ReadJsonFile("account.json")
+		accountData, err := utils.ReadJsonFile("account.json")
 		if err == nil {
-			json.Unmarshal(jsonData, &account.Account_db)
+			json.Unmarshal(accountData, &account.Account_db)
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
-			log.Println("db file not found, no content will be load")
+			log.Println("account.json db file not found, no content will be load")
 		} else {
-			log.Fatalf("DB file load failed with error: %v", err)
+			log.Fatalf("account.json DB file load failed with error: %v", err)
+		}
+
+		nodeData, err := utils.ReadJsonFile("node.json")
+		if err == nil {
+			json.Unmarshal(nodeData, &node.Node_db)
+		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
+			log.Println("node.json db file not found, no content will be load")
+		} else {
+			log.Fatalf("node.json DB file load failed with error: %v", err)
 		}
 	}
 }

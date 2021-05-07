@@ -8,6 +8,7 @@ import (
 
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/db"
+	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/vm"
 	"github.com/JinlongWukong/CloudLab/workflow"
 )
@@ -22,6 +23,7 @@ func main() {
 
 	r.LoadHTMLGlob("views/*")
 	r.GET("/", indexHandler)
+	r.GET("/admin", adminHandler)
 
 	//vm related api
 	r.GET("/vm-request", vmRequestIndexHandler)
@@ -29,6 +31,10 @@ func main() {
 
 	r.POST("/vm-request", vmRequestCreateVmHandler)
 	r.POST("/vm-request/vm", vmRequestVmActionHandler)
+
+	//node related api
+	r.GET("/node-request", nodeRequestGetNodeHandler)
+	r.POST("/node-request", nodeRequestActionNodeHandler)
 
 	//TODO api
 	r.GET("/k8s-request", toDoHandler)
@@ -40,6 +46,10 @@ func main() {
 // Head Page
 func indexHandler(c *gin.Context) {
 	c.HTML(200, "index.html", nil)
+}
+
+func adminHandler(c *gin.Context) {
+	c.HTML(200, "admin.html", nil)
 }
 
 // Todo Page
@@ -137,4 +147,63 @@ func vmRequestVmActionHandler(c *gin.Context) {
 	}
 
 	c.JSON(202, "")
+}
+
+// Get nodes info
+// Args:
+//   node Name or empty(means get all nodes)
+// Return:
+//   20x: success with Node info
+//   404: fail Node not found
+func nodeRequestGetNodeHandler(c *gin.Context) {
+
+	var g node.NodeRequestGetNode
+	c.ShouldBind(&g)
+
+	if g.Name == "" {
+		log.Println("Received get all nodes info request")
+		c.JSON(200, node.Node_db)
+	} else {
+		log.Printf("Received get node %v info request", g.Name)
+		mynode, exists := node.Node_db[g.Name]
+		if exists == true {
+			c.JSON(200, mynode)
+		} else {
+			c.JSON(404, "Node not found")
+		}
+	}
+}
+
+// Node request action handler, add/remove/reboot node
+// If action is add node -> async call, otherwise -> sync call
+func nodeRequestActionNodeHandler(c *gin.Context) {
+
+	var nodeRequest node.NodeRequest
+	c.ShouldBind(&nodeRequest)
+	log.Printf("Node request coming, %v %v", nodeRequest.Name, nodeRequest.Action)
+
+	switch nodeRequest.Action {
+	case "add":
+		_, exists := node.Node_db[nodeRequest.Name]
+		if exists == true {
+			c.JSON(400, "Node already existed")
+		} else {
+			go func() {
+				workflow.AddNode(nodeRequest)
+			}()
+		}
+	case "remove", "reboot":
+		_, exists := node.Node_db[nodeRequest.Name]
+		if exists == true {
+			if err := workflow.ActionNode(nodeRequest); err != nil {
+				c.JSON(500, err)
+			}
+		} else {
+			c.JSON(400, "Node not existed")
+		}
+	default:
+		c.JSON(400, "Action not support")
+	}
+
+	c.JSON(200, "success")
 }

@@ -2,6 +2,7 @@ package vm
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -9,9 +10,9 @@ import (
 	"github.com/JinlongWukong/CloudLab/utils"
 )
 
-func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host node.ComputeNode, Duration time.Duration) *VirtualMachine {
+func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, nodeName string, Duration time.Duration) *VirtualMachine {
 
-	log.Printf("Creating vm %v on Host %v", name, host.Name)
+	log.Printf("Creating vm %v on Host %v", name, nodeName)
 
 	//There is a mapping bt flavor and cpu/memory
 	detail, exists := flavorDetails[flavor]
@@ -26,6 +27,12 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 		Pass: utils.RandomString(8),
 	}
 
+	mynode := node.GetNodeByName(nodeName)
+	if mynode == nil {
+		log.Printf("Error: Node %v not found", nodeName)
+		return nil
+	}
+
 	payload, _ := json.Marshal(map[string]interface{}{
 		"vmName":   name,
 		"vmAction": "create",
@@ -34,9 +41,9 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 		"vmDisk":   disk,
 		"vmType":   vm_type,
 		"vncPass":  vnc.Pass,
-		"hostIp":   host.IpAddress,
-		"hostPass": host.Passwd,
-		"hostUser": host.UserName,
+		"hostIp":   mynode.IpAddress,
+		"hostPass": mynode.Passwd,
+		"hostUser": mynode.UserName,
 	})
 
 	log.Println("Remote http call to create vm")
@@ -47,7 +54,7 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 	}
 
 	ipadd, status := "unknow", "unknow"
-	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, host, Duration}
+	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, nodeName, Duration}
 }
 
 // Generic action(start/delete/shutdown/reboot)
@@ -59,12 +66,19 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, host no
 //    error  -> failed
 func (myvm VirtualMachine) genericActionVirtualMachine(action string) error {
 
+	mynode := node.GetNodeByName(myvm.Node)
+	if mynode == nil {
+		err := fmt.Errorf("Error: Node %v not found", myvm.Node)
+		log.Println(err)
+		return err
+	}
+
 	payload, _ := json.Marshal(map[string]interface{}{
 		"vmName":   myvm.Name,
 		"vmAction": action,
-		"hostIp":   myvm.Host.IpAddress,
-		"hostPass": myvm.Host.Passwd,
-		"hostUser": myvm.Host.UserName,
+		"hostIp":   mynode.IpAddress,
+		"hostPass": mynode.Passwd,
+		"hostUser": mynode.UserName,
 	})
 
 	log.Printf("Remote http call to %v vm", action)
@@ -79,28 +93,28 @@ func (myvm VirtualMachine) genericActionVirtualMachine(action string) error {
 
 func (myvm VirtualMachine) DeleteVirtualMachine() error {
 
-	log.Printf("Deleting vm %v on Host %v", myvm.Name, myvm.Host.Name)
+	log.Printf("Deleting vm %v on Host %v", myvm.Name, myvm.Node)
 
 	return myvm.genericActionVirtualMachine("delete")
 }
 
 func (myvm VirtualMachine) StartUpVirtualMachine() error {
 
-	log.Printf("Starting vm %v on Host %v", myvm.Name, myvm.Host.Name)
+	log.Printf("Starting vm %v on Host %v", myvm.Name, myvm.Node)
 
 	return myvm.genericActionVirtualMachine("start")
 }
 
 func (myvm VirtualMachine) ShutDownVirtualMachine() error {
 
-	log.Printf("Shuting down vm %v on Host %v", myvm.Name, myvm.Host.Name)
+	log.Printf("Shuting down vm %v on Host %v", myvm.Name, myvm.Node)
 
 	return myvm.genericActionVirtualMachine("shutdown")
 }
 
 func (myvm VirtualMachine) RebootVirtualMachine() error {
 
-	log.Printf("Rebooting vm %v on Host %v", myvm.Name, myvm.Host.Name)
+	log.Printf("Rebooting vm %v on Host %v", myvm.Name, myvm.Node)
 
 	return myvm.genericActionVirtualMachine("reboot")
 }
@@ -108,14 +122,21 @@ func (myvm VirtualMachine) RebootVirtualMachine() error {
 // Sync up VM status
 func (myvm *VirtualMachine) GetVirtualMachineLiveStatus() error {
 
-	log.Printf("Fetching vm  %v status on Host %v", myvm.Name, myvm.Host.Name)
+	log.Printf("Fetching vm  %v status on Host %v", myvm.Name, myvm.Node)
+
+	mynode := node.GetNodeByName(myvm.Node)
+	if mynode == nil {
+		err := fmt.Errorf("Error: Node %v not found", myvm.Node)
+		log.Println(err)
+		return err
+	}
 
 	//vmName=test-1\&hostIp=127.0.0.1\&hostPass=xxxxx\&hostUser=root
 	query := map[string]string{
 		"vmName":   myvm.Name,
-		"hostIp":   myvm.Host.IpAddress,
-		"hostUser": myvm.Host.UserName,
-		"hostPass": myvm.Host.Passwd,
+		"hostIp":   mynode.IpAddress,
+		"hostUser": mynode.UserName,
+		"hostPass": mynode.Passwd,
 	}
 
 	var vmStatus VmLiveStatus

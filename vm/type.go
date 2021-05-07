@@ -2,8 +2,6 @@ package vm
 
 import (
 	"time"
-
-	"github.com/JinlongWukong/CloudLab/node"
 )
 
 var flavorDetails = map[string]map[string]int{
@@ -30,16 +28,16 @@ type VncInfo struct {
 }
 
 type VirtualMachine struct {
-	Name      string           `json:"Name"`
-	CPU       int              `json:"CPU"`
-	Memory    int              `json:"Mem"`
-	Disk      int              `json:"Disk"`
-	IpAddress string           `json:"Address"`
-	Status    string           `json:"Status"`
-	Vnc       VncInfo          `json:"Vnc"`
-	Type      string           `json:"Type"`
-	Host      node.ComputeNode `json:"Host"`
-	Lifetime  time.Duration    `json:"LifeTime"`
+	Name      string        `json:"Name"`
+	CPU       int           `json:"CPU"`
+	Memory    int           `json:"Mem"`
+	Disk      int           `json:"Disk"`
+	IpAddress string        `json:"Address"`
+	Status    string        `json:"Status"`
+	Vnc       VncInfo       `json:"Vnc"`
+	Type      string        `json:"Type"`
+	Node      string        `json:"Node"`
+	Lifetime  time.Duration `json:"LifeTime"`
 }
 
 type VmRequest struct {

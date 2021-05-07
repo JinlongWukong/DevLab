@@ -3,18 +3,14 @@
 <head>
     <title>CloudLab</title>
     <style>
-.first-container {
-    border: 3px solid #fff;
-}
-
 .IaaS {
     width: 50%;
     height: 300px;
     float: left;
     padding: 20px;
-    border: 2px solid;
+    border: 2px none;
     display: grid;
-    background-color: lightgreen;
+    background-color: none;
 }
 
 .PaaS {
@@ -23,9 +19,9 @@
     height: 300px;
     float: left;
     padding: 20px;
-    border: 2px solid;
+    border: 2px none;
     display: grid;
-    background-color: lightblue;
+    background-color: none;
 }
 
 .SaaS {
@@ -33,30 +29,35 @@
     float: right;
     height: 650px;
     padding: 20px;
-    border: 2px solid;
+    border: 2px none;
     display: grid;
-    background-color: Tomato;
-    opacity: 0.8;
+    background-color: none;
 }
 
 button {
-    width: 40%;
-    background-color: yellow;
-    color: black;
+    width: 45%;
+    height: 50px;
+    background-color: green;
+    color: white;
     font-size: 20px;
     text-align: center;
     display: inline-block;
     margin: auto;
     opacity: 0.6;
     transition: 0.3s;
-    border-radius: 12px;
+    border-radius: 28px;
 }
 button:hover {opacity: 1}
 
+body {
+    background-color: lightyellow;
+}
     </style>
 </head>
 <body>
+
 <div class="first-container">
+
 <div class=IaaS>
 <button onclick="document.location='/vm-request'">Create VM</button>
 </div>
@@ -71,7 +72,6 @@ button:hover {opacity: 1}
 
 <div class=PaaS>
 <button onclick="document.location='/k8s-request'">Create K8S</button>
-
 </div>
 
 </div>
