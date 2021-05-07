@@ -11,25 +11,25 @@ import (
 var Node_db = make(map[string]*Node)
 
 type Node struct {
-	Name      string
-	CPU       int
-	Memory    int
-	Disk      int
-	IpAddress string
-	Status    string
-	UserName  string
-	Passwd    string
-	Role      string
+	Name      string `json:"name,omitempty"`
+	CPU       int    `json:"cpu,omitempty"`
+	Memory    int    `json:"memory,omitempty"`
+	Disk      int    `json:"disk,omitempty"`
+	IpAddress string `json:"ip_address,omitempty"`
+	Status    string `json:"status,omitempty"`
+	UserName  string `json:"user_name,omitempty"`
+	Passwd    string `json:"passwd,omitempty"`
+	Role      string `json:"role,omitempty"`
 }
 
 type NodeRequest struct {
-	Name      string `json:"name"`
-	User      string `json:"user"`
-	Passwd    string `json:"password"`
-	IpAddress string `json:"ip"`
-	Role      string `json:"role"`
-	Action    string `json:"action"`
-	Status    string `json:"status"`
+	Name      string `json:"name,omitempty"`
+	User      string `json:"user,omitempty"`
+	Passwd    string `json:"password,omitempty"`
+	IpAddress string `json:"ip,omitempty"`
+	Role      string `json:"role,omitempty"`
+	Action    string `json:"action,omitempty"`
+	Status    string `json:"status,omitempty"`
 }
 
 type NodeRequestGetNode struct {
