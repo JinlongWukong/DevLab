@@ -1,89 +1,110 @@
 package node
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
+	"sync"
+)
 
-	"github.com/JinlongWukong/CloudLab/utils"
+type NodeState string
+type NodeAction string
+type NodeStatus string
+
+const (
+	NodeStatusInit      NodeStatus = "init"
+	NodeStatusInstalled NodeStatus = "installed"
+	NodeStatusReady     NodeStatus = "ready"
+	NodeStatusUnhealth  NodeStatus = "unhealth"
+
+	NodeStateEnable  NodeState = "enable"
+	NodeStateDisable NodeState = "disable"
+
+	NodeActionAdd     NodeAction = "add"
+	NodeActionRemove  NodeAction = "remove"
+	NodeActionReboot  NodeAction = "reboot"
+	NodeActionEnable  NodeAction = "enable"
+	NodeActionDisable NodeAction = "disable"
 )
 
 var Node_db = make(map[string]*Node)
 
 type Node struct {
-	Name      string `json:"name,omitempty"`
-	CPU       int    `json:"cpu,omitempty"`
-	Memory    int    `json:"memory,omitempty"`
-	Disk      int    `json:"disk,omitempty"`
-	IpAddress string `json:"ip_address,omitempty"`
-	Status    string `json:"status,omitempty"`
-	UserName  string `json:"user_name,omitempty"`
-	Passwd    string `json:"passwd,omitempty"`
-	Role      string `json:"role,omitempty"`
+	Name       string       `json:"name"`
+	UserName   string       `json:"user"`
+	Passwd     string       `json:"passwd"`
+	Role       string       `json:"role"`
+	IpAddress  string       `json:"address"`
+	CPU        string       `json:"cpu,omitempty"`
+	Memory     string       `json:"memory,omitempty"`
+	Disk       string       `json:"disk,omitempty"`
+	Status     NodeStatus   `json:"status,omitempty"`
+	State      NodeState    `json:"state,omitempty"`
+	stateMutex sync.RWMutex `json:"-"`
 }
 
 type NodeRequest struct {
-	Name      string `json:"name,omitempty"`
-	User      string `json:"user,omitempty"`
-	Passwd    string `json:"password,omitempty"`
-	IpAddress string `json:"ip,omitempty"`
-	Role      string `json:"role,omitempty"`
-	Action    string `json:"action,omitempty"`
-	Status    string `json:"status,omitempty"`
-}
-
-type NodeRequestGetNode struct {
-	Name string `form:"name"`
+	Name      string     `json:"name" form:"name"`
+	User      string     `json:"user,omitempty" form:"user,omitempty"`
+	Passwd    string     `json:"password,omitempty" form:"password,omitempty"`
+	IpAddress string     `json:"ip,omitempty" form:"ip,omitempty"`
+	Role      string     `json:"role,omitempty" form:"role,omitempty"`
+	Action    NodeAction `json:"action,omitempty" form:"action,omitempty"`
 }
 
 // Add a new node
 // Args:
 //   nodeRequest
 // Return:
-//   node pointer
-//   error
-func NewNode(nodeRequest NodeRequest) (*Node, error) {
+//   new node pointer
+func NewNode(nodeRequest NodeRequest) *Node {
 
-	log.Printf("Start install node %v", nodeRequest.Name)
-
-	payload, _ := json.Marshal(map[string]interface{}{
-		"Ip":     nodeRequest.IpAddress,
-		"Pass":   nodeRequest.Passwd,
-		"User":   nodeRequest.User,
-		"Role":   nodeRequest.Role,
-		"Action": "install",
-	})
-
-	log.Println("Remote http call to install node")
-	//Always create node struct, set status accordingly
-	newNode := Node{Name: nodeRequest.Name, IpAddress: nodeRequest.IpAddress, UserName: nodeRequest.User,
-		Passwd: nodeRequest.Passwd, Role: nodeRequest.Role}
-
-	err := utils.HttpSendJsonData("http://10.124.44.167:9134/host", "POST", payload)
-	if err != nil {
-		log.Println(err)
-		newNode.Status = fmt.Sprint(err)
-		return &newNode, err
-	} else {
-		newNode.Status = "running"
-		return &newNode, nil
+	newNode := Node{
+		Name:      nodeRequest.Name,
+		IpAddress: nodeRequest.IpAddress,
+		UserName:  nodeRequest.User,
+		Passwd:    nodeRequest.Passwd,
+		Role:      nodeRequest.Role,
+		Status:    NodeStatusInit,
+		State:     NodeStateEnable,
 	}
 
+	return &newNode
 }
 
+//Get node pointer by name
+//Return nil if not existed
 func GetNodeByName(nodeName string) *Node {
 
-	//return Node{IpAddress: "127.0.0.1", UserName: "root", Passwd: "Cisco123!", Role: "compute"}
-	_, exists := Node_db[nodeName]
+	myNode, exists := Node_db[nodeName]
 	if exists == false {
 		return nil
 	} else {
-		return Node_db[nodeName]
+		return myNode
 	}
 
 }
 
-func (myNode Node) RebootNode() error {
+//Set node state(enable/disbale)
+func (myNode *Node) SetState(state NodeState) {
+
+	myNode.stateMutex.Lock()
+	defer myNode.stateMutex.Unlock()
+
+	myNode.State = state
+
+}
+
+//Get node state(enable/disable)
+func (myNode *Node) GetState() NodeState {
+
+	myNode.stateMutex.RLock()
+	defer myNode.stateMutex.RUnlock()
+
+	return myNode.State
+
+}
+
+//Reboot node
+//Return nil if ok, otherwise error
+func (myNode *Node) RebootNode() error {
 	//TODO
 	return nil
 }

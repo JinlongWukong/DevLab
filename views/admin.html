@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VM Operation</title>
+    <style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+    background-color: lightyellow;
+}
+
+select {
+  width: 10%;
+  margin-top: 6px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+select.table {
+  width: 25%;
+  margin-top: 6px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.button {
+  display: inline-block;
+  padding: 12px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: #4CAF50;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 9px #999;
+}
+
+.button:hover {background-color: #3e8e41}
+
+.button:active {
+  background-color: #3e8e41;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  background-color: #4CAF50;
+  color: white;
+}
+td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+tr:nth-child(even) {background-color: #f2f2f2;}
+tr:hover {background-color:#f5f5f5;}
+
+#container {
+    display: flex;
+    justify-content: center;
+}
+
+#hidden {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #000000;
+    opacity: 0.3;
+    display: none;
+}
+
+#box {
+    color: #fff;
+    width: 400px;
+    height: 320px;
+    background-color: #40527e;
+    display: none;
+    flex-direction: column;
+    border-radius: 10px;
+    align-items: center;
+    padding-top: 40px;
+    position: absolute;
+    top: 200px;
+    cursor: move;
+}
+
+#box #close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-weight: normal;
+    display: block;
+    width: 50px;
+    height: 25px;
+    line-height: 25px;
+    text-align: center;
+    border-radius: 20px;
+    color: #7a9ae4;
+}
+
+#box #close:hover {
+    background-color: #52699e;
+    cursor: pointer;
+}
+
+#box input {
+    width: 150px;
+    height: 25px;
+    border-radius: 25px;
+    border: none;
+    outline: none;
+    padding-left: 20px;
+    background-color: #536a9e;
+    color: #fff;
+}
+
+#box input[type=radio] {
+    width: 20px;
+    height: 15px;
+    border-radius: 25px;
+    border: none;
+    outline: none;
+    padding-left: 20px;
+}
+
+#box label {
+  width: 40%;
+  display: inline-block;
+}
+
+#box label[class="radio"] {
+  width: 18%;
+  display: inline-block;
+}
+
+#box input::-webkit-input-placeholder {
+    color: rgb(255, 255, 255);
+    opacity: 0.4;
+}
+
+#box input:first-child {
+    margin-bottom: 20px;
+}
+
+#box #confirm {
+    cursor: pointer;
+    width: 300px;
+    height: 30px;
+    background-color: #02a0a0;
+}
+
+#box #confirm:hover {
+    background-color: #019191;
+}
+
+
+    </style>
+</head>
+
+<body>
+<div class="node">
+    <p>Node Management</p>
+    <input type="button" class="button" id = "nodeListGenerate" value="List Nodes" />
+    <input type="button" class="button" id = "nodeGenerate" value="Add Node" />
+    <div id="container">
+        <div id="hidden"></div>
+        <div id="box">
+        <form class="boxFrom">
+            <strong id="close">Close</strong>
+            <label for="inputName">node name: </label>
+            <input type="text" id="inputName" placeholder="name">
+            <br><br>
+            <label for="inputUser">node user: </label>
+            <input type="text" id="inputUser" placeholder="user">
+            <br><br>
+            <label for="inputPasswd">node password: </label>
+            <input type="password" id="inputPasswd" placeholder="password">
+            <br><br>
+            <label for="inputAddress">node address: </label>
+            <input type="text" id="inputAddress" placeholder="address"><br>
+            <br><br>
+            <label>node role: </label>
+            <input type="radio" id="radioRoleCompute" name="radioRole" value="compute", checked="checked">
+            <label class="radio" for="radioRoleCompute">Compute</label>
+            <input type="radio" id="radioRoleContainer" name="radioRole" value="container">
+            <label class="radio" for="radioRoleContainer">Container</label>
+            <br><br>
+            <input type="button" value="Confirm" id="confirm">
+        </form>
+        </div>
+    </div>
+    <div>
+        <div id="tableDiv" style="margin-top: 20px">
+            <p>Click button -> List Nodes, to list all nodes information here </p>
+        </div>
+    </div>
+</div>
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+
+function CreateNodeTable(myNodeList) {
+    //var myNodeList = '[{ "name": "test", "ip_address": "192.168.122.89", "status": "running", "state": "enable", "user_name": "root", "passwd": "cisco123", "role": "compute" }]'
+
+    // EXTRACT VALUE FOR HTML HEADER. 
+    var col = [];
+    for (var i = 0; i < myNodeList.length; i++) {
+        for (var key in myNodeList[i]) {
+            if (col.indexOf(key) === -1) {
+                col.push(key);
+            }
+        }
+    }
+
+    // ADD NEW COL, DEFINE ACTION
+    if (myNodeList.length > 0) {
+        col.push("action")
+    }
+
+    // CREATE DYNAMIC TABLE.
+    var table = document.createElement("table");
+
+    // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
+
+    var tr = table.insertRow(-1);                   // TABLE ROW.
+
+    for (var i = 0; i < col.length; i++) {
+        var th = document.createElement("th");      // TABLE HEADER.
+        th.innerHTML = col[i];
+        tr.appendChild(th);
+    }
+
+    // ADD JSON DATA TO THE TABLE AS ROWS.
+    for (var i = 0; i < myNodeList.length; i++) {
+
+        tr = table.insertRow(-1);
+
+        for (var j = 0; j < col.length; j++) {
+            var tabCell = tr.insertCell(-1);
+            if (col[j] == "action"){
+               tabCell.innerHTML = `
+                <form action="/node-request" method="POST">
+                   <select class="table" name="action">
+                       <option value="reboot">reboot</option>
+                       <option value="remove">remove</option>
+                       <option value="enable">enable</option>
+                       <option value="disable">disable</option>
+                   </select>
+                   <button type="submit" style="border-radius: 8px">Confirm</button>
+                  `+ '<input type="hidden" name="name"' + 'value=' + myNodeList[i]["name"] + ' >'
+                + '</form>';
+            } else {
+                tabCell.innerHTML = myNodeList[i][col[j]];
+            }
+        }
+    }
+
+    // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
+    var divContainer = document.getElementById("tableDiv");
+    divContainer.innerHTML = "";
+    divContainer.appendChild(table);
+}
+
+$(document).ready(function(){
+    $("#nodeListGenerate").click(function(){
+        var baseurl = location.origin;
+        $.ajax({
+              //url: "http://localhost:8088/node-request",
+              url: baseurl + "/node-request",
+              success: function(data){
+                console.log(data)
+                CreateNodeTable(data)
+              },
+              error: function(data){
+                alert(data.status + ':' + data.statusText,data.responseText);
+              },
+              type: 'GET'
+          });
+    });
+    $("#nodeGenerate").click(function () {
+        box.style.display = 'flex';
+        hidden.style.display = 'block';
+    });
+
+    $("#confirm").click(function () {
+        var baseurl = location.origin;
+        var requestData = {
+             name: $("#inputName").val(),
+             user: $("#inputUser").val(),
+             password: $("#inputPasswd").val(),
+             ip: $("#inputAddress").val(),
+             role: $('input[name="radioRole"]').val(),
+             action: "add",
+        };
+        console.log(requestData)
+        $.ajax({
+              //url: "http://localhost:8088/node-request",
+              url: baseurl + "/node-request",
+              data: requestData,
+              success: function(data){
+                console.log(data)
+              },
+              error: function(data){
+                alert(data.status + ':' + data.statusText,data.responseText);
+              },
+              type: 'POST'
+          });
+       box.style.display = 'none';
+       hidden.style.display = 'none';
+       box.style.top = '200px';
+       box.style.left = '';
+    });
+
+    $("#close").click(function () {
+       box.style.display = 'none';
+       hidden.style.display = 'none';
+       box.style.top = '200px';
+       box.style.left = '';
+    });
+});
+</script>
+</html>

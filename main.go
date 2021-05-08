@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -150,60 +151,72 @@ func vmRequestVmActionHandler(c *gin.Context) {
 }
 
 // Get nodes info
-// Args:
-//   node Name or empty(means get all nodes)
+// Request:
+//   node name or empty(means get all nodes)
 // Return:
-//   20x: success with Node info
-//   404: fail Node not found
+//   200: success -> with Node info
+//   404: fail -> Node not found
 func nodeRequestGetNodeHandler(c *gin.Context) {
 
-	var g node.NodeRequestGetNode
-	c.ShouldBind(&g)
+	var r node.NodeRequest
+	c.ShouldBind(&r)
 
-	if g.Name == "" {
-		log.Println("Received get all nodes info request")
-		c.JSON(200, node.Node_db)
+	if r.Name == "" {
+		log.Println("Receive node request -> get all nodes info")
+		allNodesDetails := []*node.Node{}
+		for _, info := range node.Node_db {
+			allNodesDetails = append(allNodesDetails, info)
+		}
+		c.JSON(http.StatusOK, allNodesDetails)
 	} else {
-		log.Printf("Received get node %v info request", g.Name)
-		mynode, exists := node.Node_db[g.Name]
+		log.Printf("Receive node request -> get node %v info", r.Name)
+		mynode, exists := node.Node_db[r.Name]
 		if exists == true {
-			c.JSON(200, mynode)
+			c.JSON(http.StatusOK, mynode)
 		} else {
-			c.JSON(404, "Node not found")
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Node not existed",
+			})
 		}
 	}
 }
 
-// Node request action handler, add/remove/reboot node
+// Node request action handler -> add/remove/reboot node
 // If action is add node -> async call, otherwise -> sync call
 func nodeRequestActionNodeHandler(c *gin.Context) {
 
 	var nodeRequest node.NodeRequest
 	c.ShouldBind(&nodeRequest)
-	log.Printf("Node request coming, %v %v", nodeRequest.Name, nodeRequest.Action)
+	log.Printf("Node request coming, node name -> %v action -> %v", nodeRequest.Name, nodeRequest.Action)
 
 	switch nodeRequest.Action {
-	case "add":
+	case node.NodeActionAdd:
 		_, exists := node.Node_db[nodeRequest.Name]
 		if exists == true {
-			c.JSON(400, "Node already existed")
+			log.Printf("Node %v already existed", nodeRequest.Name)
 		} else {
 			go func() {
 				workflow.AddNode(nodeRequest)
 			}()
 		}
-	case "remove", "reboot":
+	case node.NodeActionRemove, node.NodeActionReboot, node.NodeActionEnable, node.NodeActionDisable:
 		_, exists := node.Node_db[nodeRequest.Name]
 		if exists == true {
 			if err := workflow.ActionNode(nodeRequest); err != nil {
-				c.JSON(500, err)
+				c.JSON(500, gin.H{
+					"error": err,
+				})
 			}
 		} else {
-			c.JSON(400, "Node not existed")
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Node not existed",
+			})
 		}
 	default:
-		c.JSON(400, "Action not support")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "action not support",
+		})
 	}
 
-	c.JSON(200, "success")
+	c.JSON(http.StatusOK, "")
 }

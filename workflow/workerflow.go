@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"sort"
@@ -12,6 +13,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/node"
+	"github.com/JinlongWukong/CloudLab/utils"
 	"github.com/JinlongWukong/CloudLab/vm"
 )
 
@@ -142,26 +144,42 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 	return action_err
 }
 
-// Add node(remove/reboot)
-// Args:
-//   NodeRequest
-// Return:
-//   error -> add node error messages
-//   nil -> add node success
+// Add a new node
+// this is a async call, will update node status after get reponse from remote deployer
 func AddNode(nodeRequest node.NodeRequest) error {
 
-	myNode, err := node.NewNode(nodeRequest)
-	node.Node_db[myNode.Name] = myNode
-	db.NotifyToDB("node", myNode.Name, "create")
+	myNode := node.NewNode(nodeRequest)
 
-	if err != nil {
-		log.Printf("Add node failed, %v %v", myNode.Name, err)
-		return err
+	_, exists := node.Node_db[nodeRequest.Name]
+	if exists == true {
+		return fmt.Errorf("node %v already added", nodeRequest.Name)
 	} else {
-		log.Printf("Add node successfully, %v %v", myNode.Name, myNode.IpAddress)
+		node.Node_db[myNode.Name] = myNode
+		db.NotifyToDB("node", myNode.Name, "create")
 	}
 
-	//TODO, post check, change status to ready
+	go func() {
+		payload, _ := json.Marshal(map[string]interface{}{
+			"Ip":     myNode.IpAddress,
+			"Pass":   myNode.Passwd,
+			"User":   myNode.UserName,
+			"Role":   myNode.Role,
+			"Action": "install",
+		})
+
+		log.Println("Remote http call to install node")
+		err := utils.HttpSendJsonData("http://10.124.44.167:9134/host", "POST", payload)
+		if err != nil {
+			log.Printf("Install node  %v failed with error -> %v", myNode.Name, err)
+			myNode.Status = node.NodeStatus(fmt.Sprint(err))
+		} else {
+			log.Printf("Install node %v successfully", myNode.Name)
+			myNode.Status = node.NodeStatusInstalled
+		}
+
+		//TODO, post check, change status to ready
+	}()
+
 	return nil
 }
 
@@ -173,17 +191,30 @@ func AddNode(nodeRequest node.NodeRequest) error {
 //   nil -> action success
 func ActionNode(nodeRequest node.NodeRequest) error {
 
-	_, exists := node.Node_db[nodeRequest.Name]
+	myNode, exists := node.Node_db[nodeRequest.Name]
 	if exists == false {
 		return fmt.Errorf("node not existed")
 	}
 
-	if nodeRequest.Action == "remove" {
-		//TODO ,check whether vm existed on node
+	switch nodeRequest.Action {
+	case node.NodeActionRemove:
+		//TODO ,check whether vm hosted on node
 		delete(node.Node_db, nodeRequest.Name)
 		db.NotifyToDB("node", nodeRequest.Name, "delete")
-	} else if nodeRequest.Action == "reboot" {
-
+		log.Printf("node %v removed", nodeRequest.Name)
+	case node.NodeActionReboot:
+		if err := myNode.RebootNode(); err != nil {
+			log.Printf("Reboot node %v failed with error -> %v", nodeRequest.Name, err)
+			return err
+		}
+	case node.NodeActionEnable:
+		myNode.SetState(node.NodeStateEnable)
+		log.Printf("Set node %v state to %v", nodeRequest.Name, node.NodeStateEnable)
+	case node.NodeActionDisable:
+		myNode.SetState(node.NodeStateDisable)
+		log.Printf("Set node %v state to %v", nodeRequest.Name, node.NodeStateDisable)
+	default:
+		return fmt.Errorf("action %v not supported", nodeRequest.Action)
 	}
 
 	return nil
