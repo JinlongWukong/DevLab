@@ -32,11 +32,12 @@ type Node struct {
 	Passwd     string       `json:"passwd"`
 	Role       string       `json:"role"`
 	IpAddress  string       `json:"address"`
-	CPU        string       `json:"cpu,omitempty"`
-	Memory     string       `json:"memory,omitempty"`
-	Disk       string       `json:"disk,omitempty"`
-	Status     NodeStatus   `json:"status,omitempty"`
-	State      NodeState    `json:"state,omitempty"`
+	CPU        int          `json:"cpu"`
+	Memory     int          `json:"memory"`
+	Disk       string       `json:"disk"`
+	OSType     string       `json:"os"`
+	Status     NodeStatus   `json:"status"`
+	State      NodeState    `json:"state"`
 	stateMutex sync.RWMutex `json:"-"`
 }
 
@@ -47,6 +48,13 @@ type NodeRequest struct {
 	IpAddress string     `json:"ip,omitempty" form:"ip,omitempty"`
 	Role      string     `json:"role,omitempty" form:"role,omitempty"`
 	Action    NodeAction `json:"action,omitempty" form:"action,omitempty"`
+}
+
+type NodeInfo struct {
+	CPU    int    `json:"cpu"`
+	Memory int    `json:"memory"`
+	Disk   string `json:"disk"`
+	OSType string `json:"type"`
 }
 
 // Add a new node

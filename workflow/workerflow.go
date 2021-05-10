@@ -159,6 +159,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 	}
 
 	go func() {
+		//Install node
 		payload, _ := json.Marshal(map[string]interface{}{
 			"Ip":     myNode.IpAddress,
 			"Pass":   myNode.Passwd,
@@ -168,16 +169,25 @@ func AddNode(nodeRequest node.NodeRequest) error {
 		})
 
 		log.Println("Remote http call to install node")
-		err := utils.HttpSendJsonData("http://10.124.44.167:9134/host", "POST", payload)
+		var nodeInfo node.NodeInfo
+		err, reponse_data := utils.HttpSendJsonData("http://10.124.44.167:9134/host", "POST", payload)
+
 		if err != nil {
 			log.Printf("Install node  %v failed with error -> %v", myNode.Name, err)
 			myNode.Status = node.NodeStatus(fmt.Sprint(err))
+			db.NotifyToDB("node", myNode.Name, "update")
+			return
 		} else {
 			log.Printf("Install node %v successfully", myNode.Name)
+			json.Unmarshal(reponse_data, &nodeInfo)
+			myNode.CPU = nodeInfo.CPU
+			myNode.Memory = nodeInfo.Memory
+			myNode.Disk = nodeInfo.Disk
+			myNode.OSType = nodeInfo.OSType
+			log.Printf("Fetched node %v cpu -> %v, memory -> %v, disk -> %v, os type -> %v", myNode.Name, myNode.CPU, myNode.Memory, myNode.Disk, myNode.OSType)
 			myNode.Status = node.NodeStatusInstalled
+			db.NotifyToDB("node", myNode.Name, "update")
 		}
-
-		//TODO, post check, change status to ready
 	}()
 
 	return nil

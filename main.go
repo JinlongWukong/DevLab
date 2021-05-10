@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -157,7 +159,8 @@ func vmRequestVmActionHandler(c *gin.Context) {
 //   200: success -> with Node info
 //   404: fail -> Node not found
 func nodeRequestGetNodeHandler(c *gin.Context) {
-
+	x, _ := ioutil.ReadAll(c.Request.Body)
+	fmt.Printf("%s", string(x))
 	var r node.NodeRequest
 	c.ShouldBind(&r)
 

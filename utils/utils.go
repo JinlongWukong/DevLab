@@ -10,23 +10,26 @@ import (
 	"net/http"
 )
 
-func HttpSendJsonData(uri string, method string, data []byte) error {
+func HttpSendJsonData(uri string, method string, data []byte) (error, []byte) {
+
 	client := &http.Client{}
 	req, _ := http.NewRequest(method, uri, bytes.NewBuffer(data))
 	req.Header.Set("Content-type", "application/json")
+
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println(err)
-		return err
+		return err, nil
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode/100 == 2 {
-		log.Println("http response successfully")
-	} else {
-		return fmt.Errorf("unexpected status-code returned %v", resp.StatusCode)
-	}
 
-	return nil
+	if resp.StatusCode/100 == 2 {
+		resp_body, _ := ioutil.ReadAll(resp.Body)
+		log.Printf("http response success with messages: %v", string(resp_body))
+		return nil, resp_body
+	} else {
+		return fmt.Errorf("unexpected status-code returned %v", resp.StatusCode), nil
+	}
 }
 
 func HttpGetJsonData(uri string, query map[string]string) (error, []byte) {

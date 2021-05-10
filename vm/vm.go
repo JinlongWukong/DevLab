@@ -47,7 +47,7 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, nodeNam
 	})
 
 	log.Println("Remote http call to create vm")
-	err := utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
+	err, _ := utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -82,7 +82,7 @@ func (myvm VirtualMachine) genericActionVirtualMachine(action string) error {
 	})
 
 	log.Printf("Remote http call to %v vm", action)
-	err := utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
+	err, _ := utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
 	if err != nil {
 		log.Println(err)
 		return err
