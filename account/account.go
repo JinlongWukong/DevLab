@@ -10,10 +10,10 @@ import (
 var Account_db = make(map[string]*Account)
 
 type Account struct {
-	Name     string
-	Role     string
-	VM       []*vm.VirtualMachine
-	StatusVm string `json:"-"`
+	Name     string               `json:"name"`
+	Role     string               `json:"role"`
+	VM       []*vm.VirtualMachine `json:"vm"`
+	StatusVm string               `json:"-"`
 }
 
 func (a Account) GetNumbersOfVm() int {

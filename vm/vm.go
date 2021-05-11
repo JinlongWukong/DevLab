@@ -10,18 +10,23 @@ import (
 	"github.com/JinlongWukong/CloudLab/utils"
 )
 
-func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int32, node *node.Node, Duration time.Duration) *VirtualMachine {
-
-	log.Printf("Creating vm %v on Host %v", name, node.Name)
+//check parameters, return struct pointer if ok, otherwise return nil
+func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int32, Duration time.Duration) *VirtualMachine {
 
 	//There is a mapping bt flavor and cpu/memory
-	detail, err := GetFlavordetail(flavor)
-	if err == nil {
-		cpu = detail["cpu"]
-		mem = detail["memory"]
-		disk = detail["disk"]
-	} else {
-		log.Println(err)
+	if flavor != "" {
+		detail, err := GetFlavordetail(flavor)
+		if err == nil {
+			cpu = detail["cpu"]
+			mem = detail["memory"]
+			disk = detail["disk"]
+		} else {
+			log.Println(err)
+		}
+	}
+
+	if cpu == 0 || mem == 0 || disk == 0 {
+		log.Println("Error: one of cpu, mem, disk is zero give")
 		return nil
 	}
 
@@ -30,28 +35,40 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int32, node 
 		Pass: utils.RandomString(8),
 	}
 
+	ipadd, status, node := "unknow", VmStatusInit, "unkonw"
+	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, node, Duration}
+}
+
+//Create VM by calling remote deployer
+func (myvm *VirtualMachine) CreateVirtualMachine() error {
+
+	log.Printf("Creating vm %v on Host %v", myvm.Name, myvm.Node)
+
+	node := node.GetNodeByName(myvm.Node)
+
 	payload, _ := json.Marshal(map[string]interface{}{
-		"vmName":   name,
+		"vmName":   myvm.Name,
 		"vmAction": "create",
-		"vmMemory": mem,
-		"vmVcpus":  cpu,
-		"vmDisk":   disk,
-		"vmType":   vm_type,
-		"vncPass":  vnc.Pass,
+		"vmMemory": myvm.Memory,
+		"vmVcpus":  myvm.CPU,
+		"vmDisk":   myvm.Disk,
+		"vmType":   myvm.Type,
+		"vncPass":  myvm.Vnc.Pass,
 		"hostIp":   node.IpAddress,
 		"hostPass": node.Passwd,
 		"hostUser": node.UserName,
 	})
 
 	log.Println("Remote http call to create vm")
-	err, _ = utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
+	err, _ := utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
 	if err != nil {
 		log.Println(err)
+		myvm.Status = fmt.Sprint(err)
+		return err
+	} else {
+		myvm.Status = VmStatusRunning
 		return nil
 	}
-
-	ipadd, status := "unknow", "unknow"
-	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, node.Name, Duration}
 }
 
 // Generic action(start/delete/shutdown/reboot)

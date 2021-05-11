@@ -20,21 +20,22 @@ import (
 
 var scheduleLock sync.Mutex
 
-// VM live status retry times and interval(unit seconds) setting
-const VmStatusRetry, vmStatusInterval = 10, 6
+// VM live status retry times and interval(unit seconds) setting, 2mins
+const VmStatusRetry, vmStatusInterval = 20, 6
 
 // Create VMs
 // Args:
 //   account: account
 //   vmRequest: vm request body
-func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
-	myaccount.StatusVm = "running"
+func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
+	//during vm creation, no more new task accept
+	myAccount.StatusVm = "running"
 	defer func() {
-		myaccount.StatusVm = "idle"
+		myAccount.StatusVm = "idle"
 	}()
 
 	//Fetch all existing VM Name, get the last index as the start index of new VM
-	vmNames := myaccount.GetVmNameList()
+	vmNames := myAccount.GetVmNameList()
 	log.Println(vmNames)
 	vmIndex := func(v []string) []string {
 		indexes := make([]string, 0)
@@ -51,81 +52,101 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 		log.Printf("The last index of VM: %v", lastIndex)
 	}
 
-	//schedule for a node
-	var reqCpu, reqMem, reqDisk int32
-	detail, err := vm.GetFlavordetail(vmRequest.Flavor)
-	if err == nil {
-		reqCpu = detail["cpu"] * vmRequest.Number
-		reqMem = detail["memory"] * vmRequest.Number
-		reqDisk = detail["disk"] * 1024 * vmRequest.Number
-	} else {
-		log.Println(err)
-		return
-	}
-	scheduleLock.Lock()
-	selectNode := scheduler.Schedule(reqCpu, reqMem, reqDisk)
-	log.Printf("node selected -> %v", selectNode.Name)
-	selectNode.ChangeCpuUsed(reqCpu)
-	selectNode.ChangeMemUsed(reqMem)
-	selectNode.ChangeDiskUsed(reqDisk)
-	db.NotifyToDB("node", selectNode.Name, "update")
-	scheduleLock.Unlock()
-
-	// Create VM in parallel
-	log.Printf("VM creation start, numbers: %v", vmRequest.Number)
-	var wg sync.WaitGroup
+	// New VM struct instance
+	log.Printf("VM creation starting... total numbers: %v", vmRequest.Number)
+	var newVmGroup []*vm.VirtualMachine
 	for i := lastIndex + 1; i <= lastIndex+int(vmRequest.Number); i++ {
-		wg.Add(1)
-		go func(i int) {
-			//task1: Create VM
-			defer wg.Done()
-			newVm := vm.NewVirtualMachine(
-				vmRequest.Account+"-"+strconv.Itoa(i),
-				vmRequest.Flavor,
-				vmRequest.Type,
-				1, 2048, 20, // if flavor not give, use cpu: 1, mem: 2048M, disk: 20G as default
-				selectNode,
-				time.Hour*24*time.Duration(vmRequest.Duration),
-			)
-
-			if newVm != nil {
-				myaccount.VM = append(myaccount.VM, newVm)
-				db.NotifyToDB("account", newVm.Name, "create")
-			} else {
-				log.Println("Create VM failed, return")
-				log.Println("return scheduled resources")
-				selectNode.ChangeCpuUsed(-(reqCpu / vmRequest.Number))
-				selectNode.ChangeMemUsed(-(reqMem / vmRequest.Number))
-				selectNode.ChangeDiskUsed(-(reqDisk / vmRequest.Number))
-				db.NotifyToDB("node", selectNode.Name, "update")
-				return
-			}
-
-			//task2: Get VM Info
-			retry := 1
-			for retry <= VmStatusRetry {
-				if err := newVm.GetVirtualMachineLiveStatus(); err == nil {
-					if newVm.Status != "" && newVm.IpAddress != "" {
-						log.Printf("Get new VM -> %v info: status -> %v, address -> %v", newVm.Name, newVm.Status, newVm.IpAddress)
-						db.NotifyToDB("account", newVm.Name, "update")
-						break
-					}
-				}
-				log.Println("VM get live status failed or empty, will try again")
-				time.Sleep(time.Second * vmStatusInterval)
-				retry++
-			}
-			if retry > VmStatusRetry {
-				log.Println("VM get status timeout, return")
-				return
-			}
-
-			//task3: Setup Proxy
-			//task4: Send Notification
-		}(i)
+		newVm := vm.NewVirtualMachine(
+			vmRequest.Account+"-"+strconv.Itoa(i),
+			vmRequest.Flavor,
+			vmRequest.Type,
+			vmRequest.CPU,
+			vmRequest.Memory,
+			vmRequest.Disk,
+			time.Hour*24*time.Duration(vmRequest.Duration),
+		)
+		if newVm != nil {
+			myAccount.VM = append(myAccount.VM, newVm)
+			newVmGroup = append(newVmGroup, newVm)
+			db.NotifyToDB("account", myAccount.Name, "create")
+		} else {
+			return fmt.Errorf("Input paramters not valid")
+		}
 	}
-	wg.Wait()
-	log.Println("VM creation done")
+
+	go func() {
+		//call scheduler to apply a node
+		reqCpu := newVmGroup[0].CPU * vmRequest.Number
+		reqMem := newVmGroup[0].Memory * vmRequest.Number
+		reqDisk := newVmGroup[0].Disk * 1024 * vmRequest.Number
+
+		scheduleLock.Lock()
+		selectNode := scheduler.Schedule(reqCpu, reqMem, reqDisk)
+		if selectNode == nil {
+			log.Println("Error: No valid node selected, VM creation exit")
+			return
+		}
+		log.Printf("node selected -> %v", selectNode.Name)
+		selectNode.ChangeCpuUsed(reqCpu)
+		selectNode.ChangeMemUsed(reqMem)
+		selectNode.ChangeDiskUsed(reqDisk)
+		db.NotifyToDB("node", selectNode.Name, "update")
+		scheduleLock.Unlock()
+
+		for _, newVm := range newVmGroup {
+			newVm.Node = selectNode.Name
+			newVm.Status = vm.VmStatusScheduled
+		}
+		db.NotifyToDB("account", myAccount.Name, "update")
+
+		//Create VMs in parallel
+		var wg sync.WaitGroup
+		for _, newVm := range newVmGroup {
+			wg.Add(1)
+			go func(myVm *vm.VirtualMachine) {
+				defer wg.Done()
+
+				//task1: VM instantiation
+				log.Printf("VM %v instantiation start", myVm.Name)
+				err := myVm.CreateVirtualMachine()
+				if err == nil {
+					log.Printf("VM %v instantiation success", myVm.Name)
+					db.NotifyToDB("account", myAccount.Name, "update")
+				} else {
+					log.Printf("VM %v instantiation fail", myVm.Name)
+					db.NotifyToDB("account", myAccount.Name, "update")
+					return
+				}
+
+				//task2: Get VM Info
+				retry := 1
+				for retry <= VmStatusRetry {
+					if err := myVm.GetVirtualMachineLiveStatus(); err == nil {
+						if myVm.Status != "" && myVm.IpAddress != "" {
+							log.Printf("Get VM -> %v info: status -> %v, address -> %v", myVm.Name, myVm.Status, myVm.IpAddress)
+							db.NotifyToDB("account", myAccount.Name, "update")
+							break
+						}
+					}
+					log.Println("VM get live status failed or empty, will try again")
+					time.Sleep(time.Second * vmStatusInterval)
+					retry++
+				}
+				if retry > VmStatusRetry {
+					log.Println("VM get status timeout, exited")
+					return
+				}
+
+				//task3: Setup DNAT
+				//task4: Send Notification
+			}(newVm)
+
+		}
+		wg.Wait()
+		log.Println("VM creation done")
+	}()
+
+	return nil
 }
 
 // Take specify action on VM(start/delete/shutdown/reboot)
@@ -152,13 +173,15 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			if err := myAccount.RemoveVmByName(myVM.Name); err != nil {
 				log.Println(err)
 			} else {
-				db.NotifyToDB("account", myVM.Name, "delete")
-				log.Println("return scheduled resources")
-				selectNode := node.GetNodeByName(myVM.Node)
-				selectNode.ChangeCpuUsed(-myVM.CPU)
-				selectNode.ChangeMemUsed(-myVM.Memory)
-				selectNode.ChangeDiskUsed(-myVM.Disk * 1024)
-				db.NotifyToDB("node", selectNode.Name, "update")
+				db.NotifyToDB("account", myAccount.Name, "delete")
+				if myVM.Status != vm.VmStatusInit {
+					log.Println("return scheduled resources")
+					selectNode := node.GetNodeByName(myVM.Node)
+					selectNode.ChangeCpuUsed(-myVM.CPU)
+					selectNode.ChangeMemUsed(-myVM.Memory)
+					selectNode.ChangeDiskUsed(-myVM.Disk * 1024)
+					db.NotifyToDB("node", selectNode.Name, "update")
+				}
 			}
 		}
 	}
@@ -171,7 +194,7 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			if err := myVM.GetVirtualMachineLiveStatus(); err != nil {
 				log.Printf("sync up vm -> %v status after action -> %v, failed -> %v", myVM.Name, action, err)
 			}
-			db.NotifyToDB("account", myVM.Name, "update")
+			db.NotifyToDB("account", myAccount.Name, "update")
 		}()
 	}
 
@@ -253,9 +276,11 @@ func ActionNode(nodeRequest node.NodeRequest) error {
 		}
 	case node.NodeActionEnable:
 		myNode.SetState(node.NodeStateEnable)
+		db.NotifyToDB("node", nodeRequest.Name, "update")
 		log.Printf("Set node %v state to %v", nodeRequest.Name, node.NodeStateEnable)
 	case node.NodeActionDisable:
 		myNode.SetState(node.NodeStateDisable)
+		db.NotifyToDB("node", nodeRequest.Name, "update")
 		log.Printf("Set node %v state to %v", nodeRequest.Name, node.NodeStateDisable)
 	default:
 		return fmt.Errorf("action %v not supported", nodeRequest.Action)

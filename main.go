@@ -79,16 +79,16 @@ func vmRequestGetVmHandler(c *gin.Context) {
 	if exists == true {
 		if g.Name == "" {
 			// return all vm
-			c.JSON(200, myaccount.VM)
+			c.JSON(http.StatusOK, myaccount.VM)
 		} else {
 			if myVM, err := myaccount.GetVmByName(g.Name); err == nil {
-				c.JSON(200, myVM)
+				c.JSON(http.StatusOK, myVM)
 			} else {
-				c.JSON(404, "VM not found")
+				c.JSON(http.StatusNotFound, "VM not found")
 			}
 		}
 	} else {
-		c.JSON(404, "Account not found")
+		c.JSON(http.StatusNotFound, "Account not found")
 	}
 }
 
@@ -106,15 +106,16 @@ func vmRequestCreateVmHandler(c *gin.Context) {
 	}
 
 	if myaccount.StatusVm == "running" {
-		c.JSON(202, "VM creation is ongoing, please try later")
+		c.JSON(http.StatusAccepted, "VM creation is ongoing, please try later")
 		return
 	}
 
-	go func() {
-		workflow.CreateVMs(myaccount, vmRequest)
-	}()
+	if err := workflow.CreateVMs(myaccount, vmRequest); err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
 
-	c.JSON(200, "VM creation request accepted")
+	c.JSON(http.StatusOK, "VM creation request accepted")
 }
 
 // VM request VM action handler, start/stop/reboot/delete VM
@@ -129,7 +130,7 @@ func vmRequestVmActionHandler(c *gin.Context) {
 	myaccount, exists := account.Account_db[vmRequestAction.Account]
 	if exists == true {
 		if vmRequestAction.Name == "" || vmRequestAction.Action == "" {
-			c.JSON(400, "VM name or Action empty")
+			c.JSON(http.StatusBadRequest, "VM name or Action empty")
 		}
 		if myVM, err := myaccount.GetVmByName(vmRequestAction.Name); err == nil {
 			var action_err error
@@ -137,19 +138,24 @@ func vmRequestVmActionHandler(c *gin.Context) {
 			case "start", "shutdown", "reboot", "delete":
 				action_err = workflow.ActionVM(myaccount, myVM, vmRequestAction.Action)
 			default:
-				c.JSON(400, "Action not support")
+				c.JSON(http.StatusBadRequest, "Action not support")
+				return
 			}
 			if action_err != nil {
-				c.JSON(500, err)
+				c.JSON(http.StatusInternalServerError, err)
+				return
 			}
 		} else {
-			c.JSON(404, "VM not found")
+			c.JSON(http.StatusNotFound, "VM not found")
+			return
 		}
 	} else {
-		c.JSON(404, "Account not found")
+		c.JSON(http.StatusNotFound, "Account not found")
+		return
 	}
 
-	c.JSON(202, "")
+	c.JSON(http.StatusNoContent, "")
+	return
 }
 
 // Get nodes info
@@ -202,13 +208,16 @@ func nodeRequestActionNodeHandler(c *gin.Context) {
 				workflow.AddNode(nodeRequest)
 			}()
 		}
+		c.JSON(http.StatusOK, "")
 	case node.NodeActionRemove, node.NodeActionReboot, node.NodeActionEnable, node.NodeActionDisable:
 		_, exists := node.Node_db[nodeRequest.Name]
 		if exists == true {
 			if err := workflow.ActionNode(nodeRequest); err != nil {
-				c.JSON(500, gin.H{
+				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": err,
 				})
+			} else {
+				c.JSON(http.StatusOK, "")
 			}
 		} else {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -220,6 +229,4 @@ func nodeRequestActionNodeHandler(c *gin.Context) {
 			"error": "action not support",
 		})
 	}
-
-	c.JSON(http.StatusOK, "")
 }
