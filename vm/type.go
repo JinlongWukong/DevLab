@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-var flavorDetails = map[string]map[string]int{
+var flavorDetails = map[string]map[string]int32{
 	"small": {
 		"cpu":    2,
 		"memory": 2048,
@@ -29,9 +29,9 @@ type VncInfo struct {
 
 type VirtualMachine struct {
 	Name      string        `json:"Name"`
-	CPU       int           `json:"CPU"`
-	Memory    int           `json:"Mem"`
-	Disk      int           `json:"Disk"`
+	CPU       int32         `json:"CPU"`
+	Memory    int32         `json:"Mem"`
+	Disk      int32         `json:"Disk"`
 	IpAddress string        `json:"Address"`
 	Status    string        `json:"Status"`
 	Vnc       VncInfo       `json:"Vnc"`
@@ -44,7 +44,7 @@ type VmRequest struct {
 	Account  string `form:"cecid"`
 	Type     string `form:"os_type"`
 	Flavor   string `form:"os_flavor"`
-	Number   int    `form:"os_numbers"`
+	Number   int32  `form:"os_numbers"`
 	Duration int    `form:"os_duration"`
 }
 

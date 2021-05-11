@@ -1,61 +1,10 @@
 package node
 
 import (
-	"sync"
-)
-
-type NodeState string
-type NodeAction string
-type NodeStatus string
-
-const (
-	NodeStatusInit      NodeStatus = "init"
-	NodeStatusInstalled NodeStatus = "installed"
-	NodeStatusReady     NodeStatus = "ready"
-	NodeStatusUnhealth  NodeStatus = "unhealth"
-
-	NodeStateEnable  NodeState = "enable"
-	NodeStateDisable NodeState = "disable"
-
-	NodeActionAdd     NodeAction = "add"
-	NodeActionRemove  NodeAction = "remove"
-	NodeActionReboot  NodeAction = "reboot"
-	NodeActionEnable  NodeAction = "enable"
-	NodeActionDisable NodeAction = "disable"
+	"sync/atomic"
 )
 
 var Node_db = make(map[string]*Node)
-
-type Node struct {
-	Name       string       `json:"name"`
-	UserName   string       `json:"user"`
-	Passwd     string       `json:"passwd"`
-	Role       string       `json:"role"`
-	IpAddress  string       `json:"address"`
-	CPU        int          `json:"cpu"`
-	Memory     int          `json:"memory"`
-	Disk       string       `json:"disk"`
-	OSType     string       `json:"os"`
-	Status     NodeStatus   `json:"status"`
-	State      NodeState    `json:"state"`
-	stateMutex sync.RWMutex `json:"-"`
-}
-
-type NodeRequest struct {
-	Name      string     `json:"name" form:"name"`
-	User      string     `json:"user,omitempty" form:"user,omitempty"`
-	Passwd    string     `json:"password,omitempty" form:"password,omitempty"`
-	IpAddress string     `json:"ip,omitempty" form:"ip,omitempty"`
-	Role      string     `json:"role,omitempty" form:"role,omitempty"`
-	Action    NodeAction `json:"action,omitempty" form:"action,omitempty"`
-}
-
-type NodeInfo struct {
-	CPU    int    `json:"cpu"`
-	Memory int    `json:"memory"`
-	Disk   string `json:"disk"`
-	OSType string `json:"type"`
-}
 
 // Add a new node
 // Args:
@@ -115,4 +64,46 @@ func (myNode *Node) GetState() NodeState {
 func (myNode *Node) RebootNode() error {
 	//TODO
 	return nil
+}
+
+func (myNode *Node) ChangeCpuUsed(delta int32) {
+
+	atomic.AddInt32(&myNode.CpuUsed, delta)
+	return
+
+}
+
+func (myNode *Node) GetCpuUsed() (value int32) {
+
+	value = atomic.LoadInt32(&myNode.CpuUsed)
+	return
+
+}
+
+func (myNode *Node) ChangeMemUsed(delta int32) {
+
+	atomic.AddInt32(&myNode.MemUsed, delta)
+	return
+
+}
+
+func (myNode *Node) GetMemUsed() (value int32) {
+
+	value = atomic.LoadInt32(&myNode.MemUsed)
+	return
+
+}
+
+func (myNode *Node) ChangeDiskUsed(delta int32) {
+
+	atomic.AddInt32(&myNode.DiskUsed, delta)
+	return
+
+}
+
+func (myNode *Node) GetDiskUsed() (value int32) {
+
+	value = atomic.LoadInt32(&myNode.DiskUsed)
+	return
+
 }

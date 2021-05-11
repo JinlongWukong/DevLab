@@ -55,20 +55,24 @@ func NotifyToDB(collection string, name string, action string) {
 func SaveToDB() {
 	log.Println("Be ready to sync up db")
 	for request := range requestChan {
-		if request.collection == "account" {
+		if database == "file" {
 			err := utils.WriteJsonFile("account.json", account.Account_db)
 			if err != nil {
 				log.Println(err)
 			} else {
 				log.Println("Saved to file db account.json")
 			}
-		} else if request.collection == "node" {
-			err := utils.WriteJsonFile("node.json", node.Node_db)
+			err = utils.WriteJsonFile("node.json", node.Node_db)
 			if err != nil {
 				log.Println(err)
 			} else {
 				log.Println("Saved to file db node.json")
 			}
+		}
+		if request.collection == "account" {
+			//TODO
+		} else if request.collection == "node" {
+			//TODO
 		}
 	}
 }

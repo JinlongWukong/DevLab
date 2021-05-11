@@ -10,27 +10,24 @@ import (
 	"github.com/JinlongWukong/CloudLab/utils"
 )
 
-func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, nodeName string, Duration time.Duration) *VirtualMachine {
+func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int32, node *node.Node, Duration time.Duration) *VirtualMachine {
 
-	log.Printf("Creating vm %v on Host %v", name, nodeName)
+	log.Printf("Creating vm %v on Host %v", name, node.Name)
 
 	//There is a mapping bt flavor and cpu/memory
-	detail, exists := flavorDetails[flavor]
-	if exists == true {
+	detail, err := GetFlavordetail(flavor)
+	if err == nil {
 		cpu = detail["cpu"]
 		mem = detail["memory"]
 		disk = detail["disk"]
+	} else {
+		log.Println(err)
+		return nil
 	}
 
 	vnc := VncInfo{
 		Port: "unknow",
 		Pass: utils.RandomString(8),
-	}
-
-	mynode := node.GetNodeByName(nodeName)
-	if mynode == nil {
-		log.Printf("Error: Node %v not found", nodeName)
-		return nil
 	}
 
 	payload, _ := json.Marshal(map[string]interface{}{
@@ -41,20 +38,20 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int, nodeNam
 		"vmDisk":   disk,
 		"vmType":   vm_type,
 		"vncPass":  vnc.Pass,
-		"hostIp":   mynode.IpAddress,
-		"hostPass": mynode.Passwd,
-		"hostUser": mynode.UserName,
+		"hostIp":   node.IpAddress,
+		"hostPass": node.Passwd,
+		"hostUser": node.UserName,
 	})
 
 	log.Println("Remote http call to create vm")
-	err, _ := utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
+	err, _ = utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 
 	ipadd, status := "unknow", "unknow"
-	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, nodeName, Duration}
+	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, node.Name, Duration}
 }
 
 // Generic action(start/delete/shutdown/reboot)
@@ -153,4 +150,15 @@ func (myvm *VirtualMachine) GetVirtualMachineLiveStatus() error {
 	log.Printf("Fetched vm %v status -> %v, address -> %v, vnc port -> %v", myvm.Name, myvm.Status, myvm.IpAddress, myvm.Vnc.Port)
 
 	return nil
+}
+
+func GetFlavordetail(flavor string) (map[string]int32, error) {
+
+	//There is a mapping bt flavor and cpu/memory
+	detail, exists := flavorDetails[flavor]
+	if exists == true {
+		return detail, nil
+	}
+
+	return nil, fmt.Errorf("flavor not found")
 }

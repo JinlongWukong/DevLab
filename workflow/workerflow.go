@@ -13,9 +13,12 @@ import (
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/node"
+	"github.com/JinlongWukong/CloudLab/scheduler"
 	"github.com/JinlongWukong/CloudLab/utils"
 	"github.com/JinlongWukong/CloudLab/vm"
 )
+
+var scheduleLock sync.Mutex
 
 // VM live status retry times and interval(unit seconds) setting
 const VmStatusRetry, vmStatusInterval = 10, 6
@@ -42,16 +45,36 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 		return indexes
 	}(vmNames)
 	sort.Strings(vmIndex)
-	lastIndex := 0
+	var lastIndex int
 	if len(vmIndex) > 0 {
 		lastIndex, _ = strconv.Atoi(vmIndex[len(vmIndex)-1])
 		log.Printf("The last index of VM: %v", lastIndex)
 	}
 
+	//schedule for a node
+	var reqCpu, reqMem, reqDisk int32
+	detail, err := vm.GetFlavordetail(vmRequest.Flavor)
+	if err == nil {
+		reqCpu = detail["cpu"] * vmRequest.Number
+		reqMem = detail["memory"] * vmRequest.Number
+		reqDisk = detail["disk"] * 1024 * vmRequest.Number
+	} else {
+		log.Println(err)
+		return
+	}
+	scheduleLock.Lock()
+	selectNode := scheduler.Schedule(reqCpu, reqMem, reqDisk)
+	log.Printf("node selected -> %v", selectNode.Name)
+	selectNode.ChangeCpuUsed(reqCpu)
+	selectNode.ChangeMemUsed(reqMem)
+	selectNode.ChangeDiskUsed(reqDisk)
+	db.NotifyToDB("node", selectNode.Name, "update")
+	scheduleLock.Unlock()
+
 	// Create VM in parallel
 	log.Printf("VM creation start, numbers: %v", vmRequest.Number)
 	var wg sync.WaitGroup
-	for i := lastIndex + 1; i <= lastIndex+vmRequest.Number; i++ {
+	for i := lastIndex + 1; i <= lastIndex+int(vmRequest.Number); i++ {
 		wg.Add(1)
 		go func(i int) {
 			//task1: Create VM
@@ -61,7 +84,7 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 				vmRequest.Flavor,
 				vmRequest.Type,
 				1, 2048, 20, // if flavor not give, use cpu: 1, mem: 2048M, disk: 20G as default
-				"localhost",
+				selectNode,
 				time.Hour*24*time.Duration(vmRequest.Duration),
 			)
 
@@ -70,6 +93,11 @@ func CreateVMs(myaccount *account.Account, vmRequest vm.VmRequest) {
 				db.NotifyToDB("account", newVm.Name, "create")
 			} else {
 				log.Println("Create VM failed, return")
+				log.Println("return scheduled resources")
+				selectNode.ChangeCpuUsed(-(reqCpu / vmRequest.Number))
+				selectNode.ChangeMemUsed(-(reqMem / vmRequest.Number))
+				selectNode.ChangeDiskUsed(-(reqDisk / vmRequest.Number))
+				db.NotifyToDB("node", selectNode.Name, "update")
 				return
 			}
 
@@ -125,6 +153,12 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 				log.Println(err)
 			} else {
 				db.NotifyToDB("account", myVM.Name, "delete")
+				log.Println("return scheduled resources")
+				selectNode := node.GetNodeByName(myVM.Node)
+				selectNode.ChangeCpuUsed(-myVM.CPU)
+				selectNode.ChangeMemUsed(-myVM.Memory)
+				selectNode.ChangeDiskUsed(-myVM.Disk * 1024)
+				db.NotifyToDB("node", selectNode.Name, "update")
 			}
 		}
 	}
