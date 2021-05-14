@@ -13,6 +13,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/node"
+	"github.com/JinlongWukong/CloudLab/notification"
 	"github.com/JinlongWukong/CloudLab/scheduler"
 	"github.com/JinlongWukong/CloudLab/utils"
 	"github.com/JinlongWukong/CloudLab/vm"
@@ -138,11 +139,12 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 				}
 
 				//task3: Setup DNAT
-				if port := selectNode.ReservePort(strings.Split(myVm.IpAddress, "/")[0] + ":22"); port == 0 {
+				sshPort := selectNode.ReservePort(strings.Split(myVm.IpAddress, "/")[0] + ":22")
+				if sshPort == 0 {
 					log.Printf("No port reserved on node %v", selectNode.Name)
 				} else {
-					myVm.PortMap[22] = strconv.Itoa(port) + ":tcp"
-					log.Printf("port -> %v reserved on node for vm %v", port, myVm.Name)
+					myVm.PortMap[22] = strconv.Itoa(sshPort) + ":tcp"
+					log.Printf("port -> %v reserved on node for vm %v", sshPort, myVm.Name)
 					db.NotifyToDB("account", myAccount.Name, "update")
 					db.NotifyToDB("node", selectNode.Name, "update")
 				}
@@ -155,6 +157,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 				log.Printf("DNAT setup success for vm %v, port mapping -> %v:%v", myVm.Name, 22, myVm.PortMap[22])
 
 				//task4: Send Notification
+				notification.SendNotification(notification.MessageRequest{ToPersonEmail: myAccount.Name + "@cisco.com", Markdown: fmt.Sprintf("Your VM %v is ready to login, ssh -> %v -p %v ", myVm.Name, selectNode.IpAddress, sshPort)})
 			}(newVm)
 
 		}

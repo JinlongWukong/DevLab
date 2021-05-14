@@ -12,6 +12,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/node"
+	"github.com/JinlongWukong/CloudLab/notification"
 	"github.com/JinlongWukong/CloudLab/vm"
 	"github.com/JinlongWukong/CloudLab/workflow"
 )
@@ -20,6 +21,9 @@ func main() {
 
 	//Start db control loop
 	db.Manager()
+
+	//Start notification loop
+	notification.Manager()
 
 	r := gin.Default()
 	r.Use(cors.Default())
