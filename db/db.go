@@ -56,13 +56,13 @@ func SaveToDB() {
 	log.Println("Be ready to sync up db")
 	for request := range requestChan {
 		if database == "file" {
-			err := utils.WriteJsonFile("account.json", account.Account_db)
+			err := utils.WriteJsonFile("account.json", account.AccountDB)
 			if err != nil {
 				log.Println(err)
 			} else {
 				log.Println("Saved to file db account.json")
 			}
-			err = utils.WriteJsonFile("node.json", node.Node_db)
+			err = utils.WriteJsonFile("node.json", node.NodeDB)
 			if err != nil {
 				log.Println(err)
 			} else {
@@ -82,7 +82,7 @@ func LoadFromDB() {
 	if database == "file" {
 		accountData, err := utils.ReadJsonFile("account.json")
 		if err == nil {
-			json.Unmarshal(accountData, &account.Account_db)
+			json.Unmarshal(accountData, &account.AccountDB)
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
 			log.Println("account.json db file not found, no content will be load")
 		} else {
@@ -91,7 +91,7 @@ func LoadFromDB() {
 
 		nodeData, err := utils.ReadJsonFile("node.json")
 		if err == nil {
-			json.Unmarshal(nodeData, &node.Node_db)
+			json.Unmarshal(nodeData, &node.NodeDB)
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
 			log.Println("node.json db file not found, no content will be load")
 		} else {

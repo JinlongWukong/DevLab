@@ -1,17 +1,85 @@
 package node
 
 import (
+	"log"
+	"sync"
 	"sync/atomic"
 )
 
-var Node_db = make(map[string]*Node)
+var NodeDB = NodeMap{Map: make(map[string]*Node)}
 
-// Add a new node
+type NodeMap struct {
+	Map  map[string]*Node `json:"node"`
+	lock sync.RWMutex     `json:"-"`
+}
+
+type NodeMapItem struct {
+	Key   string
+	Value *Node
+}
+
+func (m *NodeMap) Set(key string, value *Node) {
+
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	m.Map[key] = value
+
+}
+
+func (m *NodeMap) Get(key string) (node *Node, exists bool) {
+
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	node, exists = m.Map[key]
+	return
+
+}
+
+func (m *NodeMap) Del(key string) {
+
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	delete(m.Map, key)
+
+}
+
+// Iter iterates over the items in a concurrent map
+// Each item is sent over a channel, so that
+// we can iterate over the map using the builtin range keyword
+func (m *NodeMap) Iter() <-chan NodeMapItem {
+	c := make(chan NodeMapItem)
+
+	f := func() {
+		m.lock.Lock()
+		defer m.lock.Unlock()
+
+		for k, v := range m.Map {
+			c <- NodeMapItem{k, v}
+		}
+		close(c)
+	}
+	go f()
+
+	return c
+}
+
+// New a new node struct
 // Args:
 //   nodeRequest
 // Return:
 //   new node pointer
 func NewNode(nodeRequest NodeRequest) *Node {
+
+	if nodeRequest.Name == "" ||
+		nodeRequest.IpAddress == "" ||
+		nodeRequest.User == "" ||
+		nodeRequest.Passwd == "" {
+		log.Println("Error: node name,ip,user,password must give")
+		return nil
+	}
 
 	newNode := Node{
 		Name:      nodeRequest.Name,
@@ -21,6 +89,7 @@ func NewNode(nodeRequest NodeRequest) *Node {
 		Role:      nodeRequest.Role,
 		Status:    NodeStatusInit,
 		State:     NodeStateEnable,
+		PortMap:   make(map[int]string),
 	}
 
 	return &newNode
@@ -30,7 +99,7 @@ func NewNode(nodeRequest NodeRequest) *Node {
 //Return nil if not existed
 func GetNodeByName(nodeName string) *Node {
 
-	myNode, exists := Node_db[nodeName]
+	myNode, exists := NodeDB.Get(nodeName)
 	if exists == false {
 		return nil
 	} else {
@@ -105,5 +174,40 @@ func (myNode *Node) GetDiskUsed() (value int32) {
 
 	value = atomic.LoadInt32(&myNode.DiskUsed)
 	return
+
+}
+
+//Apply a available port, return 0 if not found
+func (myNode *Node) ReservePort(destination string) int {
+
+	myNode.portMutex.Lock()
+	defer myNode.portMutex.Unlock()
+
+	var port = NodePortRangeMin
+	for ; port <= NodePortRangeMax; port++ {
+		_, exists := myNode.PortMap[port]
+		if exists {
+			continue
+		} else {
+			myNode.PortMap[port] = destination
+			break
+		}
+	}
+
+	if port > NodePortRangeMax {
+		return 0
+	} else {
+		return port
+	}
+
+}
+
+//Return node port
+func (myNode *Node) ReleasePort(port int) {
+
+	myNode.portMutex.Lock()
+	defer myNode.portMutex.Unlock()
+
+	delete(myNode.PortMap, port)
 
 }

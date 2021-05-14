@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/JinlongWukong/CloudLab/node"
@@ -36,7 +38,7 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int32, Durat
 	}
 
 	ipadd, status, node := "unknow", VmStatusInit, "unkonw"
-	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, node, Duration}
+	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, node, Duration, map[int]string{}}
 }
 
 //Create VM by calling remote deployer
@@ -167,6 +169,43 @@ func (myvm *VirtualMachine) GetVirtualMachineLiveStatus() error {
 	log.Printf("Fetched vm %v status -> %v, address -> %v, vnc port -> %v", myvm.Name, myvm.Status, myvm.IpAddress, myvm.Vnc.Port)
 
 	return nil
+}
+
+func (myvm *VirtualMachine) ActionDnatRule(port []int, action string) error {
+
+	mynode := node.GetNodeByName(myvm.Node)
+	if mynode == nil {
+		err := fmt.Errorf("Error: Node %v not found", myvm.Node)
+		log.Println(err)
+		return err
+	}
+
+	var rules []map[string]string
+	for _, p := range port {
+		rules = append(rules, map[string]string{
+			"dport":       strings.Split(myvm.PortMap[p], ":")[0],
+			"destination": strings.Split(myvm.IpAddress, "/")[0] + ":" + strconv.Itoa(p),
+			"state":       action,
+			"protocol":    strings.Split(myvm.PortMap[p], ":")[1],
+		})
+	}
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"rules": rules,
+		"Ip":    mynode.IpAddress,
+		"Pass":  mynode.Passwd,
+		"User":  mynode.UserName,
+	})
+
+	log.Printf("Remote http call to %v dnat rule", action)
+	err, _ := utils.HttpSendJsonData("http://10.124.44.167:9134/host/dnat", "POST", payload)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+
 }
 
 func GetFlavordetail(flavor string) (map[string]int32, error) {

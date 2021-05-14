@@ -15,15 +15,15 @@ func Schedule(reqCpu, reqMem, reqDisk int32) *node.Node {
 
 	//filter all nodes
 	winerNodes := make([]*node.Node, 0)
-	for _, n := range node.Node_db {
-		if n.State != node.NodeStateEnable ||
-			n.Status != node.NodeStatusInstalled ||
-			(n.CPU*int32(allocationRatio)-n.GetCpuUsed()) < reqCpu ||
-			(n.Memory*int32(allocationRatio)-n.GetMemUsed()) < reqMem ||
-			(n.Disk*int32(allocationRatio)-n.GetDiskUsed()) < reqDisk {
+	for n := range node.NodeDB.Iter() {
+		if n.Value.State != node.NodeStateEnable ||
+			n.Value.Status != node.NodeStatusInstalled ||
+			(n.Value.CPU*int32(allocationRatio)-n.Value.GetCpuUsed()) < reqCpu ||
+			(n.Value.Memory*int32(allocationRatio)-n.Value.GetMemUsed()) < reqMem ||
+			(n.Value.Disk*int32(allocationRatio)-n.Value.GetDiskUsed()) < reqDisk {
 			continue
 		} else {
-			winerNodes = append(winerNodes, n)
+			winerNodes = append(winerNodes, n.Value)
 		}
 	}
 

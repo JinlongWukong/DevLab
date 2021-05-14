@@ -138,6 +138,22 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 				}
 
 				//task3: Setup DNAT
+				if port := selectNode.ReservePort(strings.Split(myVm.IpAddress, "/")[0] + ":22"); port == 0 {
+					log.Printf("No port reserved on node %v", selectNode.Name)
+				} else {
+					myVm.PortMap[22] = strconv.Itoa(port) + ":tcp"
+					log.Printf("port -> %v reserved on node for vm %v", port, myVm.Name)
+					db.NotifyToDB("account", myAccount.Name, "update")
+					db.NotifyToDB("node", selectNode.Name, "update")
+				}
+				err = myVm.ActionDnatRule([]int{22}, "present")
+				if err != nil {
+					log.Println(err)
+					myVm.Status = fmt.Sprint(err)
+					return
+				}
+				log.Printf("DNAT setup success for vm %v, port mapping -> %v:%v", myVm.Name, 22, myVm.PortMap[22])
+
 				//task4: Send Notification
 			}(newVm)
 
@@ -167,23 +183,66 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 	case "reboot":
 		action_err = myVM.RebootVirtualMachine()
 	case "delete":
-		action_err = myVM.DeleteVirtualMachine()
-		//TODO remove from proxy
-		if action_err == nil {
+		//Remove vm from account directly since VM is init status, no further action needed
+		if myVM.Status == vm.VmStatusInit {
 			if err := myAccount.RemoveVmByName(myVM.Name); err != nil {
 				log.Println(err)
+				return err
 			} else {
 				db.NotifyToDB("account", myAccount.Name, "delete")
-				if myVM.Status != vm.VmStatusInit {
-					log.Println("return scheduled resources")
-					selectNode := node.GetNodeByName(myVM.Node)
-					selectNode.ChangeCpuUsed(-myVM.CPU)
-					selectNode.ChangeMemUsed(-myVM.Memory)
-					selectNode.ChangeDiskUsed(-myVM.Disk * 1024)
-					db.NotifyToDB("node", selectNode.Name, "update")
-				}
+				return nil
 			}
 		}
+
+		//Delete VM from node
+		action_err = myVM.DeleteVirtualMachine()
+		if action_err != nil {
+			log.Printf("Delete vm %v failed", myVM.Name)
+			return action_err
+		}
+
+		//Clear dnat rules
+		selectNode := node.GetNodeByName(myVM.Node)
+		keys := make([]int, 0, len(myVM.PortMap))
+		for k := range myVM.PortMap {
+			keys = append(keys, k)
+		}
+		if len(keys) > 0 {
+			err := myVM.ActionDnatRule(keys, "absent")
+			if err != nil {
+				log.Printf("Clear dnat for vm %v on host %v failed with error %v", myVM.Name, selectNode.Name, err)
+				return err
+			} else {
+				log.Printf("Clear dnat for vm %v on host %v success", myVM.Name, selectNode.Name)
+				for _, info := range myVM.PortMap {
+					t := strings.Split(info, ":")
+					p, _ := strconv.Atoi(t[0])
+					selectNode.ReleasePort(p)
+				}
+				myVM.PortMap = make(map[int]string)
+				db.NotifyToDB("node", selectNode.Name, "update")
+				db.NotifyToDB("account", myAccount.Name, "update")
+			}
+		}
+
+		//Recycle resouces to node
+		if myVM.Status != vm.VmStatusInit {
+			log.Println("Recycle node resources")
+			selectNode.ChangeCpuUsed(-myVM.CPU)
+			selectNode.ChangeMemUsed(-myVM.Memory)
+			selectNode.ChangeDiskUsed(-myVM.Disk * 1024)
+			db.NotifyToDB("node", selectNode.Name, "update")
+		}
+
+		//Remove from account
+		if err := myAccount.RemoveVmByName(myVM.Name); err != nil {
+			log.Println(err)
+			return err
+		} else {
+			db.NotifyToDB("account", myAccount.Name, "delete")
+		}
+
+		return nil
 	}
 
 	// Post action, sync up vm status
@@ -207,11 +266,11 @@ func AddNode(nodeRequest node.NodeRequest) error {
 
 	myNode := node.NewNode(nodeRequest)
 
-	_, exists := node.Node_db[nodeRequest.Name]
+	_, exists := node.NodeDB.Get(nodeRequest.Name)
 	if exists == true {
 		return fmt.Errorf("node %v already added", nodeRequest.Name)
 	} else {
-		node.Node_db[myNode.Name] = myNode
+		node.NodeDB.Set(myNode.Name, myNode)
 		db.NotifyToDB("node", myNode.Name, "create")
 	}
 
@@ -258,7 +317,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 //   nil -> action success
 func ActionNode(nodeRequest node.NodeRequest) error {
 
-	myNode, exists := node.Node_db[nodeRequest.Name]
+	myNode, exists := node.NodeDB.Get(nodeRequest.Name)
 	if exists == false {
 		return fmt.Errorf("node not existed")
 	}
@@ -266,7 +325,7 @@ func ActionNode(nodeRequest node.NodeRequest) error {
 	switch nodeRequest.Action {
 	case node.NodeActionRemove:
 		//TODO ,check whether vm hosted on node
-		delete(node.Node_db, nodeRequest.Name)
+		node.NodeDB.Del(nodeRequest.Name)
 		db.NotifyToDB("node", nodeRequest.Name, "delete")
 		log.Printf("node %v removed", nodeRequest.Name)
 	case node.NodeActionReboot:

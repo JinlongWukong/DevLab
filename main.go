@@ -75,7 +75,7 @@ func vmRequestGetVmHandler(c *gin.Context) {
 	var g vm.VmRequestGetVm
 	c.Bind(&g)
 
-	myaccount, exists := account.Account_db[g.Account]
+	myaccount, exists := account.AccountDB.Get(g.Account)
 	if exists == true {
 		if g.Name == "" {
 			// return all vm
@@ -98,11 +98,11 @@ func vmRequestCreateVmHandler(c *gin.Context) {
 	c.Bind(&vmRequest)
 	log.Println(vmRequest.Account, vmRequest.Type, vmRequest.Number, vmRequest.Duration)
 
-	myaccount, exists := account.Account_db[vmRequest.Account]
+	myaccount, exists := account.AccountDB.Get(vmRequest.Account)
 	if exists == false {
 		// Acount not existed, add new
 		myaccount = &account.Account{Name: vmRequest.Account, Role: "guest"}
-		account.Account_db[vmRequest.Account] = myaccount
+		account.AccountDB.Set(vmRequest.Account, myaccount)
 	}
 
 	if myaccount.StatusVm == "running" {
@@ -127,7 +127,7 @@ func vmRequestVmActionHandler(c *gin.Context) {
 	c.ShouldBind(&vmRequestAction)
 	log.Printf("Get VM action request: Account -> %v, VM -> %v, Action -> %v ", vmRequestAction.Account, vmRequestAction.Name, vmRequestAction.Action)
 
-	myaccount, exists := account.Account_db[vmRequestAction.Account]
+	myaccount, exists := account.AccountDB.Get(vmRequestAction.Account)
 	if exists == true {
 		if vmRequestAction.Name == "" || vmRequestAction.Action == "" {
 			c.JSON(http.StatusBadRequest, "VM name or Action empty")
@@ -173,13 +173,13 @@ func nodeRequestGetNodeHandler(c *gin.Context) {
 	if r.Name == "" {
 		log.Println("Receive node request -> get all nodes info")
 		allNodesDetails := []*node.Node{}
-		for _, info := range node.Node_db {
-			allNodesDetails = append(allNodesDetails, info)
+		for v := range node.NodeDB.Iter() {
+			allNodesDetails = append(allNodesDetails, v.Value)
 		}
 		c.JSON(http.StatusOK, allNodesDetails)
 	} else {
 		log.Printf("Receive node request -> get node %v info", r.Name)
-		mynode, exists := node.Node_db[r.Name]
+		mynode, exists := node.NodeDB.Get(r.Name)
 		if exists == true {
 			c.JSON(http.StatusOK, mynode)
 		} else {
@@ -200,7 +200,7 @@ func nodeRequestActionNodeHandler(c *gin.Context) {
 
 	switch nodeRequest.Action {
 	case node.NodeActionAdd:
-		_, exists := node.Node_db[nodeRequest.Name]
+		_, exists := node.NodeDB.Get(nodeRequest.Name)
 		if exists == true {
 			log.Printf("Node %v already existed", nodeRequest.Name)
 		} else {
@@ -210,7 +210,7 @@ func nodeRequestActionNodeHandler(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, "")
 	case node.NodeActionRemove, node.NodeActionReboot, node.NodeActionEnable, node.NodeActionDisable:
-		_, exists := node.Node_db[nodeRequest.Name]
+		_, exists := node.NodeDB.Get(nodeRequest.Name)
 		if exists == true {
 			if err := workflow.ActionNode(nodeRequest); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
