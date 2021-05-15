@@ -14,6 +14,7 @@ import (
 
 var database = "file"
 var requestChan chan message
+var dbSyncPeriod = 5
 
 type message struct {
 	collection string
@@ -51,28 +52,42 @@ func NotifyToDB(collection string, name string, action string) {
 	}
 }
 
-//always sync up map into db
+//Sync up map into db
 func SaveToDB() {
-	log.Println("Be ready to sync up db")
-	for request := range requestChan {
-		if database == "file" {
-			err := utils.WriteJsonFile("account.json", account.AccountDB.Map)
-			if err != nil {
-				log.Println(err)
-			} else {
-				log.Println("Saved to file db account.json")
+
+	log.Println("Be ready to sync up with db")
+	if database == "file" {
+		period := time.Duration(dbSyncPeriod) * time.Second
+		t := time.NewTimer(period)
+		defer t.Stop()
+		for {
+			select {
+			case <-t.C:
+				<-requestChan
+				log.Println(time.Now())
+				err := utils.WriteJsonFile("account.json", account.AccountDB.Map)
+				if err != nil {
+					log.Println(err)
+				} else {
+					log.Println("Saved to file db account.json")
+				}
+				err = utils.WriteJsonFile("node.json", node.NodeDB.Map)
+				if err != nil {
+					log.Println(err)
+				} else {
+					log.Println("Saved to file db node.json")
+				}
+				t.Reset(period)
 			}
-			err = utils.WriteJsonFile("node.json", node.NodeDB.Map)
-			if err != nil {
-				log.Println(err)
-			} else {
-				log.Println("Saved to file db node.json")
-			}
+
 		}
-		if request.collection == "account" {
-			//TODO
-		} else if request.collection == "node" {
-			//TODO
+	} else {
+		for request := range requestChan {
+			if request.collection == "account" {
+				//TODO
+			} else if request.collection == "node" {
+				//TODO
+			}
 		}
 	}
 }
@@ -82,7 +97,7 @@ func LoadFromDB() {
 	if database == "file" {
 		accountData, err := utils.ReadJsonFile("account.json")
 		if err == nil {
-			json.Unmarshal(accountData, &account.AccountDB)
+			json.Unmarshal(accountData, &account.AccountDB.Map)
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
 			log.Println("account.json db file not found, no content will be load")
 		} else {
@@ -91,7 +106,7 @@ func LoadFromDB() {
 
 		nodeData, err := utils.ReadJsonFile("node.json")
 		if err == nil {
-			json.Unmarshal(nodeData, &node.NodeDB)
+			json.Unmarshal(nodeData, &node.NodeDB.Map)
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
 			log.Println("node.json db file not found, no content will be load")
 		} else {
