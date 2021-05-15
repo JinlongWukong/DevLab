@@ -56,11 +56,18 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 	// New VM struct instance
 	log.Printf("VM creation starting... total numbers: %v", vmRequest.Number)
 	var newVmGroup []*vm.VirtualMachine
+	hostname := vmRequest.Hostname
 	for i := lastIndex + 1; i <= lastIndex+int(vmRequest.Number); i++ {
+
+		if vmRequest.Number != 1 && vmRequest.Hostname != "" {
+			hostname = vmRequest.Hostname + "-" + strconv.Itoa(i-lastIndex)
+		}
+
 		newVm := vm.NewVirtualMachine(
 			vmRequest.Account+"-"+strconv.Itoa(i),
 			vmRequest.Flavor,
 			vmRequest.Type,
+			hostname,
 			vmRequest.CPU,
 			vmRequest.Memory,
 			vmRequest.Disk,

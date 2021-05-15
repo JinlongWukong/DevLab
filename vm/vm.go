@@ -13,7 +13,7 @@ import (
 )
 
 //check parameters, return struct pointer if ok, otherwise return nil
-func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int32, Duration time.Duration) *VirtualMachine {
+func NewVirtualMachine(name, flavor, vmType, hostname string, cpu, mem, disk int32, Duration time.Duration) *VirtualMachine {
 
 	//There is a mapping bt flavor and cpu/memory
 	if flavor != "" {
@@ -32,13 +32,17 @@ func NewVirtualMachine(name, flavor, vm_type string, cpu, mem, disk int32, Durat
 		return nil
 	}
 
+	if hostname == "" {
+		hostname = name
+	}
+
 	vnc := VncInfo{
 		Port: "unknow",
 		Pass: utils.RandomString(8),
 	}
 
 	ipadd, status, node := "unknow", VmStatusInit, "unkonw"
-	return &VirtualMachine{name, cpu, mem, disk, ipadd, status, vnc, vm_type, node, Duration, map[int]string{}}
+	return &VirtualMachine{name, hostname, cpu, mem, disk, ipadd, status, vnc, vmType, node, Duration, map[int]string{}}
 }
 
 //Create VM by calling remote deployer
@@ -49,16 +53,17 @@ func (myvm *VirtualMachine) CreateVirtualMachine() error {
 	node := node.GetNodeByName(myvm.Node)
 
 	payload, _ := json.Marshal(map[string]interface{}{
-		"vmName":   myvm.Name,
-		"vmAction": "create",
-		"vmMemory": myvm.Memory,
-		"vmVcpus":  myvm.CPU,
-		"vmDisk":   myvm.Disk,
-		"vmType":   myvm.Type,
-		"vncPass":  myvm.Vnc.Pass,
-		"hostIp":   node.IpAddress,
-		"hostPass": node.Passwd,
-		"hostUser": node.UserName,
+		"vmName":     myvm.Name,
+		"vmHostname": myvm.Hostname,
+		"vmAction":   "create",
+		"vmMemory":   myvm.Memory,
+		"vmVcpus":    myvm.CPU,
+		"vmDisk":     myvm.Disk,
+		"vmType":     myvm.Type,
+		"vncPass":    myvm.Vnc.Pass,
+		"hostIp":     node.IpAddress,
+		"hostPass":   node.Passwd,
+		"hostUser":   node.UserName,
 	})
 
 	log.Println("Remote http call to create vm")

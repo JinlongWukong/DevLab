@@ -35,6 +35,7 @@ type VncInfo struct {
 
 type VirtualMachine struct {
 	Name      string         `json:"name"`
+	Hostname  string         `json:"hostname"`
 	CPU       int32          `json:"cpu"`
 	Memory    int32          `json:"mem"`
 	Disk      int32          `json:"disk"`
@@ -49,6 +50,7 @@ type VirtualMachine struct {
 
 type VmRequest struct {
 	Account  string `form:"account" json:"account"`
+	Hostname string `form:"hostname" json:"hostname"`
 	Type     string `form:"type" json:"type"`
 	Flavor   string `form:"flavor" json:"flavor"`
 	CPU      int32  `form:"cpu" json:"cpu"`
