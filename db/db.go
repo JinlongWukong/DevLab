@@ -56,13 +56,13 @@ func SaveToDB() {
 	log.Println("Be ready to sync up db")
 	for request := range requestChan {
 		if database == "file" {
-			err := utils.WriteJsonFile("account.json", account.AccountDB)
+			err := utils.WriteJsonFile("account.json", account.AccountDB.Map)
 			if err != nil {
 				log.Println(err)
 			} else {
 				log.Println("Saved to file db account.json")
 			}
-			err = utils.WriteJsonFile("node.json", node.NodeDB)
+			err = utils.WriteJsonFile("node.json", node.NodeDB.Map)
 			if err != nil {
 				log.Println(err)
 			} else {
