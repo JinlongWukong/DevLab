@@ -41,8 +41,10 @@ func NewVirtualMachine(name, flavor, vmType, hostname string, cpu, mem, disk int
 		Pass: utils.RandomString(8),
 	}
 
+	rootPass := utils.RandomString(8)
+
 	ipadd, status, node := "unknow", VmStatusInit, "unkonw"
-	return &VirtualMachine{name, hostname, cpu, mem, disk, ipadd, status, vnc, vmType, node, Duration, map[int]string{}}
+	return &VirtualMachine{name, hostname, cpu, mem, disk, ipadd, status, vnc, vmType, node, Duration, map[int]string{}, rootPass}
 }
 
 //Create VM by calling remote deployer
@@ -61,6 +63,7 @@ func (myvm *VirtualMachine) CreateVirtualMachine() error {
 		"vmDisk":     myvm.Disk,
 		"vmType":     myvm.Type,
 		"vncPass":    myvm.Vnc.Pass,
+		"rootPass":   myvm.RootPass,
 		"hostIp":     node.IpAddress,
 		"hostPass":   node.Passwd,
 		"hostUser":   node.UserName,

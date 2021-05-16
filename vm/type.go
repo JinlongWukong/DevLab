@@ -46,6 +46,7 @@ type VirtualMachine struct {
 	Node      string         `json:"node"`
 	Lifetime  time.Duration  `json:"lifeTime"`
 	PortMap   map[int]string `json:"portMap"`
+	RootPass  string         `json:"rootPass"`
 }
 
 type VmRequest struct {

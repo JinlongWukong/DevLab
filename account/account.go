@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/JinlongWukong/CloudLab/notification"
 	"github.com/JinlongWukong/CloudLab/vm"
 )
 
@@ -117,4 +118,10 @@ func (a *Account) RemoveVmByName(name string) error {
 	}
 
 	return fmt.Errorf("VM %v not found", name)
+}
+
+func (a *Account) SendNotification(msg string) {
+
+	notification.SendNotification(notification.MessageRequest{ToPersonEmail: a.Name + "@cisco.com", Markdown: msg})
+
 }
