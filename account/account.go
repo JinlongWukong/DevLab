@@ -122,6 +122,6 @@ func (a *Account) RemoveVmByName(name string) error {
 
 func (a *Account) SendNotification(msg string) {
 
-	notification.SendNotification(notification.MessageRequest{ToPersonEmail: a.Name + "@cisco.com", Markdown: msg})
+	notification.SendNotification(notification.Message{Target: a.Name + "@cisco.com", Text: msg})
 
 }
