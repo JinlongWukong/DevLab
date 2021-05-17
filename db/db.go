@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/JinlongWukong/CloudLab/account"
+	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/utils"
 )
@@ -22,10 +23,19 @@ type message struct {
 	action     string
 }
 
-//Init chan size
-//use unbuffered channel for file db
-//use buffered channel for mongo db
-func init() {
+//initialize configuration
+func initialize() {
+	if config.DB.Database != "" {
+		database = config.DB.Database
+	}
+
+	if config.DB.DBSyncPeriod > 0 {
+		dbSyncPeriod = config.DB.DBSyncPeriod
+	}
+
+	//Init chan size
+	//use unbuffered channel for file db
+	//use buffered channel for mongo db
 	if database == "file" {
 		requestChan = make(chan message)
 	} else if database == "mongo" {
@@ -117,6 +127,8 @@ func LoadFromDB() {
 
 //DB manager
 func Manager() {
+
+	initialize()
 
 	if database != "file" && database != "mongo" {
 		log.Println("no database used, manager exited")

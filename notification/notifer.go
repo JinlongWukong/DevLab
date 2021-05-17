@@ -5,11 +5,15 @@ import (
 	"log"
 	"os"
 
+	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/utils"
 )
 
+var notificationKind = "webex"
+var queueSize = 1000
+
 //Message channel buffer
-var MessageChan = make(chan Message, 1000)
+var MessageChan = make(chan Message, queueSize)
 
 // MessageCreateRequest is the Create Message Request Parameters
 type Message struct {
@@ -26,6 +30,16 @@ func SendNotification(message Message) {
 		log.Println("Message buffer is full!!!")
 	}
 
+}
+
+//initialize configuration
+func initialize() {
+	if config.Notification.Kind != "" {
+		notificationKind = config.Notification.Kind
+	}
+	if config.Notification.QueueSize > 0 {
+		queueSize = config.Notification.QueueSize
+	}
 }
 
 //controller loop

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/JinlongWukong/CloudLab/account"
+	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/scheduler"
@@ -21,7 +22,16 @@ import (
 var scheduleLock sync.Mutex
 
 // VM live status retry times and interval(unit seconds) setting, 2mins
-const VmStatusRetry, vmStatusInterval = 20, 6
+var vmStatusRetry, vmStatusInterval = 20, 6
+
+func initialize() {
+	if config.Workflow.VmStatusRetry > 0 {
+		vmStatusRetry = config.Workflow.VmStatusRetry
+	}
+	if config.Workflow.VmStatusInterval > 0 {
+		vmStatusInterval = config.Workflow.VmStatusInterval
+	}
+}
 
 // Create VMs
 // Args:
@@ -127,7 +137,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 
 				//task2: Get VM Info
 				retry := 1
-				for retry <= VmStatusRetry {
+				for retry <= vmStatusRetry {
 					if err := myVm.GetVirtualMachineLiveStatus(); err == nil {
 						if myVm.Status != "" && myVm.IpAddress != "" {
 							log.Printf("Get VM -> %v info: status -> %v, address -> %v", myVm.Name, myVm.Status, myVm.IpAddress)
@@ -136,10 +146,10 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 						}
 					}
 					log.Println("VM get live status failed or empty, will try again")
-					time.Sleep(time.Second * vmStatusInterval)
+					time.Sleep(time.Second * time.Duration(vmStatusInterval))
 					retry++
 				}
-				if retry > VmStatusRetry {
+				if retry > vmStatusRetry {
 					log.Println("VM get status timeout, exited")
 					return
 				}

@@ -5,11 +5,15 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/JinlongWukong/CloudLab/api"
+	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/notification"
 )
 
 func main() {
+
+	//Load config.ini
+	config.Manager()
 
 	//Start db control loop
 	db.Manager()

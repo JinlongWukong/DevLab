@@ -4,11 +4,22 @@ import (
 	"log"
 	"math/rand"
 
+	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/node"
 )
 
 var allocationRatio = 2
 var scheduleAlgorithm = "random"
+
+//initialize configuration
+func initialize() {
+	if config.Schedule.AllocationRatio > 0 {
+		allocationRatio = config.Schedule.AllocationRatio
+	}
+	if config.Schedule.ScheduleAlgorithm != "" {
+		scheduleAlgorithm = config.Schedule.ScheduleAlgorithm
+	}
+}
 
 //apply for a node
 func Schedule(reqCpu, reqMem, reqDisk int32) *node.Node {
