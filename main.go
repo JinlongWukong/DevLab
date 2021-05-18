@@ -18,6 +18,7 @@ func routeRegister(r *gin.Engine) {
 			"message": "pong",
 		})
 	})
+
 	r.GET("/", api.IndexHandler)
 	r.GET("/admin", api.AdminHandler)
 
