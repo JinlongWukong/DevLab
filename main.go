@@ -10,19 +10,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/notification"
 )
 
-func main() {
-
-	//Load config.ini
-	config.Manager()
-
-	//Start db control loop
-	db.Manager()
-
-	//Start notification loop
-	notification.Manager()
-
-	r := gin.Default()
-	r.Use(cors.Default())
+func routeRegister(r *gin.Engine) {
 
 	r.LoadHTMLGlob("views/*")
 	r.GET("/", api.IndexHandler)
@@ -43,5 +31,22 @@ func main() {
 	r.GET("/k8s-request", api.ToDoHandler)
 	r.GET("/container-request", api.ToDoHandler)
 
+}
+
+func main() {
+
+	//Load config.ini
+	config.Manager()
+
+	//Start db control loop
+	db.Manager()
+
+	//Start notification loop
+	notification.Manager()
+
+	//Start web server
+	r := gin.Default()
+	r.Use(cors.Default())
+	routeRegister(r)
 	r.Run(":8088")
 }
