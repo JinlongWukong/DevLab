@@ -7,6 +7,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/api"
 	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/db"
+	"github.com/JinlongWukong/CloudLab/lifecycle"
 	"github.com/JinlongWukong/CloudLab/notification"
 )
 
@@ -49,6 +50,9 @@ func main() {
 
 	//Start notification loop
 	notification.Manager()
+
+	//Start lifecycle loop
+	lifecycle.Manager()
 
 	//Start web server
 	r := gin.Default()

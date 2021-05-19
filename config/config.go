@@ -26,10 +26,16 @@ type WorkflowConfig struct {
 	VmStatusInterval int
 }
 
+type LifeCycleConfig struct {
+	CheckInterval string
+	Enable        string
+}
+
 var DB DatabaseConfig
 var Workflow WorkflowConfig
 var Schedule ScheduleConfig
 var Notification NotificationConfig
+var LifeCycle LifeCycleConfig
 
 func Manager() {
 
@@ -57,6 +63,11 @@ func Manager() {
 	err = cfg.Section("Notification").MapTo(&Notification)
 	if err != nil {
 		log.Printf("Fail to parse section %v: %v", "Notification", err)
+	}
+
+	err = cfg.Section("Lifecycle").MapTo(&LifeCycle)
+	if err != nil {
+		log.Printf("Fail to parse section %v: %v", "Lifecycle", err)
 	}
 
 	log.Println("All configuration loading done")
