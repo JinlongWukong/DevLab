@@ -159,6 +159,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 				sshPort := selectNode.ReservePort(strings.Split(myVm.IpAddress, "/")[0] + ":22")
 				if sshPort == 0 {
 					log.Printf("No port reserved on node %v", selectNode.Name)
+					return
 				} else {
 					myVm.PortMap[22] = strconv.Itoa(sshPort) + ":tcp"
 					log.Printf("port -> %v reserved on node for vm %v", sshPort, myVm.Name)
@@ -278,6 +279,43 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 	}
 
 	return action_err
+}
+
+func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int) error {
+
+	if _, existed := myVM.PortMap[port]; existed == true {
+		msg := fmt.Sprintf("Port %v already exposed", port)
+		log.Println(msg)
+		return fmt.Errorf(msg)
+	}
+
+	myNode := node.GetNodeByName(myVM.Node)
+	newPort := myNode.ReservePort(strings.Split(myVM.IpAddress, "/")[0] + ":" + strconv.Itoa(port))
+
+	defer func() {
+		db.NotifyToDB("account", myAccount.Name, "update")
+		db.NotifyToDB("node", myNode.Name, "update")
+	}()
+
+	if newPort == 0 {
+		msg := fmt.Sprintf("No port reserved on node %v", myNode.Name)
+		log.Println(msg)
+		return fmt.Errorf(msg)
+	} else {
+		myVM.PortMap[port] = strconv.Itoa(newPort) + ":tcp"
+		log.Printf("port -> %v reserved on node for vm %v", newPort, myVM.Name)
+	}
+	err := myVM.ActionDnatRule([]int{port}, "present")
+	if err != nil {
+		log.Println(err)
+		myNode.ReleasePort(port)
+		myVM.Status = fmt.Sprint(err)
+		return err
+	}
+	log.Printf("DNAT setup success for vm %v, port mapping -> %v:%v", myVM.Name, port, myVM.PortMap[port])
+
+	return nil
+
 }
 
 // Add a new node

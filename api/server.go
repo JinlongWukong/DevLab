@@ -126,6 +126,37 @@ func VmRequestVmActionHandler(c *gin.Context) {
 	return
 }
 
+// VM request port expose handler,
+// Return:
+//     20x     -> success
+//     40x/50x -> failed
+func VmRequestVmPortExposeHandler(c *gin.Context) {
+	var vmRequestPortExpose vm.VmRequestPortExpose
+	c.ShouldBind(&vmRequestPortExpose)
+	log.Printf("Get VM port expose request: Account -> %v, VM -> %v, Port -> %v ", vmRequestPortExpose.Account, vmRequestPortExpose.Name, vmRequestPortExpose.Port)
+
+	myaccount, exists := account.AccountDB.Get(vmRequestPortExpose.Account)
+	if exists == true {
+		if myVM, err := myaccount.GetVmByName(vmRequestPortExpose.Name); err == nil {
+			var action_err error
+			action_err = workflow.ExposePort(myaccount, myVM, vmRequestPortExpose.Port)
+			if action_err != nil {
+				c.JSON(http.StatusInternalServerError, err)
+				return
+			}
+		} else {
+			c.JSON(http.StatusNotFound, "VM not found")
+			return
+		}
+	} else {
+		c.JSON(http.StatusNotFound, "Account not found")
+		return
+	}
+
+	c.JSON(http.StatusNoContent, "")
+	return
+}
+
 // Get nodes info
 // Request:
 //   node name or empty(means get all nodes)
