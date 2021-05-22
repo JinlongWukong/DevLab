@@ -256,10 +256,17 @@ function CreateNodeTable(myNodeList) {
 
         for (var j = 0; j < col.length; j++) {
             var tabCell = tr.insertCell(-1);
-            if (col[j] == "action"){
+            if (col[j] == "portMap"){
+                var result = ""
+                for(var key in myNodeList[i][col[j]]) {
+                    var value = myNodeList[i][col[j]][key];
+                    result = result + key + "->" + value + "<br>"
+                }
+                tabCell.innerHTML = result
+            } else if (col[j] == "action"){
                tabCell.innerHTML = `
-                <form action="/node-request" method="POST">
-                   <select class="table" name="action">
+                <form action="/node" method="POST">
+                   <select class="table" name="action" style="width: 60%">
                        <option value="reboot">reboot</option>
                        <option value="remove">remove</option>
                        <option value="enable">enable</option>
@@ -284,8 +291,8 @@ $(document).ready(function(){
     $("#nodeListGenerate").click(function(){
         var baseurl = location.origin;
         $.ajax({
-              //url: "http://localhost:8088/node-request",
-              url: baseurl + "/node-request",
+              //url: "http://localhost:8088/node",
+              url: baseurl + "/node",
               success: function(data){
                 console.log(data)
                 CreateNodeTable(data)
@@ -313,8 +320,8 @@ $(document).ready(function(){
         };
         console.log(requestData)
         $.ajax({
-              //url: "http://localhost:8088/node-request",
-              url: baseurl + "/node-request",
+              //url: "http://localhost:8088/node",
+              url: baseurl + "/node",
               data: requestData,
               success: function(data){
                 console.log(data)

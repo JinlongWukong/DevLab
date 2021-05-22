@@ -37,7 +37,6 @@ func Schedule(reqCpu, reqMem, reqDisk int32) *node.Node {
 			winerNodes = append(winerNodes, n.Value)
 		}
 	}
-	log.Println("debug1")
 	if len(winerNodes) == 0 {
 		log.Println("Not enough nodes left")
 		return nil

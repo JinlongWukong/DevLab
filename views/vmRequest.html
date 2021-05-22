@@ -105,7 +105,7 @@ tr:hover {background-color:#f5f5f5;}
 </head>
 
 <div class="container">
-<form action="/vm-request" method="POST">
+<form action="/vm" method="POST">
     <p>VM Selector: </p>
 
     <label for="account">Account ID: </label>
@@ -217,7 +217,7 @@ function CreateVMTableFromJSON(myVmList) {
                 tabCell.innerHTML = myVmList[i][col[j]]["port"];
             } else if (col[j] == "action"){
                 tabCell.innerHTML = `
-                <form id="actionForm" action="/vm-request/vm" onsubmit="event.preventDefault();return vmAction(this)">
+                <form id="actionForm" action="/vm" onsubmit="event.preventDefault();return vmAction(this)">
                    <select class="selection" name="action" style="width: 60%">
                        <option value="start">start</option>
                        <option value="shutdown">shutdown</option>
@@ -249,6 +249,8 @@ function vmAction(element) {
       var port = prompt("Please enter the port to be exposed: ");
       payload = payload + '&port=' + port;
       url = url + '/expose-port'
+    } else {
+      url = url + '/action'
     }
     $.blockUI({timeout:   8000});
     $.ajax({
@@ -272,8 +274,8 @@ $(document).ready(function(){
         }
         var baseurl = location.origin;
         $.ajax({
-              //url: "http://127.0.0.1:8088/vm-request/vm?account=" + account,
-              url: baseurl + "/vm-request/vm?account=" + account,
+              //url: "http://127.0.0.1:8088/vm?account=" + account,
+              url: baseurl + "/vm?account=" + account,
               success: function(data){
                 console.log(data)
                 CreateVMTableFromJSON(data)

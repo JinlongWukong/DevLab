@@ -24,20 +24,24 @@ func routeRegister(r *gin.Engine) {
 	r.GET("/admin", api.AdminHandler)
 
 	//vm related api
-	r.GET("/vm-request", api.VmRequestIndexHandler)
-	r.GET("/vm-request/vm", api.VmRequestGetVmHandler)
-
-	r.POST("/vm-request", api.VmRequestCreateVmHandler)
-	r.POST("/vm-request/vm", api.VmRequestVmActionHandler)
-	r.POST("/vm-request/vm/expose-port", api.VmRequestVmPortExposeHandler)
+	//vm request first page
+	r.GET("/vm-home", api.VmRequestIndexHandler)
+	//Get vm http://127.0.0.1:8088/vm?account=1234
+	r.GET("/vm", api.VmRequestGetVmHandler)
+	//Create vm
+	r.POST("/vm", api.VmRequestCreateVmHandler)
+	//Generate vm action(start/stop/reboot/delete)
+	r.POST("/vm/action", api.VmRequestVmActionHandler)
+	//Port expose
+	r.POST("/vm/expose-port", api.VmRequestVmPortExposeHandler)
 
 	//node related api
-	r.GET("/node-request", api.NodeRequestGetNodeHandler)
-	r.POST("/node-request", api.NodeRequestActionNodeHandler)
+	r.GET("/node", api.NodeRequestGetNodeHandler)
+	r.POST("/node", api.NodeRequestActionNodeHandler)
 
 	//TODO api
-	r.GET("/k8s-request", api.ToDoHandler)
-	r.GET("/container-request", api.ToDoHandler)
+	r.GET("/k8s", api.ToDoHandler)
+	r.GET("/container", api.ToDoHandler)
 
 }
 
