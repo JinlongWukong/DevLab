@@ -66,6 +66,13 @@ func VmRequestCreateVmHandler(c *gin.Context) {
 	c.Bind(&vmRequest)
 	log.Println(vmRequest.Account, vmRequest.Type, vmRequest.Number, vmRequest.Duration)
 
+	if vmRequest.Account == "" ||
+		vmRequest.Type == "" ||
+		vmRequest.Number < 1 {
+		c.JSON(http.StatusBadRequest, "input parameters error")
+		return
+	}
+
 	myaccount, exists := account.AccountDB.Get(vmRequest.Account)
 	if exists == false {
 		// Acount not existed, add new

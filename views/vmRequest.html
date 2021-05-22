@@ -109,7 +109,7 @@ tr:hover {background-color:#f5f5f5;}
     <p>VM Selector: </p>
 
     <label for="account">Account ID: </label>
-    <input type="text" id="account" name="account" placeholder="Your cecid.."> <br>
+    <input type="text" id="account" name="account" placeholder="Your cecid.." required> <br>
 
     <label for="hostname">Hostname: </label>
     <input type="text" id="hostname" name="hostname" placeholder="optional"> <br>
@@ -163,8 +163,8 @@ tr:hover {background-color:#f5f5f5;}
 </body>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="http://malsup.github.io/jquery.blockUI.js"></script>
 <script>
-
 
 function CreateVMTableFromJSON(myVmList) {
     //var myVmList = [{"Name":"jinlliu-1","CPU":2,"Mem":2048,"Disk":30,"Address":"192.168.122.50/24","Status":"running","Type":"centos7","Host":{"Name":"","CPU":0,"Memory":0,"IpAddress":"127.0.0.1","Status":"","UserName":"root","Passwd":"Cisco123!"},"LifeTime":86400000000000}]
@@ -213,13 +213,12 @@ function CreateVMTableFromJSON(myVmList) {
                     result = result + key + "->" + value + "<br>"
                 }
                 tabCell.innerHTML = result
-                console.log(result)
             } else if (col[j] == "vnc"){
                 tabCell.innerHTML = myVmList[i][col[j]]["port"];
             } else if (col[j] == "action"){
                 tabCell.innerHTML = `
-                <form action="/vm-request/vm" method="POST">
-                   <select class="table" name="action">
+                <form id="actionForm" action="/vm-request/vm" onsubmit="event.preventDefault();return vmAction(this)">
+                   <select class="table" name="action" style="width: 60%">
                        <option value="start">start</option>
                        <option value="shutdown">shutdown</option>
                        <option value="reboot">reboot</option>
@@ -241,8 +240,25 @@ function CreateVMTableFromJSON(myVmList) {
     divContainer.appendChild(table);
 }
 
+function vmAction(element) {
+    $.blockUI({css: { backgroundColor: '#f00', color: '#fff' }});
+    setTimeout($.unblockUI, 8000);
+    var form = $(element);
+    var url = form.attr('action');
+    $.ajax({
+           type: "POST",
+           url: url,
+           data: form.serialize(), // serializes the form's elements.
+           error: function(data) {
+               alert(data); // show response
+           }
+         }).done(function() {
+          $.unblockUI();
+         });
+}
+
 $(document).ready(function(){
-    $("#vmListGenerate").click(function(){
+  $("#vmListGenerate").click(function(){ 
         var account = document.getElementById("account").value;
         if (account == "") {
             alert("Account ID must be filled");
