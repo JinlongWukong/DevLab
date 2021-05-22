@@ -29,7 +29,7 @@ func routeRegister(r *gin.Engine) {
 
 	r.POST("/vm-request", api.VmRequestCreateVmHandler)
 	r.POST("/vm-request/vm", api.VmRequestVmActionHandler)
-	r.POST("/vm-request/vm/port-expose", api.VmRequestVmPortExposeHandler)
+	r.POST("/vm-request/vm/expose-port", api.VmRequestVmPortExposeHandler)
 
 	//node related api
 	r.GET("/node-request", api.NodeRequestGetNodeHandler)

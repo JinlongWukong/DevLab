@@ -218,11 +218,12 @@ function CreateVMTableFromJSON(myVmList) {
             } else if (col[j] == "action"){
                 tabCell.innerHTML = `
                 <form id="actionForm" action="/vm-request/vm" onsubmit="event.preventDefault();return vmAction(this)">
-                   <select class="table" name="action" style="width: 60%">
+                   <select class="selection" name="action" style="width: 60%">
                        <option value="start">start</option>
                        <option value="shutdown">shutdown</option>
                        <option value="reboot">reboot</option>
                        <option value="delete">delete</option>
+                       <option value="expose-port">expose-port</option>
                    </select>
                    <button type="submit">Confirm</button>
                   `+ '<input type="hidden" name="name"' + 'value=' + myVmList[i]["name"] + ' >'
@@ -241,14 +242,19 @@ function CreateVMTableFromJSON(myVmList) {
 }
 
 function vmAction(element) {
-    $.blockUI({css: { backgroundColor: '#f00', color: '#fff' }});
-    setTimeout($.unblockUI, 8000);
     var form = $(element);
     var url = form.attr('action');
+    var payload = form.serialize();
+    if (form.find(".selection").val() == "expose-port") {
+      var port = prompt("Please enter the port to be exposed: ");
+      payload = payload + '&port=' + port;
+      url = url + '/expose-port'
+    }
+    $.blockUI({timeout:   8000});
     $.ajax({
            type: "POST",
            url: url,
-           data: form.serialize(), // serializes the form's elements.
+           data: payload, // serializes the form's elements.
            error: function(data) {
                alert(data); // show response
            }
