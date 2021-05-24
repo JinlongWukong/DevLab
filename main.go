@@ -1,6 +1,15 @@
 package main
 
 import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
@@ -9,9 +18,14 @@ import (
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/lifecycle"
 	"github.com/JinlongWukong/CloudLab/notification"
+	"github.com/JinlongWukong/CloudLab/scheduler"
+	"github.com/JinlongWukong/CloudLab/workflow"
 )
 
-func routeRegister(r *gin.Engine) {
+func setupRouter() *gin.Engine {
+
+	r := gin.Default()
+	r.Use(cors.Default())
 
 	r.LoadHTMLGlob("views/*")
 	r.GET("/ping", func(c *gin.Context) {
@@ -43,25 +57,67 @@ func routeRegister(r *gin.Engine) {
 	r.GET("/k8s", api.ToDoHandler)
 	r.GET("/container", api.ToDoHandler)
 
+	return r
 }
 
 func main() {
 
+	//Used for stop service
+	ctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+
 	//Load config.ini
-	config.Manager()
+	config.LoadConfig()
+
+	scheduler.ReloadConfig()
+	workflow.ReloadConfig()
 
 	//Start db control loop
-	db.Manager()
+	wg.Add(1)
+	go db.Manager(ctx, &wg)
 
 	//Start notification loop
-	notification.Manager()
+	wg.Add(1)
+	go notification.Manager(ctx, &wg)
 
 	//Start lifecycle loop
-	lifecycle.Manager()
+	wg.Add(1)
+	go lifecycle.Manager(ctx, &wg)
 
-	//Start web server
-	r := gin.Default()
-	r.Use(cors.Default())
-	routeRegister(r)
-	r.Run(":8088")
+	//Setup web server
+	srv := &http.Server{
+		Addr:    ":8088",
+		Handler: setupRouter(),
+	}
+	go func() {
+		// serve connections
+		if err := srv.ListenAndServe(); err != nil {
+			log.Printf("listen: %s\n", err)
+		}
+	}()
+
+	//Wait signal to reload/stop
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGALRM)
+	for s := range sigs {
+		switch s {
+		case syscall.SIGINT, syscall.SIGTERM:
+			ctxServer, cancelServer := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancelServer()
+			if err := srv.Shutdown(ctxServer); err != nil {
+				log.Printf("Server Shutdown: %v", err)
+			}
+			cancel()
+			ctxManger, cancelManager := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancelManager()
+			go func() {
+				<-ctxManger.Done()
+				log.Println("Manger exit timeout")
+				os.Exit(1)
+			}()
+			wg.Wait()
+			log.Println("Program exit normally")
+			os.Exit(0)
+		}
+	}
 }

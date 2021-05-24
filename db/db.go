@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"strings"
@@ -63,7 +64,7 @@ func NotifyToDB(collection string, name string, action string) {
 }
 
 //Sync up map into db
-func SaveToDB() {
+func SyncToDB(ctx context.Context) {
 
 	log.Println("Be ready to sync up with db")
 	if database == "file" {
@@ -72,31 +73,41 @@ func SaveToDB() {
 		defer t.Stop()
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case <-t.C:
-				<-requestChan
-				log.Println(time.Now())
-				err := utils.WriteJsonFile("account.json", account.AccountDB.Map)
-				if err != nil {
-					log.Println(err)
-				} else {
-					log.Println("Saved to file db account.json")
-				}
-				err = utils.WriteJsonFile("node.json", node.NodeDB.Map)
-				if err != nil {
-					log.Println(err)
-				} else {
-					log.Println("Saved to file db node.json")
+				select {
+				case <-ctx.Done():
+					return
+				case <-requestChan:
+					log.Println(time.Now())
+					err := utils.WriteJsonFile("account.json", account.AccountDB.Map)
+					if err != nil {
+						log.Println(err)
+					} else {
+						log.Println("Saved to file db account.json")
+					}
+					err = utils.WriteJsonFile("node.json", node.NodeDB.Map)
+					if err != nil {
+						log.Println(err)
+					} else {
+						log.Println("Saved to file db node.json")
+					}
 				}
 				t.Reset(period)
 			}
-
 		}
 	} else {
-		for request := range requestChan {
-			if request.collection == "account" {
-				//TODO
-			} else if request.collection == "node" {
-				//TODO
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case request := <-requestChan:
+				if request.collection == "account" {
+					//TODO
+				} else if request.collection == "node" {
+					//TODO
+				}
 			}
 		}
 	}
@@ -126,7 +137,12 @@ func LoadFromDB() {
 }
 
 //DB manager
-func Manager() {
+func Manager(ctx context.Context, wg *sync.WaitGroup) {
+
+	defer func() {
+		log.Println("DB manager exited")
+		wg.Done()
+	}()
 
 	initialize()
 
@@ -139,19 +155,6 @@ func Manager() {
 	LoadFromDB()
 
 	//for Loop to sync up db
-	go func() {
-		var wg sync.WaitGroup
-		for {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				SaveToDB()
-			}()
-			wg.Wait()
-			log.Println("DB manager abnormal, try serve again")
-			time.Sleep(time.Second)
-		}
-	}()
+	SyncToDB(ctx)
 
-	return
 }

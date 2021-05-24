@@ -37,7 +37,7 @@ var Schedule ScheduleConfig
 var Notification NotificationConfig
 var LifeCycle LifeCycleConfig
 
-func Manager() {
+func LoadConfig() error {
 
 	log.Println("Start loading config.ini")
 	cfg, err := ini.Load("config.ini")
@@ -70,5 +70,11 @@ func Manager() {
 		log.Printf("Fail to parse section %v: %v", "Lifecycle", err)
 	}
 
+	if err != nil {
+		return err
+	}
+
 	log.Println("All configuration loading done")
+	return nil
+
 }

@@ -24,7 +24,7 @@ var scheduleLock sync.Mutex
 // VM live status retry times and interval(unit seconds) setting, 2mins
 var vmStatusRetry, vmStatusInterval = 20, 6
 
-func initialize() {
+func ReloadConfig() {
 	if config.Workflow.VmStatusRetry > 0 {
 		vmStatusRetry = config.Workflow.VmStatusRetry
 	}

@@ -1,9 +1,11 @@
 package notification
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/utils"
@@ -43,12 +45,20 @@ func initialize() {
 }
 
 //controller loop
-func Manager() {
+func Manager(ctx context.Context, wg *sync.WaitGroup) {
+
+	defer func() {
+		log.Println("Notification manager exited")
+		wg.Done()
+	}()
 
 	myToken := os.Getenv("BOT_TOKEN")
 
-	go func() {
-		for message := range MessageChan {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case message := <-MessageChan:
 			formatedMessage := WebexMessageRequest{ToPersonEmail: message.Target, Text: message.Text}
 			payload, _ := json.Marshal(formatedMessage)
 			err, _ := utils.HttpSendJsonDataWithAuthBearer("https://webexapis.com/v1/messages", "POST", myToken, payload)
@@ -56,8 +66,6 @@ func Manager() {
 				log.Println(err)
 			}
 		}
-	}()
-
-	return
+	}
 
 }
