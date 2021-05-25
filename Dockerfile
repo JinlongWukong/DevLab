@@ -13,4 +13,4 @@ COPY --from=builder /go/src/cloudlab/controller .
 COPY --from=builder /go/src/cloudlab/config.ini .
 COPY --from=builder /go/src/cloudlab/views/* ./views/
 EXPOSE 8088
-ENTRYPOINT ./controller
+ENTRYPOINT ["/app/controller"]
