@@ -8,9 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/utils"
 )
+
+func ReloadConfig() {
+	baseUrl = config.Deployer.Protocol + "://" + config.Deployer.EndPoint
+}
 
 //check parameters, return struct pointer if ok, otherwise return nil
 func NewVirtualMachine(name, flavor, vmType, hostname string, cpu, mem, disk int32, Duration time.Duration) *VirtualMachine {
@@ -70,7 +75,8 @@ func (myvm *VirtualMachine) CreateVirtualMachine() error {
 	})
 
 	log.Println("Remote http call to create vm")
-	err, _ := utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
+	url := baseUrl + "/vm"
+	err, _ := utils.HttpSendJsonData(url, "POST", payload)
 	if err != nil {
 		log.Println(err)
 		myvm.Status = fmt.Sprint(err)
@@ -106,7 +112,8 @@ func (myvm VirtualMachine) genericActionVirtualMachine(action string) error {
 	})
 
 	log.Printf("Remote http call to %v vm", action)
-	err, _ := utils.HttpSendJsonData("http://10.124.44.167:9134/vm", "POST", payload)
+	url := baseUrl + "/vm"
+	err, _ := utils.HttpSendJsonData(url, "POST", payload)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -164,7 +171,8 @@ func (myvm *VirtualMachine) GetVirtualMachineLiveStatus() error {
 	}
 
 	var vmStatus VmLiveStatus
-	err, reponse_data := utils.HttpGetJsonData("http://10.124.44.167:9134/vm", query)
+	url := baseUrl + "/vm"
+	err, reponse_data := utils.HttpGetJsonData(url, query)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -206,7 +214,8 @@ func (myvm *VirtualMachine) ActionDnatRule(port []int, action string) error {
 	})
 
 	log.Printf("Remote http call to %v dnat rule", action)
-	err, _ := utils.HttpSendJsonData("http://10.124.44.167:9134/host/dnat", "POST", payload)
+	url := baseUrl + "/host/dnat"
+	err, _ := utils.HttpSendJsonData(url, "POST", payload)
 	if err != nil {
 		log.Println(err)
 		return err

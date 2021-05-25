@@ -19,6 +19,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/lifecycle"
 	"github.com/JinlongWukong/CloudLab/notification"
 	"github.com/JinlongWukong/CloudLab/scheduler"
+	"github.com/JinlongWukong/CloudLab/vm"
 	"github.com/JinlongWukong/CloudLab/workflow"
 )
 
@@ -69,6 +70,7 @@ func main() {
 	//Load config.ini
 	config.LoadConfig()
 
+	vm.ReloadConfig()
 	scheduler.ReloadConfig()
 	workflow.ReloadConfig()
 

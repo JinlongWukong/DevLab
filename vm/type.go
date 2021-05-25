@@ -28,6 +28,8 @@ var flavorDetails = map[string]map[string]int32{
 	},
 }
 
+var baseUrl string
+
 type VncInfo struct {
 	Port string `json:"port"`
 	Pass string `json:"passwd"`

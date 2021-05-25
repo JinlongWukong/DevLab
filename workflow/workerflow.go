@@ -23,8 +23,10 @@ var scheduleLock sync.Mutex
 
 // VM live status retry times and interval(unit seconds) setting, 2mins
 var vmStatusRetry, vmStatusInterval = 20, 6
+var baseUrl string
 
 func ReloadConfig() {
+	baseUrl = config.Deployer.Protocol + "://" + config.Deployer.EndPoint
 	if config.Workflow.VmStatusRetry > 0 {
 		vmStatusRetry = config.Workflow.VmStatusRetry
 	}
@@ -344,7 +346,8 @@ func AddNode(nodeRequest node.NodeRequest) error {
 
 		log.Println("Remote http call to install node")
 		var nodeInfo node.NodeInfo
-		err, reponse_data := utils.HttpSendJsonData("http://10.124.44.167:9134/host", "POST", payload)
+		url := baseUrl + "/host"
+		err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
 
 		if err != nil {
 			log.Printf("Install node  %v failed with error -> %v", myNode.Name, err)

@@ -31,11 +31,17 @@ type LifeCycleConfig struct {
 	Enable        string
 }
 
+type DeployerConfig struct {
+	Protocol string
+	EndPoint string
+}
+
 var DB DatabaseConfig
 var Workflow WorkflowConfig
 var Schedule ScheduleConfig
 var Notification NotificationConfig
 var LifeCycle LifeCycleConfig
+var Deployer DeployerConfig
 
 func LoadConfig() error {
 
@@ -68,6 +74,11 @@ func LoadConfig() error {
 	err = cfg.Section("Lifecycle").MapTo(&LifeCycle)
 	if err != nil {
 		log.Printf("Fail to parse section %v: %v", "Lifecycle", err)
+	}
+
+	err = cfg.Section("Deployer").MapTo(&Deployer)
+	if err != nil {
+		log.Printf("Fail to parse section %v: %v", "Deployer", err)
 	}
 
 	if err != nil {
