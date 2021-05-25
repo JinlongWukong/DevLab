@@ -40,7 +40,7 @@ func setupRouter() *gin.Engine {
 
 	//vm related api
 	//vm request first page
-	r.GET("/vm-home", api.VmRequestIndexHandler)
+	r.GET("/vm-request", api.VmRequestIndexHandler)
 	//Get vm http://127.0.0.1:8088/vm?account=1234
 	r.GET("/vm", api.VmRequestGetVmHandler)
 	//Create vm
