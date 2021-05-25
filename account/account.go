@@ -93,7 +93,6 @@ func (a Account) GetVmNameList() []string {
 
 func (a Account) GetVmByName(name string) (*vm.VirtualMachine, error) {
 
-	log.Println(a.VM)
 	for _, v := range a.VM {
 		if v.Name == name {
 			return v, nil

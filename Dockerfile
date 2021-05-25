@@ -12,4 +12,5 @@ WORKDIR /app
 COPY --from=builder /go/src/cloudlab/controller .
 COPY --from=builder /go/src/cloudlab/config.ini .
 EXPOSE 8088
-ENTRYPOINT /app/controller 2>&1
+ENV PATH="/app:${PATH}"
+ENTRYPOINT ["sh", "controller", "2>&1"]
