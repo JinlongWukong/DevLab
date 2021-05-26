@@ -258,6 +258,7 @@ function vmAction(element) {
            url: url,
            data: payload, // serializes the form's elements.
            error: function(data) {
+               console.log(data)
                alert(data); // show response
            }
          }).done(function() {
