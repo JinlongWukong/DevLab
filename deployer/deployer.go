@@ -11,9 +11,11 @@ import (
 var baseUrl string
 
 func ReloadConfig() {
+
+	regUrl, _ := regexp.Compile("^http[s]?://[[:ascii:]]*:\\d*$")
 	//Load deployer info from ENV first, if not ok, then load from config.ini
 	envUrl := os.Getenv("DEPLOYER_PROTOCOL") + "://" + os.Getenv("DEPLOYER_HOST") + ":" + os.Getenv("DEPLOYER_PORT")
-	match, _ := regexp.MatchString("^http[s]?://[[:ascii:]]*:\\d*$", envUrl)
+	match := regUrl.MatchString(envUrl)
 	if match {
 		log.Printf("Using deployer url from environment %v", envUrl)
 		baseUrl = envUrl
@@ -21,7 +23,7 @@ func ReloadConfig() {
 	}
 
 	configUrl := config.Deployer.Protocol + "://" + config.Deployer.EndPoint
-	match, _ = regexp.MatchString("^http[s]?://[[:ascii:]]*:\\d*$", configUrl)
+	match = regUrl.MatchString(configUrl)
 	if match {
 		baseUrl = config.Deployer.Protocol + "://" + config.Deployer.EndPoint
 		log.Printf("Using deployer url from config.ini %v", baseUrl)
