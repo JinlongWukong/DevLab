@@ -259,7 +259,7 @@ function vmAction(element) {
            data: payload, // serializes the form's elements.
            error: function(data) {
                console.log(data)
-               alert(data); // show response
+               alert(data.status); // show response
            }
          }).done(function() {
           $.unblockUI();
