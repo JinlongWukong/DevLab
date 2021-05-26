@@ -13,6 +13,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/db"
+	"github.com/JinlongWukong/CloudLab/deployer"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/scheduler"
 	"github.com/JinlongWukong/CloudLab/utils"
@@ -23,10 +24,8 @@ var scheduleLock sync.Mutex
 
 // VM live status retry times and interval(unit seconds) setting, 2mins
 var vmStatusRetry, vmStatusInterval = 20, 6
-var baseUrl string
 
 func ReloadConfig() {
-	baseUrl = config.Deployer.Protocol + "://" + config.Deployer.EndPoint
 	if config.Workflow.VmStatusRetry > 0 {
 		vmStatusRetry = config.Workflow.VmStatusRetry
 	}
@@ -346,7 +345,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 
 		log.Println("Remote http call to install node")
 		var nodeInfo node.NodeInfo
-		url := baseUrl + "/host"
+		url := deployer.GetDeployerBaseUrl() + "/host"
 		err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
 
 		if err != nil {
