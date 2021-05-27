@@ -8,6 +8,7 @@ type NodeStatus string
 
 const (
 	NodeStatusInit      NodeStatus = "init"
+	NodeStatusFailed    NodeStatus = "failed"
 	NodeStatusInstalled NodeStatus = "installed"
 	NodeStatusReady     NodeStatus = "ready"
 	NodeStatusUnhealth  NodeStatus = "unhealth"

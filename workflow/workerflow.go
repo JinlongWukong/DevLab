@@ -350,7 +350,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 
 		if err != nil {
 			log.Printf("Install node  %v failed with error -> %v", myNode.Name, err)
-			myNode.Status = node.NodeStatus(fmt.Sprint(err))
+			myNode.Status = node.NodeStatusFailed
 			db.NotifyToDB("node", myNode.Name, "update")
 			return
 		} else {

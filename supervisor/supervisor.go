@@ -64,6 +64,10 @@ func Manager(ctx context.Context, wg *sync.WaitGroup) {
 			}
 
 			for _, n := range allNodes {
+				//if node status not installed or failed, skip
+				if n.Status == node.NodeStatusInit || n.Status == node.NodeStatusFailed {
+					break
+				}
 				select {
 				case <-ctx.Done():
 					return
@@ -73,7 +77,6 @@ func Manager(ctx context.Context, wg *sync.WaitGroup) {
 						"Pass": n.Passwd,
 						"User": n.UserName,
 					}
-
 					log.Printf("Remote http call to check node usage %v", n.Name)
 					var nodeUsage node.NodeUsage
 					url := deployer.GetDeployerBaseUrl() + "/host"
