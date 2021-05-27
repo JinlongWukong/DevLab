@@ -84,7 +84,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 			time.Hour*24*time.Duration(vmRequest.Duration),
 		)
 		if newVm != nil {
-			myAccount.VM = append(myAccount.VM, newVm)
+			myAccount.AppendVM(newVm)
 			newVmGroup = append(newVmGroup, newVm)
 			db.NotifyToDB("account", myAccount.Name, "create")
 		} else {

@@ -70,18 +70,25 @@ func (m *AccountMap) Iter() <-chan AccountMapItem {
 }
 
 type Account struct {
-	Name     string               `json:"name"`
-	Role     string               `json:"role"`
-	VM       []*vm.VirtualMachine `json:"vm"`
-	StatusVm string               `json:"-"`
+	Name          string               `json:"name"`
+	Role          string               `json:"role"`
+	VM            []*vm.VirtualMachine `json:"vm"`
+	lockerVMSlice sync.Mutex           `json:"-"`
+	StatusVm      string               `json:"-"`
 }
 
-func (a Account) GetNumbersOfVm() int {
+func (a *Account) GetNumbersOfVm() int {
+
+	a.lockerVMSlice.Lock()
+	defer a.lockerVMSlice.Unlock()
 
 	return len(a.VM)
 }
 
-func (a Account) GetVmNameList() []string {
+func (a *Account) GetVmNameList() []string {
+
+	a.lockerVMSlice.Lock()
+	defer a.lockerVMSlice.Unlock()
 
 	vmNames := make([]string, 0)
 	for _, v := range a.VM {
@@ -91,7 +98,10 @@ func (a Account) GetVmNameList() []string {
 	return vmNames
 }
 
-func (a Account) GetVmByName(name string) (*vm.VirtualMachine, error) {
+func (a *Account) GetVmByName(name string) (*vm.VirtualMachine, error) {
+
+	a.lockerVMSlice.Lock()
+	defer a.lockerVMSlice.Unlock()
 
 	for _, v := range a.VM {
 		if v.Name == name {
@@ -102,7 +112,18 @@ func (a Account) GetVmByName(name string) (*vm.VirtualMachine, error) {
 	return nil, fmt.Errorf("VM %v not found", name)
 }
 
+func (a *Account) AppendVM(vm *vm.VirtualMachine) {
+
+	a.lockerVMSlice.Lock()
+	defer a.lockerVMSlice.Unlock()
+
+	a.VM = append(a.VM, vm)
+}
+
 func (a *Account) RemoveVmByName(name string) error {
+
+	a.lockerVMSlice.Lock()
+	defer a.lockerVMSlice.Unlock()
 
 	//To remove item from slice, this is a fast version (changes order)
 	for i, v := range a.VM {
@@ -117,6 +138,23 @@ func (a *Account) RemoveVmByName(name string) error {
 	}
 
 	return fmt.Errorf("VM %v not found", name)
+}
+
+func (a *Account) Iter() <-chan *vm.VirtualMachine {
+	c := make(chan *vm.VirtualMachine)
+
+	f := func() {
+		a.lockerVMSlice.Lock()
+		defer a.lockerVMSlice.Unlock()
+
+		for _, v := range a.VM {
+			c <- v
+		}
+		close(c)
+	}
+	go f()
+
+	return c
 }
 
 func (a *Account) SendNotification(msg string) {
