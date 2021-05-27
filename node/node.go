@@ -128,6 +128,26 @@ func (myNode *Node) GetState() NodeState {
 
 }
 
+//Set node status
+func (myNode *Node) SetStatus(status NodeStatus) {
+
+	myNode.statusMutex.Lock()
+	defer myNode.statusMutex.Unlock()
+
+	myNode.Status = status
+
+}
+
+//Get node status
+func (myNode *Node) GetStatus() NodeStatus {
+
+	myNode.statusMutex.RLock()
+	defer myNode.statusMutex.RUnlock()
+
+	return myNode.Status
+
+}
+
 //Reboot node
 //Return nil if ok, otherwise error
 func (myNode *Node) RebootNode() error {

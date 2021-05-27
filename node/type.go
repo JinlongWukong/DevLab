@@ -27,23 +27,24 @@ const (
 )
 
 type Node struct {
-	Name       string         `json:"name"`
-	UserName   string         `json:"user"`
-	Passwd     string         `json:"passwd"`
-	Role       string         `json:"role"`
-	IpAddress  string         `json:"address"`
-	OSType     string         `json:"os"`
-	CPU        int32          `json:"cpu"`
-	Memory     int32          `json:"memory"`
-	Disk       int32          `json:"disk"`
-	CpuUsed    int32          `json:"cpuUsed"`
-	MemUsed    int32          `json:"memUsed"`
-	DiskUsed   int32          `json:"diskUsed"`
-	PortMap    map[int]string `json:"portMap"`
-	Status     NodeStatus     `json:"status"`
-	State      NodeState      `json:"state"`
-	stateMutex sync.RWMutex   `json:"-"`
-	portMutex  sync.Mutex     `json:"-"`
+	Name        string         `json:"name"`
+	UserName    string         `json:"user"`
+	Passwd      string         `json:"passwd"`
+	Role        string         `json:"role"`
+	IpAddress   string         `json:"address"`
+	OSType      string         `json:"os"`
+	CPU         int32          `json:"cpu"`
+	Memory      int32          `json:"memory"`
+	Disk        int32          `json:"disk"`
+	CpuUsed     int32          `json:"cpuUsed"`
+	MemUsed     int32          `json:"memUsed"`
+	DiskUsed    int32          `json:"diskUsed"`
+	PortMap     map[int]string `json:"portMap"`
+	Status      NodeStatus     `json:"status"`
+	State       NodeState      `json:"state"`
+	statusMutex sync.RWMutex   `json:"-"`
+	stateMutex  sync.RWMutex   `json:"-"`
+	portMutex   sync.Mutex     `json:"-"`
 }
 
 type NodeRequest struct {
