@@ -3,15 +3,11 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 
 	"github.com/JinlongWukong/CloudLab/api"
 	"github.com/JinlongWukong/CloudLab/config"
@@ -23,56 +19,20 @@ import (
 	"github.com/JinlongWukong/CloudLab/workflow"
 )
 
-func setupRouter() *gin.Engine {
-
-	r := gin.Default()
-	r.Use(cors.Default())
-
-	r.LoadHTMLGlob("views/*")
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-
-	r.GET("/", api.IndexHandler)
-	r.GET("/admin", api.AdminHandler)
-
-	//vm related api
-	//vm request first page
-	r.GET("/vm-request", api.VmRequestIndexHandler)
-	//Get vm http://127.0.0.1:8088/vm?account=1234
-	r.GET("/vm", api.VmRequestGetVmHandler)
-	//Create vm
-	r.POST("/vm", api.VmRequestCreateVmHandler)
-	//Generate vm action(start/stop/reboot/delete)
-	r.POST("/vm/action", api.VmRequestVmActionHandler)
-	//Port expose
-	r.POST("/vm/expose-port", api.VmRequestVmPortExposeHandler)
-
-	//node related api
-	r.GET("/node", api.NodeRequestGetNodeHandler)
-	r.POST("/node", api.NodeRequestActionNodeHandler)
-
-	//TODO api
-	r.GET("/k8s", api.ToDoHandler)
-	r.GET("/container", api.ToDoHandler)
-
-	return r
-}
-
 func main() {
 
-	//Used for stop service
+	//Used for stop service gracefully
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 
 	//Load config.ini
-	config.LoadConfig()
+	if err := config.LoadConfig(); err != nil {
+		log.Fatalf("configuration file loadling failed %v, program exited", err)
+	}
 
-	deployer.ReloadConfig()
-	scheduler.ReloadConfig()
-	workflow.ReloadConfig()
+	deployer.LoadConfig()
+	scheduler.LoadConfig()
+	workflow.LoadConfig()
 
 	//Start db control loop
 	wg.Add(1)
@@ -87,16 +47,7 @@ func main() {
 	go lifecycle.Manager(ctx, &wg)
 
 	//Setup web server
-	srv := &http.Server{
-		Addr:    ":8088",
-		Handler: setupRouter(),
-	}
-	go func() {
-		// serve connections
-		if err := srv.ListenAndServe(); err != nil {
-			log.Printf("listen: %s\n", err)
-		}
-	}()
+	srv := api.Server()
 
 	//Wait signal to reload/stop
 	sigs := make(chan os.Signal, 1)

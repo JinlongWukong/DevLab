@@ -10,7 +10,7 @@ import (
 
 var baseUrl string
 
-func ReloadConfig() {
+func LoadConfig() {
 
 	regUrl, _ := regexp.Compile("^http[s]?://[[:ascii:]]*:\\d*$")
 	//Load deployer info from ENV first, if not ok, then load from config.ini
