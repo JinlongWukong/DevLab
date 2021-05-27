@@ -57,7 +57,7 @@ func Manager(ctx context.Context, wg *sync.WaitGroup) {
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			//Get all nodes
+			//Copy all nodes
 			allNodes := []*node.Node{}
 			for v := range node.NodeDB.Iter() {
 				allNodes = append(allNodes, v.Value)
@@ -85,6 +85,7 @@ func Manager(ctx context.Context, wg *sync.WaitGroup) {
 					err, reponse_data := utils.HttpGetJsonData(url, query)
 					if err != nil {
 						log.Printf("Remote http call to check node %v usage failed with error -> %v", n.Name, err)
+						//if err occur, set node as unhealth status
 						n.SetStatus(node.NodeStatusUnhealth)
 						db.NotifyToDB("node", n.Name, "update")
 						break
@@ -95,6 +96,7 @@ func Manager(ctx context.Context, wg *sync.WaitGroup) {
 							break
 						}
 						diskUsage, _ := strconv.Atoi(strings.Split(nodeUsage.DiskUsage, "%")[0])
+						//If at least one of below conditions not satisfied, means overload
 						if nodeUsage.CpuLoad > float64(n.CPU)*nodeLimitCPU ||
 							nodeUsage.MemAvail < nodeMinimumMem ||
 							diskUsage > nodeLimitDisk {
