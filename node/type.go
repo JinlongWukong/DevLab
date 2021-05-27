@@ -11,6 +11,7 @@ const (
 	NodeStatusInstalled NodeStatus = "installed"
 	NodeStatusReady     NodeStatus = "ready"
 	NodeStatusUnhealth  NodeStatus = "unhealth"
+	NodeStatusOverload  NodeStatus = "overload"
 
 	NodeStateEnable  NodeState = "enable"
 	NodeStateDisable NodeState = "disable"
@@ -58,4 +59,10 @@ type NodeInfo struct {
 	Memory int32  `json:"memory"`
 	Disk   int32  `json:"disk"`
 	OSType string `json:"type"`
+}
+
+type NodeUsage struct {
+	CpuLoad   float64 `json:"cpu_load"`
+	MemAvail  int     `json:"memory_avail"`
+	DiskUsage string  `json:"disk_usage"`
 }

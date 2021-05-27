@@ -41,6 +41,16 @@ type ApiServerConfig struct {
 	Port int
 }
 
+type SupervisorConfig struct {
+	NodeCheckInterval string
+	//Maxinum CPU load(15mins) usage, 0.8 -> core * 80%
+	NodeLimitCPU float64
+	//Mininum memory available left, unit(M)
+	NodeMinimumMem int
+	//maxinum Disk in Use(0,100), 80 -> 80%
+	NodeLimitDisk int
+}
+
 var DB DatabaseConfig
 var Workflow WorkflowConfig
 var Schedule ScheduleConfig
@@ -48,6 +58,7 @@ var Notification NotificationConfig
 var LifeCycle LifeCycleConfig
 var Deployer DeployerConfig
 var ApiServer ApiServerConfig
+var Supervisor SupervisorConfig
 
 func LoadConfig() error {
 
@@ -97,6 +108,12 @@ func LoadConfig() error {
 	err = cfg.Section("ApiServer").MapTo(&ApiServer)
 	if err != nil {
 		log.Printf("Fail to parse section %v: %v", "ApiServer", err)
+		return err
+	}
+
+	err = cfg.Section("Supervisor").MapTo(&Supervisor)
+	if err != nil {
+		log.Printf("Fail to parse section %v: %v", "Supervisor", err)
 		return err
 	}
 

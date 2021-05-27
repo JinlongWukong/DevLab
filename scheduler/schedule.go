@@ -28,7 +28,7 @@ func Schedule(reqCpu, reqMem, reqDisk int32) *node.Node {
 	winerNodes := make([]*node.Node, 0)
 	for n := range node.NodeDB.Iter() {
 		if n.Value.State != node.NodeStateEnable ||
-			n.Value.Status != node.NodeStatusInstalled ||
+			n.Value.Status != node.NodeStatusReady ||
 			(n.Value.CPU*int32(allocationRatio)-n.Value.GetCpuUsed()) < reqCpu ||
 			(n.Value.Memory*int32(allocationRatio)-n.Value.GetMemUsed()) < reqMem ||
 			(n.Value.Disk*int32(allocationRatio)-n.Value.GetDiskUsed()) < reqDisk {

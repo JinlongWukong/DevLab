@@ -16,6 +16,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/lifecycle"
 	"github.com/JinlongWukong/CloudLab/notification"
 	"github.com/JinlongWukong/CloudLab/scheduler"
+	"github.com/JinlongWukong/CloudLab/supervisor"
 	"github.com/JinlongWukong/CloudLab/workflow"
 )
 
@@ -37,6 +38,8 @@ func main() {
 	//Start db control loop
 	wg.Add(1)
 	go db.Manager(ctx, &wg)
+	//Sleep a while to load db
+	time.Sleep(time.Second * 2)
 
 	//Start notification loop
 	wg.Add(1)
@@ -45,6 +48,10 @@ func main() {
 	//Start lifecycle loop
 	wg.Add(1)
 	go lifecycle.Manager(ctx, &wg)
+
+	//Start supervisor control loop
+	wg.Add(1)
+	go supervisor.Manager(ctx, &wg)
 
 	//Setup web server
 	srv := api.Server()
