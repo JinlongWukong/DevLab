@@ -236,3 +236,10 @@ func NodeRequestActionNodeHandler(c *gin.Context) {
 		})
 	}
 }
+
+//Will return total task numbers
+func WorkflowTaskHandler(c *gin.Context) {
+
+	taskNumber := workflow.GetTaskCount()
+	c.JSON(http.StatusOK, gin.H{"number": taskNumber})
+}

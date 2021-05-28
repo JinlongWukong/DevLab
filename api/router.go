@@ -36,6 +36,9 @@ func setupRouter() *gin.Engine {
 	r.GET("/node", NodeRequestGetNodeHandler)
 	r.POST("/node", NodeRequestActionNodeHandler)
 
+	//workflow related api
+	r.GET("/task", WorkflowTaskHandler)
+
 	//TODO api
 	r.GET("/k8s", ToDoHandler)
 	r.GET("/container", ToDoHandler)

@@ -39,6 +39,9 @@ func LoadConfig() {
 //   account: account
 //   vmRequest: vm request body
 func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
+
 	//during vm creation, no more new task accept
 	myAccount.StatusVm = "running"
 	defer func() {
@@ -195,6 +198,8 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 //   error -> action error messages
 //   nil -> action success
 func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string) error {
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
 
 	var action_err error
 	switch action {
@@ -283,6 +288,8 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 }
 
 func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int) error {
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
 
 	if _, existed := myVM.PortMap[port]; existed == true {
 		msg := fmt.Sprintf("Port %v already exposed", port)
@@ -322,6 +329,8 @@ func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int) e
 // Add a new node
 // this is a async call, will update node status after get reponse from remote deployer
 func AddNode(nodeRequest node.NodeRequest) error {
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
 
 	myNode := node.NewNode(nodeRequest)
 
@@ -376,6 +385,8 @@ func AddNode(nodeRequest node.NodeRequest) error {
 //   error -> action error messages
 //   nil -> action success
 func ActionNode(nodeRequest node.NodeRequest) error {
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
 
 	myNode, exists := node.NodeDB.Get(nodeRequest.Name)
 	if exists == false {
