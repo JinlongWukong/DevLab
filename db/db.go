@@ -10,6 +10,7 @@ import (
 
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/config"
+	"github.com/JinlongWukong/CloudLab/manager"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/utils"
 )
@@ -23,6 +24,11 @@ type message struct {
 	name       string
 	action     string
 }
+
+type DB struct {
+}
+
+var _ manager.Manager = DB{}
 
 //initialize configuration
 func initialize() {
@@ -137,7 +143,7 @@ func LoadFromDB() {
 }
 
 //DB manager
-func Manager(ctx context.Context, wg *sync.WaitGroup) {
+func (db DB) Control(ctx context.Context, wg *sync.WaitGroup) {
 
 	defer func() {
 		log.Println("DB manager exited")

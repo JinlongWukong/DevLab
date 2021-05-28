@@ -10,11 +10,17 @@ import (
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/db"
+	"github.com/JinlongWukong/CloudLab/manager"
 	"github.com/JinlongWukong/CloudLab/workflow"
 )
 
 var checkInterval = "1h"
 var enabled = false
+
+type LifeCycle struct {
+}
+
+var _ manager.Manager = LifeCycle{}
 
 //initialize configuration
 func initialize() {
@@ -27,7 +33,7 @@ func initialize() {
 	}
 }
 
-func Manager(ctx context.Context, wg *sync.WaitGroup) {
+func (l LifeCycle) Control(ctx context.Context, wg *sync.WaitGroup) {
 
 	defer func() {
 		log.Println("Lifecycle manager exited")

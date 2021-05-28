@@ -12,6 +12,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/deployer"
+	"github.com/JinlongWukong/CloudLab/manager"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/utils"
 )
@@ -20,6 +21,11 @@ var nodeCheckInterval = "10s"
 var nodeLimitCPU = 0.8
 var nodeMinimumMem = 2048
 var nodeLimitDisk = 80
+
+type Supervisor struct {
+}
+
+var _ manager.Manager = Supervisor{}
 
 func initialize() {
 	if config.Supervisor.NodeCheckInterval != "" {
@@ -36,7 +42,7 @@ func initialize() {
 	}
 }
 
-func Manager(ctx context.Context, wg *sync.WaitGroup) {
+func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 
 	defer func() {
 		log.Println("Supervisor manager exited")

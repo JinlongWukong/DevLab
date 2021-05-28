@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/JinlongWukong/CloudLab/config"
+	"github.com/JinlongWukong/CloudLab/manager"
 	"github.com/JinlongWukong/CloudLab/utils"
 )
 
@@ -22,6 +23,11 @@ type Message struct {
 	Target string `json:"target,omitempty"` // Target ID.
 	Text   string `json:"text,omitempty"`   // Message in plain text format.
 }
+
+type Notifier struct {
+}
+
+var _ manager.Manager = Notifier{}
 
 //notficaiont internal api interface
 func SendNotification(message Message) {
@@ -45,7 +51,7 @@ func initialize() {
 }
 
 //controller loop
-func Manager(ctx context.Context, wg *sync.WaitGroup) {
+func (n Notifier) Control(ctx context.Context, wg *sync.WaitGroup) {
 
 	defer func() {
 		log.Println("Notification manager exited")

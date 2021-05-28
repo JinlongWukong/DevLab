@@ -14,6 +14,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/deployer"
 	"github.com/JinlongWukong/CloudLab/lifecycle"
+	"github.com/JinlongWukong/CloudLab/manager"
 	"github.com/JinlongWukong/CloudLab/notification"
 	"github.com/JinlongWukong/CloudLab/scheduler"
 	"github.com/JinlongWukong/CloudLab/supervisor"
@@ -25,6 +26,7 @@ func main() {
 	//Used for stop service gracefully
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
+	managers := make([]manager.Manager, 0)
 
 	//Load config.ini
 	if err := config.LoadConfig(); err != nil {
@@ -35,23 +37,22 @@ func main() {
 	scheduler.LoadConfig()
 	workflow.LoadConfig()
 
-	//Start db control loop
-	wg.Add(1)
-	go db.Manager(ctx, &wg)
-	//Sleep a while to load db
-	time.Sleep(time.Second * 2)
+	var m manager.Manager
+	//Register all managers
+	m = db.DB{}
+	managers = append(managers, m)
+	m = notification.Notifier{}
+	managers = append(managers, m)
+	m = lifecycle.LifeCycle{}
+	managers = append(managers, m)
+	m = supervisor.Supervisor{}
+	managers = append(managers, m)
 
-	//Start notification loop
-	wg.Add(1)
-	go notification.Manager(ctx, &wg)
-
-	//Start lifecycle loop
-	wg.Add(1)
-	go lifecycle.Manager(ctx, &wg)
-
-	//Start supervisor control loop
-	wg.Add(1)
-	go supervisor.Manager(ctx, &wg)
+	//Start all control loop
+	for _, m := range managers {
+		wg.Add(1)
+		go m.Control(ctx, &wg)
+	}
 
 	//Setup web server
 	srv := api.Server()
