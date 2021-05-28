@@ -106,6 +106,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 		selectNode := scheduler.Schedule(reqCpu, reqMem, reqDisk)
 		if selectNode == nil {
 			log.Println("Error: No valid node selected, VM creation exit")
+			scheduleLock.Unlock()
 			return
 		}
 		log.Printf("node selected -> %v", selectNode.Name)
