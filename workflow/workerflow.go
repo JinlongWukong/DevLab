@@ -49,18 +49,19 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 	//Fetch all existing VM Name, get the last index as the start index of new VM
 	vmNames := myAccount.GetVmNameList()
 	log.Println(vmNames)
-	vmIndex := func(v []string) []string {
-		indexes := make([]string, 0)
+	vmIndex := func(v []string) []int {
+		indexes := make([]int, 0)
 		for _, v := range v {
 			t := strings.Split(v, "-")
-			indexes = append(indexes, t[len(t)-1])
+			i, _ := strconv.Atoi(t[len(t)-1])
+			indexes = append(indexes, i)
 		}
 		return indexes
 	}(vmNames)
-	sort.Strings(vmIndex)
+	sort.Ints(vmIndex)
 	var lastIndex int
 	if len(vmIndex) > 0 {
-		lastIndex, _ = strconv.Atoi(vmIndex[len(vmIndex)-1])
+		lastIndex = vmIndex[len(vmIndex)-1]
 		log.Printf("The last index of VM: %v", lastIndex)
 	}
 
