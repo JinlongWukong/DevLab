@@ -11,10 +11,9 @@ func setupRouter() *gin.Engine {
 	r.Use(cors.Default())
 
 	r.LoadHTMLGlob("views/*")
+	//readness/liveness check point
 	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+		c.Writer.WriteString("pong")
 	})
 
 	r.GET("/", IndexHandler)
