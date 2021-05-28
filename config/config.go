@@ -42,6 +42,9 @@ type ApiServerConfig struct {
 }
 
 type SupervisorConfig struct {
+	//Enable/disable supervisor
+	Enable string
+	//Node check interval -> 10s,1m
 	NodeCheckInterval string
 	//Maxinum CPU load(15mins) usage, 0.8 -> core * 80%
 	NodeLimitCPU float64

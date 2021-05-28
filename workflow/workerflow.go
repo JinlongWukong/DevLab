@@ -39,8 +39,6 @@ func LoadConfig() {
 //   account: account
 //   vmRequest: vm request body
 func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
-	changeTaskCount(1)
-	defer changeTaskCount(-1)
 
 	//during vm creation, no more new task accept
 	myAccount.StatusVm = "running"
@@ -96,6 +94,9 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 	}
 
 	go func() {
+		changeTaskCount(1)
+		defer changeTaskCount(-1)
+
 		//call scheduler to apply a node
 		reqCpu := newVmGroup[0].CPU * vmRequest.Number
 		reqMem := newVmGroup[0].Memory * vmRequest.Number
@@ -329,8 +330,6 @@ func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int) e
 // Add a new node
 // this is a async call, will update node status after get reponse from remote deployer
 func AddNode(nodeRequest node.NodeRequest) error {
-	changeTaskCount(1)
-	defer changeTaskCount(-1)
 
 	myNode := node.NewNode(nodeRequest)
 
@@ -343,6 +342,9 @@ func AddNode(nodeRequest node.NodeRequest) error {
 	}
 
 	go func() {
+		changeTaskCount(1)
+		defer changeTaskCount(-1)
+
 		//Install node
 		payload, _ := json.Marshal(map[string]interface{}{
 			"Ip":     myNode.IpAddress,
