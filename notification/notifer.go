@@ -53,6 +53,7 @@ func initialize() {
 //controller loop
 func (n Notifier) Control(ctx context.Context, wg *sync.WaitGroup) {
 
+	log.Println("Notification manager started")
 	defer func() {
 		log.Println("Notification manager exited")
 		wg.Done()

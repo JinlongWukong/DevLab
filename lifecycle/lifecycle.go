@@ -35,6 +35,7 @@ func initialize() {
 
 func (l LifeCycle) Control(ctx context.Context, wg *sync.WaitGroup) {
 
+	log.Println("LifeCycle manager started")
 	defer func() {
 		log.Println("Lifecycle manager exited")
 		wg.Done()

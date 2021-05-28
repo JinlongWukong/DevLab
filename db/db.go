@@ -145,6 +145,7 @@ func LoadFromDB() {
 //DB manager
 func (db DB) Control(ctx context.Context, wg *sync.WaitGroup) {
 
+	log.Println("DB manager started")
 	defer func() {
 		log.Println("DB manager exited")
 		wg.Done()

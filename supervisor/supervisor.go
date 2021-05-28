@@ -48,6 +48,7 @@ func initialize() {
 
 func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 
+	log.Println("Supervisor manager started")
 	defer func() {
 		log.Println("Supervisor manager exited")
 		wg.Done()
