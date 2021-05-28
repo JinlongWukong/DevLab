@@ -241,5 +241,5 @@ func NodeRequestActionNodeHandler(c *gin.Context) {
 func WorkflowTaskHandler(c *gin.Context) {
 
 	taskNumber := workflow.GetTaskCount()
-	c.JSON(http.StatusOK, gin.H{"number": taskNumber})
+	c.Writer.WriteString(fmt.Sprintf("taskNumber %v", taskNumber))
 }
