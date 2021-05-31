@@ -296,6 +296,7 @@ function nodeAction(element) {
     $.ajax({
            type: "POST",
            url: url,
+           async: false,
            data: payload, // serializes the form's elements.
            error: function(data) {
                console.log(data)

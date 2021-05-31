@@ -215,6 +215,8 @@ function CreateVMTableFromJSON(myVmList) {
                 tabCell.innerHTML = result
             } else if (col[j] == "vnc"){
                 tabCell.innerHTML = myVmList[i][col[j]]["port"];
+            } else if (col[j] == "lifeTime"){
+                tabCell.innerHTML = myVmList[i][col[j]]/3600000000000 + "h";
             } else if (col[j] == "action"){
                 tabCell.innerHTML = `
                 <form id="actionForm" action="/vm" onsubmit="event.preventDefault();return vmAction(this)">
