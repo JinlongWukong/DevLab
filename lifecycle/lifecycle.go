@@ -11,6 +11,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/manager"
+	"github.com/JinlongWukong/CloudLab/vm"
 	"github.com/JinlongWukong/CloudLab/workflow"
 )
 
@@ -58,7 +59,11 @@ func (l LifeCycle) Control(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			case <-t.C:
 				for ac := range account.AccountDB.Iter() {
-					for _, vm := range ac.Value.VM {
+					vmSlice := []*vm.VirtualMachine{}
+					for item := range ac.Value.Iter() {
+						vmSlice = append(vmSlice, item)
+					}
+					for _, vm := range vmSlice {
 						vm.Lifetime = vm.Lifetime - period
 						log.Printf("Accout %v vm %v lifetime is %v", ac.Value.Name, vm.Name, vm.Lifetime)
 						if vm.Lifetime <= 0 {
