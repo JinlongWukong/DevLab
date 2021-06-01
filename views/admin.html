@@ -302,7 +302,7 @@ function nodeAction(element) {
                console.log(data)
                alert(data.status); // show response
            }
-         }).done(function() {
+         }).always(function() {
           $.unblockUI();
          });
 }
