@@ -249,8 +249,12 @@ function vmAction(element) {
     var payload = form.serialize();
     if (form.find(".selection").val() == "expose-port") {
       var port = prompt("Please enter the port to be exposed: ");
-      payload = payload + '&port=' + port;
-      url = url + '/expose-port'
+      if (port) {
+        payload = payload + '&port=' + port
+        url = url + '/expose-port'
+      } else {
+        return
+      }
     } else {
       url = url + '/action'
     }

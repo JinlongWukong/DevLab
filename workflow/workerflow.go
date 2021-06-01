@@ -294,6 +294,10 @@ func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int) e
 	changeTaskCount(1)
 	defer changeTaskCount(-1)
 
+	if port <= 0 {
+		return fmt.Errorf("invalid port given")
+	}
+
 	if _, existed := myVM.PortMap[port]; existed == true {
 		msg := fmt.Sprintf("Port %v already exposed", port)
 		log.Println(msg)
