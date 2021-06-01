@@ -290,12 +290,16 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 	return action_err
 }
 
-func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int) error {
+func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int, protocol string) error {
 	changeTaskCount(1)
 	defer changeTaskCount(-1)
 
+	//Input param check
 	if port <= 0 {
 		return fmt.Errorf("invalid port given")
+	}
+	if protocol != "tcp" && protocol != "udp" {
+		return fmt.Errorf("invalid protocol given")
 	}
 
 	if _, existed := myVM.PortMap[port]; existed == true {
@@ -317,7 +321,7 @@ func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int) e
 		log.Println(msg)
 		return fmt.Errorf(msg)
 	} else {
-		myVM.PortMap[port] = strconv.Itoa(newPort) + ":tcp"
+		myVM.PortMap[port] = strconv.Itoa(newPort) + ":" + protocol
 		log.Printf("port -> %v reserved on node for vm %v", newPort, myVM.Name)
 	}
 	err := myVM.ActionDnatRule([]int{port}, "present")

@@ -248,15 +248,24 @@ function vmAction(element) {
     var url = form.attr('action');
     var payload = form.serialize();
     if (form.find(".selection").val() == "expose-port") {
-      var port = prompt("Please enter the port to be exposed: ");
-      if (port) {
-        payload = payload + '&port=' + port
-        url = url + '/expose-port'
-      } else {
-        return
-      }
+        var portInput = prompt("Please enter the port to be exposed, format(22 or 22:tcp or 22:udp)");
+        if (portInput) {
+            var res = portInput.split(":")
+            if (res.length == 1) {
+                payload = payload + '&port=' + res[0] + '&protocol=' + 'tcp'
+            } else if (res.length == 2) {
+                payload = payload + '&port=' + res[0] + '&protocol=' + res[1]
+            } else {
+                alert("invalid port format")
+                return
+            }
+            console.log(payload)
+            url = url + '/expose-port'
+        } else {
+            return
+        }
     } else {
-      url = url + '/action'
+        url = url + '/action'
     }
     $.blockUI({timeout:   8000});
     $.ajax({
@@ -267,7 +276,7 @@ function vmAction(element) {
                console.log(data)
                alert(data.status); // show response
            }
-         }).done(function() {
+         }).always(function() {
           $.unblockUI();
          });
 }

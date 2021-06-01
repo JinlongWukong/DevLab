@@ -140,13 +140,14 @@ func VmRequestVmActionHandler(c *gin.Context) {
 func VmRequestVmPortExposeHandler(c *gin.Context) {
 	var vmRequestPortExpose vm.VmRequestPortExpose
 	c.ShouldBind(&vmRequestPortExpose)
-	log.Printf("Get VM port expose request: Account -> %v, VM -> %v, Port -> %v ", vmRequestPortExpose.Account, vmRequestPortExpose.Name, vmRequestPortExpose.Port)
+	log.Printf("Get VM port expose request: Account -> %v, VM -> %v, Port -> %v, Protocol -> %v ", vmRequestPortExpose.Account, vmRequestPortExpose.Name,
+		vmRequestPortExpose.Port, vmRequestPortExpose.Protocol)
 
 	myaccount, exists := account.AccountDB.Get(vmRequestPortExpose.Account)
 	if exists == true {
 		if myVM, err := myaccount.GetVmByName(vmRequestPortExpose.Name); err == nil {
 			var action_err error
-			action_err = workflow.ExposePort(myaccount, myVM, vmRequestPortExpose.Port)
+			action_err = workflow.ExposePort(myaccount, myVM, vmRequestPortExpose.Port, vmRequestPortExpose.Protocol)
 			if action_err != nil {
 				c.JSON(http.StatusInternalServerError, err)
 				return
