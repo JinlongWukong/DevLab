@@ -73,9 +73,10 @@ type VmRequestPostAction struct {
 }
 
 type VmRequestPortExpose struct {
-	Account string `form:"account" json:"account"`
-	Name    string `form:"name" json:"name"`
-	Port    int    `form:"port" json:"port"`
+	Account  string `form:"account" json:"account"`
+	Name     string `form:"name" json:"name"`
+	Port     int    `form:"port" json:"port"`
+	Protocol string `form:"protocol" json:"protocol"`
 }
 
 type VmLiveStatus struct {
