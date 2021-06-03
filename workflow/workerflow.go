@@ -388,6 +388,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 			"User":   myNode.UserName,
 			"Role":   myNode.Role,
 			"Action": "install",
+			"Subnet": myNode.Subnet,
 		})
 
 		log.Println("Remote http call to install node")
