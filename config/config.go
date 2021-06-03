@@ -7,12 +7,16 @@ import (
 )
 
 type DatabaseConfig struct {
-	Database     string
+	//database type(off, file, mongo)
+	Database string
+	//database sync up period, only used if database is file
 	DBSyncPeriod int
 }
 
 type NotificationConfig struct {
-	Kind      string
+	//notification kind(webex,...)
+	Kind string
+	//notification queue size
 	QueueSize int
 }
 

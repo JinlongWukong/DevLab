@@ -12,7 +12,7 @@ var allocationRatio = 2
 var scheduleAlgorithm = "random"
 
 //initialize configuration
-func LoadConfig() {
+func ReadConfig() {
 	if config.Schedule.AllocationRatio > 0 {
 		allocationRatio = config.Schedule.AllocationRatio
 	}
@@ -23,7 +23,6 @@ func LoadConfig() {
 
 //apply for a node
 func Schedule(reqCpu, reqMem, reqDisk int32) *node.Node {
-
 	//filter all nodes
 	winerNodes := make([]*node.Node, 0)
 	for n := range node.NodeDB.Iter() {
@@ -47,5 +46,4 @@ func Schedule(reqCpu, reqMem, reqDisk int32) *node.Node {
 	} else {
 		return winerNodes[rand.Intn(len(winerNodes))]
 	}
-
 }

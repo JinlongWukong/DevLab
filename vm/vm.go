@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/JinlongWukong/CloudLab/deployer"
@@ -45,7 +46,7 @@ func NewVirtualMachine(name, flavor, vmType, hostname string, cpu, mem, disk int
 	rootPass := utils.RandomString(8)
 
 	ipadd, status, node := "unknow", VmStatusInit, "unkonw"
-	return &VirtualMachine{name, hostname, cpu, mem, disk, ipadd, status, vnc, vmType, node, Duration, map[int]string{}, rootPass}
+	return &VirtualMachine{name, hostname, cpu, mem, disk, ipadd, status, vnc, vmType, node, Duration, map[int]string{}, rootPass, sync.RWMutex{}}
 }
 
 //Create VM by calling remote deployer
@@ -90,7 +91,7 @@ func (myvm *VirtualMachine) CreateVirtualMachine() error {
 // Return:
 //    nil    -> success
 //    error  -> failed
-func (myvm VirtualMachine) genericActionVirtualMachine(action string) error {
+func (myvm *VirtualMachine) genericActionVirtualMachine(action string) error {
 
 	mynode := node.GetNodeByName(myvm.Node)
 	if mynode == nil {
@@ -118,28 +119,28 @@ func (myvm VirtualMachine) genericActionVirtualMachine(action string) error {
 	return nil
 }
 
-func (myvm VirtualMachine) DeleteVirtualMachine() error {
+func (myvm *VirtualMachine) DeleteVirtualMachine() error {
 
 	log.Printf("Deleting vm %v on Host %v", myvm.Name, myvm.Node)
 
 	return myvm.genericActionVirtualMachine("delete")
 }
 
-func (myvm VirtualMachine) StartUpVirtualMachine() error {
+func (myvm *VirtualMachine) StartUpVirtualMachine() error {
 
 	log.Printf("Starting vm %v on Host %v", myvm.Name, myvm.Node)
 
 	return myvm.genericActionVirtualMachine("start")
 }
 
-func (myvm VirtualMachine) ShutDownVirtualMachine() error {
+func (myvm *VirtualMachine) ShutDownVirtualMachine() error {
 
 	log.Printf("Shuting down vm %v on Host %v", myvm.Name, myvm.Node)
 
 	return myvm.genericActionVirtualMachine("shutdown")
 }
 
-func (myvm VirtualMachine) RebootVirtualMachine() error {
+func (myvm *VirtualMachine) RebootVirtualMachine() error {
 
 	log.Printf("Rebooting vm %v on Host %v", myvm.Name, myvm.Node)
 

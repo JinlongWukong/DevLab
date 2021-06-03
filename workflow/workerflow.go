@@ -25,7 +25,8 @@ var scheduleLock sync.Mutex
 // VM live status retry times and interval(unit seconds) setting, 2mins
 var vmStatusRetry, vmStatusInterval = 20, 6
 
-func LoadConfig() {
+// initialize configuration
+func ReadConfig() {
 	if config.Workflow.VmStatusRetry > 0 {
 		vmStatusRetry = config.Workflow.VmStatusRetry
 	}
@@ -35,12 +36,9 @@ func LoadConfig() {
 }
 
 // Create VMs
-// Args:
-//   account: account
-//   vmRequest: vm request body
 func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 
-	//during vm creation, no more new task accept
+	//No more new create task accept during vm creation
 	myAccount.StatusVm = "running"
 	defer func() {
 		myAccount.StatusVm = "idle"
@@ -65,12 +63,13 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 		log.Printf("The last index of VM: %v", lastIndex)
 	}
 
-	// New VM struct instance
+	// New VM instance
 	log.Printf("VM creation starting... total numbers: %v", vmRequest.Number)
 	var newVmGroup []*vm.VirtualMachine
 	hostname := vmRequest.Hostname
 	for i := lastIndex + 1; i <= lastIndex+int(vmRequest.Number); i++ {
 
+		// define hostname if multi instances, by adding index
 		if vmRequest.Number != 1 && vmRequest.Hostname != "" {
 			hostname = vmRequest.Hostname + "-" + strconv.Itoa(i-lastIndex)
 		}
@@ -98,7 +97,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 		changeTaskCount(1)
 		defer changeTaskCount(-1)
 
-		//call scheduler to apply a node
+		//call scheduler to select a node
 		reqCpu := newVmGroup[0].CPU * vmRequest.Number
 		reqMem := newVmGroup[0].Memory * vmRequest.Number
 		reqDisk := newVmGroup[0].Disk * 1024 * vmRequest.Number
@@ -129,6 +128,8 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 			wg.Add(1)
 			go func(myVm *vm.VirtualMachine) {
 				defer wg.Done()
+				myVm.Lock()
+				defer myVm.Unlock()
 
 				//task1: VM instantiation
 				log.Printf("VM %v instantiation start", myVm.Name)
@@ -194,23 +195,32 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 }
 
 // Take specify action on VM(start/delete/shutdown/reboot)
-// Args:
-//   account pointer, vm pointer
-//   action -> start/shutdown/reboot/delete
-// Return:
-//   error -> action error messages
-//   nil -> action success
 func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string) error {
 	changeTaskCount(1)
 	defer changeTaskCount(-1)
 
+	myVM.Lock()
+	defer myVM.Unlock()
+
 	var action_err error
 	switch action {
 	case "start":
+		//VM status check
+		if myVM.Status == vm.VmStatusDeleted || myVM.Status == vm.VmStatusDeleting {
+			return fmt.Errorf("VM in deleting or deleted")
+		}
 		action_err = myVM.StartUpVirtualMachine()
 	case "shutdown":
+		//VM status check
+		if myVM.Status == vm.VmStatusDeleted || myVM.Status == vm.VmStatusDeleting {
+			return fmt.Errorf("VM in deleting or deleted")
+		}
 		action_err = myVM.ShutDownVirtualMachine()
 	case "reboot":
+		//VM status check
+		if myVM.Status == vm.VmStatusDeleted || myVM.Status == vm.VmStatusDeleting {
+			return fmt.Errorf("VM in deleting or deleted")
+		}
 		action_err = myVM.RebootVirtualMachine()
 	case "delete":
 		//Remove vm from account directly since VM is init status, no further action needed
@@ -219,10 +229,14 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 				log.Println(err)
 				return err
 			} else {
+				myVM.Status = vm.VmStatusDeleted
 				db.NotifyToDB("account", myAccount.Name, "delete")
 				return nil
 			}
 		}
+
+		myVM.Status = vm.VmStatusDeleting
+		db.NotifyToDB("account", myAccount.Name, "update")
 
 		//Delete VM from node
 		action_err = myVM.DeleteVirtualMachine()
@@ -269,17 +283,18 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			log.Println(err)
 			return err
 		} else {
+			myVM.Status = vm.VmStatusDeleted
 			db.NotifyToDB("account", myAccount.Name, "delete")
 		}
 
 		return nil
 	}
 
-	// Post action, sync up vm status
+	// Post action, fetch latest vm status
 	switch action {
 	case "start", "shutdown", "reboot":
 		go func() {
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 5)
 			if err := myVM.GetVirtualMachineLiveStatus(); err != nil {
 				log.Printf("sync up vm -> %v status after action -> %v, failed -> %v", myVM.Name, action, err)
 			}
@@ -290,9 +305,18 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 	return action_err
 }
 
+// Set dnat rule to expose vm port with node port
 func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int, protocol string) error {
 	changeTaskCount(1)
 	defer changeTaskCount(-1)
+
+	myVM.Lock()
+	defer myVM.Unlock()
+
+	//VM status check
+	if myVM.Status == vm.VmStatusDeleted || myVM.Status == vm.VmStatusDeleting {
+		return fmt.Errorf("VM in deleting or deleted")
+	}
 
 	//Input param check
 	if port <= 0 {
@@ -391,11 +415,6 @@ func AddNode(nodeRequest node.NodeRequest) error {
 }
 
 // Take specify action on Node(remove/reboot)
-// Args:
-//   NodeRequest
-// Return:
-//   error -> action error messages
-//   nil -> action success
 func ActionNode(nodeRequest node.NodeRequest) error {
 	changeTaskCount(1)
 	defer changeTaskCount(-1)

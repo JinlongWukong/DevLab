@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"sync"
 	"time"
 )
 
@@ -8,6 +9,8 @@ const (
 	VmStatusInit      = "init"
 	VmStatusScheduled = "scheduled"
 	VmStatusRunning   = "running"
+	VmStatusDeleting  = "deleting"
+	VmStatusDeleted   = "deleted"
 )
 
 var flavorDetails = map[string]map[string]int32{
@@ -34,19 +37,20 @@ type VncInfo struct {
 }
 
 type VirtualMachine struct {
-	Name      string         `json:"name"`
-	Hostname  string         `json:"hostname"`
-	CPU       int32          `json:"cpu"`
-	Memory    int32          `json:"mem"`
-	Disk      int32          `json:"disk"`
-	IpAddress string         `json:"address"`
-	Status    string         `json:"status"`
-	Vnc       VncInfo        `json:"vnc"`
-	Type      string         `json:"type"`
-	Node      string         `json:"node"`
-	Lifetime  time.Duration  `json:"lifeTime"`
-	PortMap   map[int]string `json:"portMap"`
-	RootPass  string         `json:"rootPass"`
+	Name         string         `json:"name"`
+	Hostname     string         `json:"hostname"`
+	CPU          int32          `json:"cpu"`
+	Memory       int32          `json:"mem"`
+	Disk         int32          `json:"disk"`
+	IpAddress    string         `json:"address"`
+	Status       string         `json:"status"`
+	Vnc          VncInfo        `json:"vnc"`
+	Type         string         `json:"type"`
+	Node         string         `json:"node"`
+	Lifetime     time.Duration  `json:"lifeTime"`
+	PortMap      map[int]string `json:"portMap"`
+	RootPass     string         `json:"rootPass"`
+	sync.RWMutex `json:"-"`
 }
 
 type VmRequest struct {

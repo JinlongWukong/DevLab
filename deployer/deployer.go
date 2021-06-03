@@ -10,10 +10,11 @@ import (
 
 var baseUrl string
 
-func LoadConfig() {
+//Load deployer info from ENV first, if not ok, then load from config.ini
+func ReadConfig() {
 
 	regUrl, _ := regexp.Compile("^http[s]?://[[:ascii:]]*:\\d*$")
-	//Load deployer info from ENV first, if not ok, then load from config.ini
+
 	envUrl := os.Getenv("DEPLOYER_PROTOCOL") + "://" + os.Getenv("DEPLOYER_HOST") + ":" + os.Getenv("DEPLOYER_PORT")
 	match := regUrl.MatchString(envUrl)
 	if match {
@@ -29,7 +30,7 @@ func LoadConfig() {
 		log.Printf("Using deployer url from config.ini %v", baseUrl)
 		return
 	}
-	log.Println("deployer url info load failed")
+	log.Println("deployer url load failed")
 }
 
 func GetDeployerBaseUrl() string {
