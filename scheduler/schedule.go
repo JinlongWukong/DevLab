@@ -12,7 +12,7 @@ var allocationRatio = 2
 var scheduleAlgorithm = "random"
 
 //initialize configuration
-func ReadConfig() {
+func Initialize() {
 	if config.Schedule.AllocationRatio > 0 {
 		allocationRatio = config.Schedule.AllocationRatio
 	}

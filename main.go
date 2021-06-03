@@ -15,6 +15,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/deployer"
 	"github.com/JinlongWukong/CloudLab/lifecycle"
 	"github.com/JinlongWukong/CloudLab/manager"
+	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/notification"
 	"github.com/JinlongWukong/CloudLab/scheduler"
 	"github.com/JinlongWukong/CloudLab/supervisor"
@@ -31,9 +32,12 @@ func main() {
 	if err := config.LoadConfig(); err != nil {
 		log.Fatalf("configuration file loadling failed %v, program exited", err)
 	}
-	deployer.ReadConfig()
-	scheduler.ReadConfig()
-	workflow.ReadConfig()
+
+	//module initialation
+	deployer.Initialize()
+	scheduler.Initialize()
+	workflow.Initialize()
+	node.Initialize()
 
 	//Setup all managers
 	managers := make([]manager.Manager, 0)

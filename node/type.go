@@ -33,6 +33,7 @@ type Node struct {
 	Role        string         `json:"role"`
 	IpAddress   string         `json:"address"`
 	OSType      string         `json:"os"`
+	Subnet      string         `json:"subnet"`
 	CPU         int32          `json:"cpu"`
 	Memory      int32          `json:"memory"`
 	Disk        int32          `json:"disk"`

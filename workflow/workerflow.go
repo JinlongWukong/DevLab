@@ -21,12 +21,13 @@ import (
 )
 
 var scheduleLock sync.Mutex
+var newNodeLock sync.Mutex
 
 // VM live status retry times and interval(unit seconds) setting, 2mins
 var vmStatusRetry, vmStatusInterval = 20, 6
 
 // initialize configuration
-func ReadConfig() {
+func Initialize() {
 	if config.Workflow.VmStatusRetry > 0 {
 		vmStatusRetry = config.Workflow.VmStatusRetry
 	}
@@ -365,15 +366,16 @@ func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int, p
 // this is a async call, will update node status after get reponse from remote deployer
 func AddNode(nodeRequest node.NodeRequest) error {
 
-	myNode := node.NewNode(nodeRequest)
-
 	_, exists := node.NodeDB.Get(nodeRequest.Name)
 	if exists == true {
 		return fmt.Errorf("node %v already added", nodeRequest.Name)
-	} else {
-		node.NodeDB.Set(myNode.Name, myNode)
-		db.NotifyToDB("node", myNode.Name, "create")
 	}
+
+	newNodeLock.Lock()
+	myNode := node.NewNode(nodeRequest)
+	node.NodeDB.Set(myNode.Name, myNode)
+	newNodeLock.Unlock()
+	db.NotifyToDB("node", myNode.Name, "create")
 
 	go func() {
 		changeTaskCount(1)

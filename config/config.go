@@ -58,6 +58,11 @@ type SupervisorConfig struct {
 	NodeLimitDisk int
 }
 
+type NodeConfig struct {
+	//Node subnet range
+	SubnetRange string
+}
+
 var DB DatabaseConfig
 var Workflow WorkflowConfig
 var Schedule ScheduleConfig
@@ -66,6 +71,7 @@ var LifeCycle LifeCycleConfig
 var Deployer DeployerConfig
 var ApiServer ApiServerConfig
 var Supervisor SupervisorConfig
+var Node NodeConfig
 
 func LoadConfig() error {
 
@@ -121,6 +127,12 @@ func LoadConfig() error {
 	err = cfg.Section("Supervisor").MapTo(&Supervisor)
 	if err != nil {
 		log.Printf("Fail to parse section %v: %v", "Supervisor", err)
+		return err
+	}
+
+	err = cfg.Section("Node").MapTo(&Node)
+	if err != nil {
+		log.Printf("Fail to parse section %v: %v", "Node", err)
 		return err
 	}
 

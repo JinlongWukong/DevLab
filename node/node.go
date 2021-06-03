@@ -81,6 +81,12 @@ func NewNode(nodeRequest NodeRequest) *Node {
 		return nil
 	}
 
+	subnet := allocateSubnet()
+	if subnet == "" {
+		log.Println("Error, no subnet allocated")
+		return nil
+	}
+
 	newNode := Node{
 		Name:      nodeRequest.Name,
 		IpAddress: nodeRequest.IpAddress,
@@ -90,6 +96,7 @@ func NewNode(nodeRequest NodeRequest) *Node {
 		Status:    NodeStatusInit,
 		State:     NodeStateEnable,
 		PortMap:   make(map[int]string),
+		Subnet:    subnet,
 	}
 
 	return &newNode
