@@ -50,7 +50,7 @@ type VirtualMachine struct {
 	Lifetime     time.Duration  `json:"lifeTime"`
 	PortMap      map[int]string `json:"portMap"`
 	RootPass     string         `json:"rootPass"`
-	sync.RWMutex `json:"-"`
+	sync.RWMutex `json:"-" gob:"-"`
 }
 
 type VmRequest struct {

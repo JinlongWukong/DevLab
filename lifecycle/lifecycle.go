@@ -85,7 +85,7 @@ func (l LifeCycle) Control(ctx context.Context, wg *sync.WaitGroup) {
 							ac.Value.SendNotification(fmt.Sprintf("Warning, Your VM %v still have %v life left", vm.Name, vm.Lifetime))
 						}
 					}
-					db.NotifyToDB("account", ac.Value.Name, "update")
+					db.NotifyToSave()
 				}
 			}
 		}

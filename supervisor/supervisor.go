@@ -17,7 +17,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/utils"
 )
 
-var nodeCheckInterval = "10s"
+var nodeCheckInterval = "180s"
 var nodeLimitCPU = 0.8
 var nodeMinimumMem = 2048
 var nodeLimitDisk = 80
@@ -99,7 +99,7 @@ func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 							log.Printf("Remote http call to check node %v usage failed with error -> %v", n.Name, err)
 							//if err occur, set node as unhealth status
 							n.SetStatus(node.NodeStatusUnhealth)
-							db.NotifyToDB("node", n.Name, "update")
+							db.NotifyToSave()
 							break
 						} else {
 							log.Printf("Remote http call to check node %v successfully", n.Name)
@@ -116,7 +116,7 @@ func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 							} else {
 								n.SetStatus(node.NodeStatusReady)
 							}
-							db.NotifyToDB("node", n.Name, "update")
+							db.NotifyToSave()
 						}
 					}
 				}

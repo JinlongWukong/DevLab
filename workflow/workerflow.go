@@ -88,11 +88,12 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 		if newVm != nil {
 			myAccount.AppendVM(newVm)
 			newVmGroup = append(newVmGroup, newVm)
-			db.NotifyToDB("account", myAccount.Name, "create")
 		} else {
 			return fmt.Errorf("Input paramters not valid")
 		}
 	}
+
+	db.NotifyToSave()
 
 	go func() {
 		changeTaskCount(1)
@@ -114,33 +115,33 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 		selectNode.ChangeCpuUsed(reqCpu)
 		selectNode.ChangeMemUsed(reqMem)
 		selectNode.ChangeDiskUsed(reqDisk)
-		db.NotifyToDB("node", selectNode.Name, "update")
 		scheduleLock.Unlock()
 
 		for _, newVm := range newVmGroup {
 			newVm.Node = selectNode.Name
 			newVm.Status = vm.VmStatusScheduled
 		}
-		db.NotifyToDB("account", myAccount.Name, "update")
+
+		db.NotifyToSave()
 
 		//Create VMs in parallel
 		var wg sync.WaitGroup
 		for _, newVm := range newVmGroup {
 			wg.Add(1)
 			go func(myVm *vm.VirtualMachine) {
+
 				defer wg.Done()
 				myVm.Lock()
 				defer myVm.Unlock()
+				defer db.NotifyToSave()
 
 				//task1: VM instantiation
 				log.Printf("VM %v instantiation start", myVm.Name)
 				err := myVm.CreateVirtualMachine()
 				if err == nil {
 					log.Printf("VM %v instantiation success", myVm.Name)
-					db.NotifyToDB("account", myAccount.Name, "update")
 				} else {
 					log.Printf("VM %v instantiation fail", myVm.Name)
-					db.NotifyToDB("account", myAccount.Name, "update")
 					return
 				}
 
@@ -150,7 +151,6 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 					if err := myVm.GetVirtualMachineLiveStatus(); err == nil {
 						if myVm.Status != "" && myVm.IpAddress != "" {
 							log.Printf("Get VM -> %v info: status -> %v, address -> %v", myVm.Name, myVm.Status, myVm.IpAddress)
-							db.NotifyToDB("account", myAccount.Name, "update")
 							break
 						}
 					}
@@ -172,8 +172,6 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 				} else {
 					myVm.PortMap[22] = strconv.Itoa(sshPort) + ":tcp"
 					log.Printf("port -> %v reserved on node for vm %v", sshPort, myVm.Name)
-					db.NotifyToDB("account", myAccount.Name, "update")
-					db.NotifyToDB("node", selectNode.Name, "update")
 				}
 				err = myVm.ActionDnatRule([]int{22}, "present")
 				if err != nil {
@@ -203,6 +201,8 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 	myVM.Lock()
 	defer myVM.Unlock()
 
+	defer db.NotifyToSave()
+
 	var action_err error
 	switch action {
 	case "start":
@@ -231,13 +231,11 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 				return err
 			} else {
 				myVM.Status = vm.VmStatusDeleted
-				db.NotifyToDB("account", myAccount.Name, "delete")
 				return nil
 			}
 		}
 
 		myVM.Status = vm.VmStatusDeleting
-		db.NotifyToDB("account", myAccount.Name, "update")
 
 		//Delete VM from node
 		action_err = myVM.DeleteVirtualMachine()
@@ -265,8 +263,6 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 					selectNode.ReleasePort(p)
 				}
 				myVM.PortMap = make(map[int]string)
-				db.NotifyToDB("node", selectNode.Name, "update")
-				db.NotifyToDB("account", myAccount.Name, "update")
 			}
 		}
 
@@ -276,7 +272,6 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			selectNode.ChangeCpuUsed(-myVM.CPU)
 			selectNode.ChangeMemUsed(-myVM.Memory)
 			selectNode.ChangeDiskUsed(-myVM.Disk * 1024)
-			db.NotifyToDB("node", selectNode.Name, "update")
 		}
 
 		//Remove from account
@@ -285,7 +280,6 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			return err
 		} else {
 			myVM.Status = vm.VmStatusDeleted
-			db.NotifyToDB("account", myAccount.Name, "delete")
 		}
 
 		return nil
@@ -299,7 +293,6 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			if err := myVM.GetVirtualMachineLiveStatus(); err != nil {
 				log.Printf("sync up vm -> %v status after action -> %v, failed -> %v", myVM.Name, action, err)
 			}
-			db.NotifyToDB("account", myAccount.Name, "update")
 		}()
 	}
 
@@ -336,10 +329,7 @@ func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int, p
 	myNode := node.GetNodeByName(myVM.Node)
 	newPort := myNode.ReservePort(strings.Split(myVM.IpAddress, "/")[0] + ":" + strconv.Itoa(port))
 
-	defer func() {
-		db.NotifyToDB("account", myAccount.Name, "update")
-		db.NotifyToDB("node", myNode.Name, "update")
-	}()
+	defer db.NotifyToSave()
 
 	if newPort == 0 {
 		msg := fmt.Sprintf("No port reserved on node %v", myNode.Name)
@@ -375,11 +365,12 @@ func AddNode(nodeRequest node.NodeRequest) error {
 	myNode := node.NewNode(nodeRequest)
 	node.NodeDB.Set(myNode.Name, myNode)
 	newNodeLock.Unlock()
-	db.NotifyToDB("node", myNode.Name, "create")
+	db.NotifyToSave()
 
 	go func() {
 		changeTaskCount(1)
 		defer changeTaskCount(-1)
+		defer db.NotifyToSave()
 
 		//Install node
 		payload, _ := json.Marshal(map[string]interface{}{
@@ -399,7 +390,6 @@ func AddNode(nodeRequest node.NodeRequest) error {
 		if err != nil {
 			log.Printf("Install node  %v failed with error -> %v", myNode.Name, err)
 			myNode.SetStatus(node.NodeStatusFailed)
-			db.NotifyToDB("node", myNode.Name, "update")
 			return
 		} else {
 			log.Printf("Install node %v successfully", myNode.Name)
@@ -410,7 +400,6 @@ func AddNode(nodeRequest node.NodeRequest) error {
 			myNode.OSType = nodeInfo.OSType
 			log.Printf("Fetched node %v cpu -> %v, memory -> %v, disk -> %v, os type -> %v", myNode.Name, myNode.CPU, myNode.Memory, myNode.Disk, myNode.OSType)
 			myNode.SetStatus(node.NodeStatusInstalled)
-			db.NotifyToDB("node", myNode.Name, "update")
 		}
 	}()
 
@@ -421,6 +410,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 func ActionNode(nodeRequest node.NodeRequest) error {
 	changeTaskCount(1)
 	defer changeTaskCount(-1)
+	defer db.NotifyToSave()
 
 	myNode, exists := node.NodeDB.Get(nodeRequest.Name)
 	if exists == false {
@@ -431,7 +421,6 @@ func ActionNode(nodeRequest node.NodeRequest) error {
 	case node.NodeActionRemove:
 		//TODO ,check whether vm hosted on node
 		node.NodeDB.Del(nodeRequest.Name)
-		db.NotifyToDB("node", nodeRequest.Name, "delete")
 		log.Printf("node %v removed", nodeRequest.Name)
 	case node.NodeActionReboot:
 		if err := myNode.RebootNode(); err != nil {
@@ -440,11 +429,9 @@ func ActionNode(nodeRequest node.NodeRequest) error {
 		}
 	case node.NodeActionEnable:
 		myNode.SetState(node.NodeStateEnable)
-		db.NotifyToDB("node", nodeRequest.Name, "update")
 		log.Printf("Set node %v state to %v", nodeRequest.Name, node.NodeStateEnable)
 	case node.NodeActionDisable:
 		myNode.SetState(node.NodeStateDisable)
-		db.NotifyToDB("node", nodeRequest.Name, "update")
 		log.Printf("Set node %v state to %v", nodeRequest.Name, node.NodeStateDisable)
 	default:
 		return fmt.Errorf("action %v not supported", nodeRequest.Action)

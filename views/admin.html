@@ -276,10 +276,9 @@ function CreateNodeTable(myNodeList) {
                tabCell.innerHTML = `
                 <form id="actionForm" action="/node" onsubmit="event.preventDefault();return nodeAction(this)">
                    <select class="table" name="action" style="width: 60%">
-                       <option value="reboot">reboot</option>
-                       <option value="remove">remove</option>
                        <option value="enable">enable</option>
                        <option value="disable">disable</option>
+                       <option value="remove">remove</option>
                    </select>
                    <button type="submit" style="border-radius: 8px">Confirm</button>
                   `+ '<input type="hidden" name="name"' + 'value=' + myNodeList[i]["name"] + ' >'

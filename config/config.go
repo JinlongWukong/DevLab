@@ -7,10 +7,10 @@ import (
 )
 
 type DatabaseConfig struct {
-	//database type(off, file, mongo)
-	Database string
-	//database sync up period, only used if database is file
-	DBSyncPeriod int
+	//database sync up period
+	SyncPeriod int
+	//database format(json, gob)
+	Format string
 }
 
 type NotificationConfig struct {

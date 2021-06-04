@@ -15,15 +15,9 @@ import (
 	"github.com/JinlongWukong/CloudLab/utils"
 )
 
-var database = "file"
-var requestChan chan message
+var requestChan = make(chan struct{}, 1)
 var dbSyncPeriod = 5
-
-type message struct {
-	collection string
-	name       string
-	action     string
-}
+var format = "json"
 
 type DB struct {
 }
@@ -32,61 +26,46 @@ var _ manager.Manager = DB{}
 
 //initialize configuration
 func initialize() {
-	if config.DB.Database != "" {
-		database = config.DB.Database
+
+	if config.DB.SyncPeriod > 0 {
+		dbSyncPeriod = config.DB.SyncPeriod
+	}
+	if config.DB.Format != "" {
+		format = config.DB.Format
 	}
 
-	if config.DB.DBSyncPeriod > 0 {
-		dbSyncPeriod = config.DB.DBSyncPeriod
-	}
-
-	//Init chan size
-	//use unbuffered channel for file db
-	//use buffered channel for mongo db
-	if database == "file" {
-		requestChan = make(chan message)
-	} else if database == "mongo" {
-		requestChan = make(chan message, 1000)
-	} else {
-		log.Println("database not specified, use in-memory map")
-	}
 }
 
 //Send notfication to DB chan to sync up
-func NotifyToDB(collection string, name string, action string) {
-	if database == "file" {
-		log.Println("Saving to file db")
-		//non-blocking sends, keep only one message received
-		select {
-		case requestChan <- message{collection, name, action}:
-		default:
-		}
-	} else if database == "mongo" {
-		log.Println("Saving to mongdo db")
-		requestChan <- message{collection, name, action}
-	} else {
-		return
+func NotifyToSave() {
+
+	log.Println("Saving to file db")
+	//non-blocking sends, keep only one request
+	select {
+	case requestChan <- struct{}{}:
+	default:
 	}
 }
 
 //Sync up map into db
-func SyncToDB(ctx context.Context) {
+func SaveToDB(ctx context.Context) {
 
 	log.Println("Be ready to sync up with db")
-	if database == "file" {
-		period := time.Duration(dbSyncPeriod) * time.Second
-		t := time.NewTimer(period)
-		defer t.Stop()
-		for {
+
+	period := time.Duration(dbSyncPeriod) * time.Second
+	t := time.NewTimer(period)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
 			select {
 			case <-ctx.Done():
 				return
-			case <-t.C:
-				select {
-				case <-ctx.Done():
-					return
-				case <-requestChan:
-					log.Println(time.Now())
+			case <-requestChan:
+				log.Println(time.Now())
+				if format == "json" {
 					err := utils.WriteJsonFile("account.json", account.AccountDB.Map)
 					if err != nil {
 						log.Println(err)
@@ -99,34 +78,35 @@ func SyncToDB(ctx context.Context) {
 					} else {
 						log.Println("Saved to file db node.json")
 					}
+				} else {
+					err := utils.GobStoreToFile("account.db", account.AccountDB.Map)
+					if err != nil {
+						log.Println(err)
+					} else {
+						log.Println("Saved to file db account.db")
+					}
+					err = utils.GobStoreToFile("node.db", node.NodeDB.Map)
+					if err != nil {
+						log.Println(err)
+					} else {
+						log.Println("Saved to file db node.db")
+					}
 				}
-				t.Reset(period)
+
 			}
-		}
-	} else {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case request := <-requestChan:
-				if request.collection == "account" {
-					//TODO
-				} else if request.collection == "node" {
-					//TODO
-				}
-			}
+			t.Reset(period)
 		}
 	}
 }
 
-//Load data from database into map
+//Load data from database
 func LoadFromDB() {
-	if database == "file" {
+	if format == "json" {
 		accountData, err := utils.ReadJsonFile("account.json")
 		if err == nil {
 			json.Unmarshal(accountData, &account.AccountDB.Map)
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
-			log.Println("account.json db file not found, no content will be load")
+			log.Println("account.json db file not found, no content will be loaded")
 		} else {
 			log.Fatalf("account.json DB file load failed with error: %v", err)
 		}
@@ -135,14 +115,32 @@ func LoadFromDB() {
 		if err == nil {
 			json.Unmarshal(nodeData, &node.NodeDB.Map)
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
-			log.Println("node.json db file not found, no content will be load")
+			log.Println("node.json db file not found, no content will be loaded")
 		} else {
 			log.Fatalf("node.json DB file load failed with error: %v", err)
+		}
+	} else {
+		err := utils.GobLoadFromFile("account.db", &account.AccountDB.Map)
+		if err == nil {
+			log.Println("account.db DB file loaded")
+		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
+			log.Println("account.db db file not found, no content will be loaded")
+		} else {
+			log.Fatalf("account.db DB file load failed with error: %v", err)
+		}
+
+		err = utils.GobLoadFromFile("node.db", &node.NodeDB.Map)
+		if err == nil {
+			log.Println("node.db DB file loaded")
+		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
+			log.Println("node.db db file not found, no content will be loaded")
+		} else {
+			log.Fatalf("node.db DB file load failed with error: %v", err)
 		}
 	}
 }
 
-//DB manager
+//DB controller
 func (db DB) Control(ctx context.Context, wg *sync.WaitGroup) {
 
 	log.Println("DB manager started")
@@ -153,15 +151,10 @@ func (db DB) Control(ctx context.Context, wg *sync.WaitGroup) {
 
 	initialize()
 
-	if database != "file" && database != "mongo" {
-		log.Println("no database used, manager exited")
-		return
-	}
-
 	//Load data from db into map
 	LoadFromDB()
 
 	//for Loop to sync up db
-	SyncToDB(ctx)
+	SaveToDB(ctx)
 
 }
