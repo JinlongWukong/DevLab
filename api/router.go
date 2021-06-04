@@ -10,7 +10,8 @@ func setupRouter() *gin.Engine {
 	r := gin.Default()
 	r.Use(cors.Default())
 
-	r.LoadHTMLGlob("views/*")
+	r.Static("/css", "views/css")
+	r.LoadHTMLGlob("views/*.html")
 	//readness/liveness check point
 	r.GET("/ping", func(c *gin.Context) {
 		c.Writer.WriteString("pong")
