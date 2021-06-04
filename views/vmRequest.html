@@ -104,55 +104,61 @@ tr:hover {background-color:#f5f5f5;}
     </style>
 </head>
 
-<div class="container">
-<form action="/vm" method="POST">
-    <p>VM Selector: </p>
-
-    <label for="account">Account ID: </label>
-    <input type="text" id="account" name="account" placeholder="Your cecid.." required> <br>
-
-    <label for="hostname">Hostname: </label>
-    <input type="text" id="hostname" name="hostname" placeholder="optional"> <br>
-
-    <label for="type">Select OS type: </label>
-    <select name="type">
-        <option value="centos7">Centos7</option>
-        <option value="ubuntu18">Ubuntu18</option>
-    </select>
-    <br>
-
-    <label for="flavor">Select VM Size: </label>
-    <select name="flavor">
-        <option value="small">small</option>
-        <option value="middle">middle</option>
-        <option value="large">large</option>
-    </select>
-    <br>
-
-    <label for="numbers">Select numbers of VM: </label>
-    <select name="numbers">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-    </select>
-
-    <br>
-    <label >Select VM duration: </label>
-    <input type="radio" id="one-day" name="duration" value="1", checked="checked">
-    <label for="one-day">one day</label>
-    <input type="radio" id="one-week" name="duration" value="7">
-    <label for="one-week">one week</label>
-    <input type="radio" id="two-week" name="duration" value="14">
-    <label for="two-week">two week</label><br>
-    <input type="radio" id="forever" name="duration" value="365">
-    <label for="forever">forever</label><br>
-    <br>
-
-    <input type="submit" />
-    <br>
-</form>
-</div>
 <body>
+    <nav>
+        <a href="/">Control Panel</a>
+        <a href="/admin">Admin Panel</a>
+        <a href="https://github.com/JinlongWukong/CloudLab#readme">Help</a>
+    </nav>
+    
+    <div class="vmForm">
+    <form action="/vm" method="POST">
+        <p>VM Selector: </p>
+    
+        <label for="account">Account ID: </label>
+        <input type="text" id="account" name="account" placeholder="Your cecid.." required> <br>
+    
+        <label for="hostname">Hostname: </label>
+        <input type="text" id="hostname" name="hostname" placeholder="optional"> <br>
+    
+        <label for="type">Select OS type: </label>
+        <select name="type">
+            <option value="centos7">Centos7</option>
+            <option value="ubuntu18">Ubuntu18</option>
+        </select>
+        <br>
+    
+        <label for="flavor">Select VM Size: </label>
+        <select name="flavor">
+            <option value="small">small</option>
+            <option value="middle">middle</option>
+            <option value="large">large</option>
+        </select>
+        <br>
+    
+        <label for="numbers">Select numbers of VM: </label>
+        <select name="numbers">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+        </select>
+    
+        <br>
+        <label >Select VM duration: </label>
+        <input type="radio" id="one-day" name="duration" value="1", checked="checked">
+        <label for="one-day">one day</label>
+        <input type="radio" id="one-week" name="duration" value="7">
+        <label for="one-week">one week</label>
+        <input type="radio" id="two-week" name="duration" value="14">
+        <label for="two-week">two week</label><br>
+        <input type="radio" id="forever" name="duration" value="365">
+        <label for="forever">forever</label><br>
+        <br>
+    
+        <input type="submit" />
+        <br>
+    </form>
+    </div>
 
     <br>
     <input type="button" class="button" id = "vmListGenerate" value="VM Info" />
