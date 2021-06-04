@@ -16,7 +16,7 @@ label {
   display: inline-block;
 }
 
-label[for="one-day"], label[for="one-week"], label[for="two-week"] {
+label[for="one-day"], label[for="one-week"], label[for="two-week"], label[for="forever"] {
   width: 5%;
 }
 
@@ -144,6 +144,8 @@ tr:hover {background-color:#f5f5f5;}
     <label for="one-week">one week</label>
     <input type="radio" id="two-week" name="duration" value="14">
     <label for="two-week">two week</label><br>
+    <input type="radio" id="forever" name="duration" value="365">
+    <label for="forever">forever</label><br>
     <br>
 
     <input type="submit" />
@@ -277,11 +279,21 @@ function vmAction(element) {
                alert(data.status); // show response
            }
          }).always(function() {
-          $.unblockUI();
+           $.unblockUI();
+           btnAutoClick();
          });
 }
 
+function btnAutoClick() {
+    var account = document.getElementById("account").value;
+    if (account != "") {
+        var vmList = document.getElementById("vmListGenerate");
+        vmList.click();
+    }
+}
+
 $(document).ready(function(){
+  window.onload = btnAutoClick;
   $("#vmListGenerate").click(function(){ 
         var account = document.getElementById("account").value;
         if (account == "") {

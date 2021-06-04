@@ -33,6 +33,7 @@ type WorkflowConfig struct {
 type LifeCycleConfig struct {
 	CheckInterval string
 	Enable        string
+	Forever       int64
 }
 
 type DeployerConfig struct {

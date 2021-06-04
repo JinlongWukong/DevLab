@@ -18,6 +18,9 @@ import (
 var checkInterval = "1h"
 var enabled = false
 
+//31536000000000000 = 1 years, if >= 1 years means forever
+var forever = time.Duration(31536000000000000)
+
 type LifeCycle struct {
 }
 
@@ -31,6 +34,9 @@ func initialize() {
 	}
 	if config.LifeCycle.Enable == "true" {
 		enabled = true
+	}
+	if config.LifeCycle.Forever > 0 {
+		forever = time.Duration(config.LifeCycle.Forever)
 	}
 }
 
@@ -64,6 +70,10 @@ func (l LifeCycle) Control(ctx context.Context, wg *sync.WaitGroup) {
 						vmSlice = append(vmSlice, item)
 					}
 					for _, vm := range vmSlice {
+						//whether forever
+						if vm.Lifetime >= forever {
+							continue
+						}
 						vm.Lifetime = vm.Lifetime - period
 						log.Printf("Accout %v vm %v lifetime is %v", ac.Value.Name, vm.Name, vm.Lifetime)
 						if vm.Lifetime <= 0 {
