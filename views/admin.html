@@ -271,6 +271,8 @@ function CreateNodeTable(myNodeList) {
                     result = result + key + "->" + value + "<br>"
                 }
                 tabCell.innerHTML = result
+            } else if (col[j] == "passwd"){
+                tabCell.innerHTML = "******"
             } else if (col[j] == "action"){
                tabCell.innerHTML = `
                 <form id="actionForm" action="/node" onsubmit="event.preventDefault();return nodeAction(this)">
