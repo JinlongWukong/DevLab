@@ -271,7 +271,18 @@ function CreateNodeTable(myNodeList) {
                 }
                 tabCell.innerHTML = result
             } else if (col[j] == "passwd"){
-                tabCell.innerHTML = "******"
+                tabCell.innerHTML = "******" 
+            } else if (col[j] == "status"){
+                tabCell.innerHTML =  myNodeList[i][col[j]];
+                if (myNodeList[i][col[j]] == "ready") {
+                    tabCell.style.background = "lightgreen"
+                } else if (myNodeList[i][col[j]] == "overload") {
+                    tabCell.style.background = "orange"
+                } else if (myNodeList[i][col[j]] == "unhealth") {
+                    tabCell.style.background = "red"
+                } else if (myNodeList[i][col[j]] == "failed") {
+                    tabCell.style.background = "brown"
+                }
             } else if (col[j] == "action"){
                tabCell.innerHTML = `
                 <form id="actionForm" action="/node" onsubmit="event.preventDefault();return nodeAction(this)">
