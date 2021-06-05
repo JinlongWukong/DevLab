@@ -330,8 +330,13 @@ function nodeAction(element) {
          });
 }
 
+function btnAutoClick() {
+    var vmList = document.getElementById("nodeListGenerate");
+    vmList.click();
+}
 
 $(document).ready(function(){
+    window.onload = btnAutoClick;
     $("#nodeListGenerate").click(function(){
         var baseurl = location.origin;
         $.ajax({
