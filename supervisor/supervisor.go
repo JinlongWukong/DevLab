@@ -79,7 +79,7 @@ func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 					//if node status not installed or failed, skip
 					nodeStatus := n.GetStatus()
 					if nodeStatus == node.NodeStatusInit || nodeStatus == node.NodeStatusFailed {
-						break
+						continue
 					}
 
 					select {
@@ -97,10 +97,11 @@ func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 						err, reponse_data := utils.HttpGetJsonData(url, query)
 						if err != nil {
 							log.Printf("Remote http call to check node %v usage failed with error -> %v", n.Name, err)
-							//if err occur, set node as unhealth status
-							n.SetStatus(node.NodeStatusUnhealth)
-							db.NotifyToSave()
-							break
+							if strings.Contains(err.Error(), "unexpected status-code returned") {
+								//if err occur, set node as unhealth status
+								n.SetStatus(node.NodeStatusUnhealth)
+								db.NotifyToSave()
+							}
 						} else {
 							log.Printf("Remote http call to check node %v successfully", n.Name)
 							if err := json.Unmarshal(reponse_data, &nodeUsage); err != nil {
