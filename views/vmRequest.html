@@ -146,17 +146,16 @@ tr:hover {background-color:#f5f5f5;}
         </select>
     
         <br>
-        <label >Select VM duration: </label>
-        <input type="radio" id="one-day" name="duration" value="1", checked="checked">
-        <label for="one-day">one day</label>
-        <input type="radio" id="one-week" name="duration" value="7">
-        <label for="one-week">one week</label>
-        <input type="radio" id="two-week" name="duration" value="14">
-        <label for="two-week">two week</label><br>
-        <input type="radio" id="forever" name="duration" value="365">
-        <label for="forever">forever</label><br>
-        <br>
-    
+        <label for="duration">Specify vm lifecycle: </label>
+        <select name="duration">
+            <option value="1">one day</option>
+            <option value="7">one week</option>
+            <option value="14">two weeks</option>
+            <option value="30">one month</option>
+            <option value="180">three months</option>
+            <option value="365">forever</option>
+        </select>
+        <br>    
         <input type="submit" />
         <br>
     </form>
