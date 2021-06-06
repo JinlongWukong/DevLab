@@ -64,10 +64,11 @@ func VmRequestGetVmHandler(c *gin.Context) {
 func VmRequestCreateVmHandler(c *gin.Context) {
 	var vmRequest vm.VmRequest
 	c.Bind(&vmRequest)
-	log.Println(vmRequest.Account, vmRequest.Type, vmRequest.Number, vmRequest.Duration)
+	log.Println(vmRequest.Account, vmRequest.Type, vmRequest.Flavor, vmRequest.Number, vmRequest.Duration)
 
 	if vmRequest.Account == "" ||
 		vmRequest.Type == "" ||
+		vmRequest.Flavor == "" ||
 		vmRequest.Number < 1 {
 		c.JSON(http.StatusBadRequest, "input parameters error")
 		return
