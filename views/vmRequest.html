@@ -30,7 +30,7 @@ select.table {
   resize: vertical;
 }
 
-input[type=text], select {
+input[type=text], input[type=password], select {
   width: 10%;
   margin-top: 6px;
   padding: 4px;
@@ -115,14 +115,17 @@ tr:hover {background-color:#f5f5f5;}
     
     <div class="vmForm">
     <form action="/vm" method="POST">
-        <p>VM Selector: </p>
-    
+        <p>New VM input: </p>
+
         <label for="account">Account ID: </label>
         <input type="text" id="account" name="account" placeholder="Your cecid.." required> <br>
     
         <label for="hostname">Hostname: </label>
         <input type="text" id="hostname" name="hostname" placeholder="optional"> <br>
-    
+
+        <label for="rootPass">root passwd: </label>
+        <input type="password" id="rootPass" name="rootPass" placeholder="optional"> <br>
+
         <label for="type">Select OS type: </label>
         <select name="type">
             <option value="centos7">Centos7</option>
@@ -155,7 +158,7 @@ tr:hover {background-color:#f5f5f5;}
             <option value="180">three months</option>
             <option value="365">forever</option>
         </select>
-        <br>    
+        <br><br>
         <input type="submit" />
         <br>
     </form>

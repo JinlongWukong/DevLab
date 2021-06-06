@@ -56,6 +56,7 @@ type VirtualMachine struct {
 type VmRequest struct {
 	Account  string `form:"account" json:"account"`
 	Hostname string `form:"hostname" json:"hostname"`
+	RootPass string `form:"rootPass" json:"rootPass"`
 	Type     string `form:"type" json:"type"`
 	Flavor   string `form:"flavor" json:"flavor"`
 	CPU      int32  `form:"cpu" json:"cpu"`

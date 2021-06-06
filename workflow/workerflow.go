@@ -80,6 +80,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 			vmRequest.Flavor,
 			vmRequest.Type,
 			hostname,
+			vmRequest.RootPass,
 			vmRequest.CPU,
 			vmRequest.Memory,
 			vmRequest.Disk,

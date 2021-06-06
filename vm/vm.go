@@ -15,7 +15,7 @@ import (
 )
 
 //check parameters, return struct pointer if ok, otherwise return nil
-func NewVirtualMachine(name, flavor, vmType, hostname string, cpu, mem, disk int32, Duration time.Duration) *VirtualMachine {
+func NewVirtualMachine(name, flavor, vmType, hostname, rootPass string, cpu, mem, disk int32, Duration time.Duration) *VirtualMachine {
 
 	//There is a mapping bt flavor and cpu/memory
 	if flavor != "" {
@@ -43,7 +43,9 @@ func NewVirtualMachine(name, flavor, vmType, hostname string, cpu, mem, disk int
 		Pass: utils.RandomString(8),
 	}
 
-	rootPass := utils.RandomString(8)
+	if rootPass == "" {
+		rootPass = utils.RandomString(8)
+	}
 
 	ipadd, status, node := "unknow", VmStatusInit, "unkonw"
 	return &VirtualMachine{name, hostname, cpu, mem, disk, ipadd, status, vnc, vmType, node, Duration, map[int]string{}, rootPass, sync.RWMutex{}}
