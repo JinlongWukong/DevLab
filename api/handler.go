@@ -87,7 +87,7 @@ func VmRequestCreateVmHandler(c *gin.Context) {
 	}
 
 	if err := workflow.CreateVMs(myaccount, vmRequest); err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -118,7 +118,7 @@ func VmRequestVmActionHandler(c *gin.Context) {
 				return
 			}
 			if action_err != nil {
-				c.JSON(http.StatusInternalServerError, err)
+				c.JSON(http.StatusInternalServerError, err.Error())
 				return
 			}
 		} else {
@@ -150,7 +150,7 @@ func VmRequestVmPortExposeHandler(c *gin.Context) {
 			var action_err error
 			action_err = workflow.ExposePort(myaccount, myVM, vmRequestPortExpose.Port, vmRequestPortExpose.Protocol)
 			if action_err != nil {
-				c.JSON(http.StatusInternalServerError, err)
+				c.JSON(http.StatusInternalServerError, err.Error())
 				return
 			}
 		} else {
@@ -222,7 +222,7 @@ func NodeRequestActionNodeHandler(c *gin.Context) {
 		if exists == true {
 			if err := workflow.ActionNode(nodeRequest); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": err,
+					"error": err.Error(),
 				})
 			} else {
 				c.JSON(http.StatusOK, "")
