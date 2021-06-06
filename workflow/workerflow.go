@@ -420,7 +420,9 @@ func ActionNode(nodeRequest node.NodeRequest) error {
 
 	switch nodeRequest.Action {
 	case node.NodeActionRemove:
-		//TODO ,check whether vm hosted on node
+		if myNode.GetCpuUsed() > 0 {
+			return fmt.Errorf("Still have vm hosted on node %v, can't be removed", myNode.Name)
+		}
 		node.NodeDB.Del(nodeRequest.Name)
 		log.Printf("node %v removed", nodeRequest.Name)
 	case node.NodeActionReboot:
