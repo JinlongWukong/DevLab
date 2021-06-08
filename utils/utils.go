@@ -120,3 +120,16 @@ func RandomString(n int) string {
 	}
 	return string(s)
 }
+
+// Equal tells whether a and b contain the same elements.
+func EqualStringSlice(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}

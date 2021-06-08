@@ -15,6 +15,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/deployer"
 	"github.com/JinlongWukong/CloudLab/lifecycle"
 	"github.com/JinlongWukong/CloudLab/manager"
+	"github.com/JinlongWukong/CloudLab/network"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/notification"
 	"github.com/JinlongWukong/CloudLab/scheduler"
@@ -49,6 +50,8 @@ func main() {
 	m = lifecycle.LifeCycle{}
 	managers = append(managers, m)
 	m = supervisor.Supervisor{}
+	managers = append(managers, m)
+	m = network.NetworkController{}
 	managers = append(managers, m)
 	//control loop
 	for _, m := range managers {

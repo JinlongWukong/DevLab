@@ -64,6 +64,11 @@ type NodeConfig struct {
 	SubnetRange string
 }
 
+type NetworkConfig struct {
+	CheckInterval string
+	NetworkType   string
+}
+
 var DB DatabaseConfig
 var Workflow WorkflowConfig
 var Schedule ScheduleConfig
@@ -73,6 +78,7 @@ var Deployer DeployerConfig
 var ApiServer ApiServerConfig
 var Supervisor SupervisorConfig
 var Node NodeConfig
+var Network NetworkConfig
 
 func LoadConfig() error {
 
@@ -134,6 +140,12 @@ func LoadConfig() error {
 	err = cfg.Section("Node").MapTo(&Node)
 	if err != nil {
 		log.Printf("Fail to parse section %v: %v", "Node", err)
+		return err
+	}
+
+	err = cfg.Section("Network").MapTo(&Network)
+	if err != nil {
+		log.Printf("Fail to parse section %v: %v", "Network", err)
 		return err
 	}
 
