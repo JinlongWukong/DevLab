@@ -8,10 +8,6 @@
   box-sizing: border-box;
 }
 
-body {
-    background-color: lightyellow;
-}
-
 label {
   width: 12%;
   display: inline-block;
@@ -19,15 +15,6 @@ label {
 
 label[for="one-day"], label[for="one-week"], label[for="two-week"], label[for="forever"] {
   width: 5%;
-}
-
-select.table {
-  width: 25%;
-  margin-top: 6px;
-  padding: 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  resize: vertical;
 }
 
 input[type=text], input[type=password], select {
@@ -60,56 +47,16 @@ input[type=submit] {
 input[type=submit]:hover {
   background-color: #45a049;
 }
-
-.button {
-  display: inline-block;
-  padding: 12px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  text-align: center;
-  text-decoration: none;
-  outline: none;
-  color: #fff;
-  background-color: #4CAF50;
-  border: none;
-  border-radius: 4px;
-  box-shadow: 0 9px #999;
-}
-
-.button:hover {background-color: #3e8e41}
-
-.button:active {
-  background-color: #3e8e41;
-  box-shadow: 0 5px #666;
-  transform: translateY(4px);
-}
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-th {
-  padding: 8px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-  background-color: #4CAF50;
-  color: white;
-}
-td {
-  padding: 8px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-tr:nth-child(even) {background-color: #f2f2f2;}
-tr:hover {background-color:#f5f5f5;}
-
     </style>
 </head>
 
 <body>
     <nav>
-        <a href="/">Control Panel</a>
-        <a href="/admin">Admin Panel</a>
+        <a href="/">Home</a>
+        <a href="/vm-request">Virtual Machine</a>
+        <a href="/k8s">Kubernetes</a>
+        <a href="/container">SaaS</a>
+        <a href="/admin">Administration</a>
         <a href="https://github.com/JinlongWukong/CloudLab#readme">Help</a>
     </nav>
     

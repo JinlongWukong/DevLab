@@ -11,6 +11,7 @@ func setupRouter() *gin.Engine {
 	r.Use(cors.Default())
 
 	r.Static("/css", "views/css")
+	r.Static("/img", "views/image")
 	r.LoadHTMLGlob("views/*.html")
 	//readness/liveness check point
 	r.GET("/ping", func(c *gin.Context) {

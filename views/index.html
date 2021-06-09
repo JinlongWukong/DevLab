@@ -4,54 +4,13 @@
     <title>CloudLab</title>
     <link rel="stylesheet" type="text/css" href="css/common.css">
     <style>
-.IaaS {
-    width: 50%;
-    height: 300px;
-    float: left;
-    padding: 20px;
-    border: 2px none;
-    display: grid;
-    background-color: none;
-}
 
-.PaaS {
-    margin-top: 5px;
-    width: 50%;
-    height: 300px;
-    float: left;
-    padding: 20px;
-    border: 2px none;
-    display: grid;
-    background-color: none;
-}
-
-.SaaS {
-    width: 44%;
-    float: right;
-    height: 650px;
-    padding: 20px;
-    border: 2px none;
-    display: grid;
-    background-color: none;
-}
-
-button {
-    width: 45%;
-    height: 50px;
-    background-color: green;
-    color: white;
-    font-size: 20px;
-    text-align: center;
-    display: inline-block;
-    margin: auto;
-    opacity: 0.6;
-    transition: 0.3s;
-    border-radius: 28px;
-}
-button:hover {opacity: 1}
-
-body {
-    background-color: lightyellow;
+.center {
+  display: block;
+  margin-top: 8%;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
 }
 
     </style>
@@ -62,26 +21,14 @@ body {
 <div class="first-container">
 
     <nav>
-        <a href="/">Control Panel</a>
-        <a href="/admin">Admin Panel</a>
+        <a href="/">Home</a>
+        <a href="/vm-request">Virtual Machine</a>
+        <a href="/k8s">Kubernetes</a>
+        <a href="/container">SaaS</a>
+        <a href="/admin">Administration</a>
         <a href="https://github.com/JinlongWukong/CloudLab#readme">Help</a>
     </nav>
 
-<div class=IaaS>
-<button onclick="document.location='/vm-request'">Create VM</button>
-</div>
-
-<div class=SaaS>
-<button onclick="document.location='/container-request'">Create NSO</button>
-<button onclick="document.location='/container-request'">Create redis</button>
-<button onclick="document.location='/container-request'">Create kafka</button>
-<button onclick="document.location='/container-request'">Create mongodb</button>
-<button onclick="document.location='/container-request'">Create jenkins</button>
-</div>
-
-<div class=PaaS>
-<button onclick="document.location='/k8s-request'">Create K8S</button>
-</div>
-
+    <img src="img/cloudlab.png" alt="artitecture" class="center">
 </div>
 </body>
