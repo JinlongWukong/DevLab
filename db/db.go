@@ -105,7 +105,8 @@ func LoadFromDB() {
 		accountData, err := utils.ReadJsonFile(".db/account.json")
 		if err == nil {
 			json.Unmarshal(accountData, &account.AccountDB.Map)
-		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
+		} else if strings.Contains(err.Error(), "The system cannot find the file specified") ||
+			strings.Contains(err.Error(), "no such file or directory") {
 			log.Println("account.json db file not found, no content will be loaded")
 		} else {
 			log.Fatalf("account.json DB file load failed with error: %v", err)
@@ -114,7 +115,8 @@ func LoadFromDB() {
 		nodeData, err := utils.ReadJsonFile(".db/node.json")
 		if err == nil {
 			json.Unmarshal(nodeData, &node.NodeDB.Map)
-		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
+		} else if strings.Contains(err.Error(), "The system cannot find the file specified") ||
+			strings.Contains(err.Error(), "no such file or directory") {
 			log.Println("node.json db file not found, no content will be loaded")
 		} else {
 			log.Fatalf("node.json DB file load failed with error: %v", err)
