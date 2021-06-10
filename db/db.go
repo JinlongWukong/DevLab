@@ -66,26 +66,26 @@ func SaveToDB(ctx context.Context) {
 			case <-requestChan:
 				log.Println(time.Now())
 				if format == "json" {
-					err := utils.WriteJsonFile("account.json", account.AccountDB.Map)
+					err := utils.WriteJsonFile(".db/account.json", account.AccountDB.Map)
 					if err != nil {
 						log.Println(err)
 					} else {
 						log.Println("Saved to file db account.json")
 					}
-					err = utils.WriteJsonFile("node.json", node.NodeDB.Map)
+					err = utils.WriteJsonFile(".db/node.json", node.NodeDB.Map)
 					if err != nil {
 						log.Println(err)
 					} else {
 						log.Println("Saved to file db node.json")
 					}
 				} else {
-					err := utils.GobStoreToFile("account.db", account.AccountDB.Map)
+					err := utils.GobStoreToFile(".db/account.db", account.AccountDB.Map)
 					if err != nil {
 						log.Println(err)
 					} else {
 						log.Println("Saved to file db account.db")
 					}
-					err = utils.GobStoreToFile("node.db", node.NodeDB.Map)
+					err = utils.GobStoreToFile(".db/node.db", node.NodeDB.Map)
 					if err != nil {
 						log.Println(err)
 					} else {
@@ -102,7 +102,7 @@ func SaveToDB(ctx context.Context) {
 //Load data from database
 func LoadFromDB() {
 	if format == "json" {
-		accountData, err := utils.ReadJsonFile("account.json")
+		accountData, err := utils.ReadJsonFile(".db/account.json")
 		if err == nil {
 			json.Unmarshal(accountData, &account.AccountDB.Map)
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
@@ -111,7 +111,7 @@ func LoadFromDB() {
 			log.Fatalf("account.json DB file load failed with error: %v", err)
 		}
 
-		nodeData, err := utils.ReadJsonFile("node.json")
+		nodeData, err := utils.ReadJsonFile(".db/node.json")
 		if err == nil {
 			json.Unmarshal(nodeData, &node.NodeDB.Map)
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
@@ -120,7 +120,7 @@ func LoadFromDB() {
 			log.Fatalf("node.json DB file load failed with error: %v", err)
 		}
 	} else {
-		err := utils.GobLoadFromFile("account.db", &account.AccountDB.Map)
+		err := utils.GobLoadFromFile(".db/account.db", &account.AccountDB.Map)
 		if err == nil {
 			log.Println("account.db DB file loaded")
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
@@ -129,7 +129,7 @@ func LoadFromDB() {
 			log.Fatalf("account.db DB file load failed with error: %v", err)
 		}
 
-		err = utils.GobLoadFromFile("node.db", &node.NodeDB.Map)
+		err = utils.GobLoadFromFile(".db/node.db", &node.NodeDB.Map)
 		if err == nil {
 			log.Println("node.db DB file loaded")
 		} else if strings.Contains(err.Error(), "The system cannot find the file specified") {
