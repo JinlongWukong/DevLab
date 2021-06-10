@@ -163,7 +163,9 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 					log.Println("VM get status timeout, exited")
 					return
 				}
-				myAccount.SendNotification(fmt.Sprintf("Your VM %v is running, root pass-> %v, vnc pass -> %v ", myVm.Name, myVm.RootPass, myVm.Vnc.Pass))
+				myAccount.SendNotification(fmt.Sprintf("Your VM %v is running \n"+
+					"root passwd -> %v, vnc passwd -> %v \n"+
+					"vnc login -> %v%v", myVm.Name, myVm.RootPass, myVm.Vnc.Pass, selectNode.IpAddress, myVm.Vnc.Port))
 
 				//task3: Setup DNAT
 				sshPort := selectNode.ReservePort(strings.Split(myVm.IpAddress, "/")[0] + ":22")
@@ -183,7 +185,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 				log.Printf("DNAT setup success for vm %v, port mapping -> %v:%v", myVm.Name, 22, myVm.PortMap[22])
 
 				//task4: Send Notification
-				myAccount.SendNotification(fmt.Sprintf("Your VM %v dnat setup done, ssh -> %v -p %v ", myVm.Name, selectNode.IpAddress, sshPort))
+				myAccount.SendNotification(fmt.Sprintf("Your VM %v is ready to login by ssh %v -p %v ", myVm.Name, selectNode.IpAddress, sshPort))
 			}(newVm)
 
 		}
