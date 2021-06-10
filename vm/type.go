@@ -8,6 +8,7 @@ import (
 const (
 	VmStatusInit      = "init"
 	VmStatusScheduled = "scheduled"
+	VmStatusCreating  = "creating"
 	VmStatusRunning   = "running"
 	VmStatusDeleting  = "deleting"
 	VmStatusDeleted   = "deleted"

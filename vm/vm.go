@@ -55,6 +55,7 @@ func NewVirtualMachine(name, flavor, vmType, hostname, rootPass string, cpu, mem
 func (myvm *VirtualMachine) CreateVirtualMachine() error {
 
 	log.Printf("Creating vm %v on Host %v", myvm.Name, myvm.Node)
+	myvm.Status = VmStatusCreating
 
 	node := node.GetNodeByName(myvm.Node)
 
