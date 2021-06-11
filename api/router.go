@@ -17,6 +17,8 @@ func setupRouter() *gin.Engine {
 	r.GET("/ping", func(c *gin.Context) {
 		c.Writer.WriteString("pong")
 	})
+	//metrics
+	r.GET("/internal/metrics", metricsHandler)
 
 	r.GET("/", IndexHandler)
 	r.GET("/admin", AdminHandler)

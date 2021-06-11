@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"runtime"
 
 	"github.com/gin-gonic/gin"
 
@@ -244,4 +245,11 @@ func WorkflowTaskHandler(c *gin.Context) {
 
 	taskNumber := workflow.GetTaskCount()
 	c.Writer.WriteString(fmt.Sprintf("taskNumber %v", taskNumber))
+}
+
+//metrics handler
+func metricsHandler(c *gin.Context) {
+
+	c.Writer.WriteString(fmt.Sprintf("GoroutineNumber %v", runtime.NumGoroutine()))
+
 }
