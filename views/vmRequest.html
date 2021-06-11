@@ -61,7 +61,7 @@ input[type=submit]:hover {
     </nav>
     
     <div class="vmForm">
-    <form action="/vm" method="POST">
+    <form id="vmCreateForm" action="/vm" method="POST">
         <p>New VM input: </p>
 
         <label for="account">Account ID: </label>
@@ -253,6 +253,28 @@ function btnAutoClick() {
 
 $(document).ready(function(){
   window.onload = btnAutoClick;
+
+  $("#vmCreateForm").submit(function(event) {
+    $.blockUI({timeout:   10000});
+    event.preventDefault(); //prevent default action
+    var post_url = $(this).attr("action"); //get form action url
+	var request_method = $(this).attr("method"); //get form GET/POST method
+	var form_data = $(this).serialize(); //Encode form elements for submiss
+    $.ajax({
+           type: "POST",
+           url: post_url,
+           async: false,
+           data: form_data,
+           error: function(data) {
+               console.log(data)
+               alert(data.status); // show response
+           }
+         }).always(function() {
+           $.unblockUI();
+           btnAutoClick();
+    });
+  })
+
   $("#vmListGenerate").click(function(){ 
         var account = document.getElementById("account").value;
         if (account == "") {
