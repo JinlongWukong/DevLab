@@ -67,3 +67,9 @@ select.table {
     border-radius: 4px;
     resize: vertical;
 }
+
+form label.required:after
+{
+    color: red;
+    content: " *";
+}
