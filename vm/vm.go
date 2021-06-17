@@ -39,7 +39,7 @@ func NewVirtualMachine(name, flavor, vmType, hostname, rootPass string, cpu, mem
 	}
 
 	vnc := VncInfo{
-		Port: "unknow",
+		Port: "unknown",
 		Pass: utils.RandomString(8),
 	}
 
@@ -47,7 +47,7 @@ func NewVirtualMachine(name, flavor, vmType, hostname, rootPass string, cpu, mem
 		rootPass = utils.RandomString(8)
 	}
 
-	ipadd, status, node := "unknow", VmStatusInit, "unkonw"
+	ipadd, status, node := "unknown", VmStatusInit, "unknown"
 	return &VirtualMachine{name, hostname, cpu, mem, disk, ipadd, status, vnc, vmType, node, Duration, map[int]string{}, rootPass, sync.RWMutex{}}
 }
 

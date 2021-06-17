@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/JinlongWukong/CloudLab/account"
+	"github.com/JinlongWukong/CloudLab/k8s"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/vm"
 	"github.com/JinlongWukong/CloudLab/workflow"
@@ -82,13 +83,8 @@ func VmRequestCreateVmHandler(c *gin.Context) {
 		account.AccountDB.Set(vmRequest.Account, myaccount)
 	}
 
-	if myaccount.StatusVm == "running" {
-		c.JSON(http.StatusAccepted, "VM creation is ongoing, please try later")
-		return
-	}
-
-	if err := workflow.CreateVMs(myaccount, vmRequest); err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
+	if _, err := workflow.CreateVMs(myaccount, vmRequest); err != nil {
+		c.JSON(http.StatusInternalServerError, "")
 		return
 	}
 
@@ -237,6 +233,80 @@ func NodeRequestActionNodeHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "action not support",
 		})
+	}
+}
+
+// K8s request POST handler, Create K8S
+func K8sRequestCreateHandler(c *gin.Context) {
+	var k8sRequest k8s.K8sRequest
+	c.Bind(&k8sRequest)
+	log.Println(k8sRequest.Account, k8sRequest.Type, k8sRequest.Version,
+		k8sRequest.NumOfContronller, k8sRequest.NumOfWorker, k8sRequest.Duration)
+
+	if k8sRequest.Account == "" ||
+		k8sRequest.Type == "" ||
+		k8sRequest.Version == "" ||
+		k8sRequest.NumOfWorker < 1 ||
+		k8sRequest.NumOfContronller < 1 {
+		c.JSON(http.StatusBadRequest, "input parameters error")
+		return
+	}
+
+	myaccount, exists := account.AccountDB.Get(k8sRequest.Account)
+	if exists == false {
+		// Acount not existed, add new
+		myaccount = &account.Account{Name: k8sRequest.Account, Role: "guest"}
+		account.AccountDB.Set(k8sRequest.Account, myaccount)
+	}
+
+	if err := workflow.CreateK8S(myaccount, k8sRequest); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, "K8S creation request accepted")
+}
+
+// K8s request Delete handler, remove K8S
+func K8sRequestDeleteHandler(c *gin.Context) {
+	var g k8s.K8sRequestAction
+	c.Bind(&g)
+
+	if g.Name == "" {
+		c.JSON(http.StatusBadRequest, "k8s name not specify")
+	} else {
+		if err := workflow.DeleteK8S(g); err == nil {
+			c.JSON(http.StatusOK, "")
+		} else {
+			c.JSON(http.StatusInternalServerError, err.Error())
+		}
+	}
+}
+
+// Get k8s of specify account
+// Args:
+//   k8s Name or empty(means get all k8s)
+// Return:
+//   20x: success with k8s info
+//   40x: fail Account/k8s not found
+func K8sRequestGetHandler(c *gin.Context) {
+	var g k8s.K8sRequestAction
+	c.Bind(&g)
+
+	myaccount, exists := account.AccountDB.Get(g.Account)
+	if exists == true {
+		if g.Name == "" {
+			// return all k8s
+			c.JSON(http.StatusOK, myaccount.K8S)
+		} else {
+			if myK8s, err := myaccount.GetK8sByName(g.Name); err == nil {
+				c.JSON(http.StatusOK, myK8s)
+			} else {
+				c.JSON(http.StatusNotFound, "k8s not found")
+			}
+		}
+	} else {
+		c.JSON(http.StatusNotFound, "Account not found")
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/config"
 	"github.com/JinlongWukong/CloudLab/db"
 	"github.com/JinlongWukong/CloudLab/deployer"
+	"github.com/JinlongWukong/CloudLab/k8s"
 	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/scheduler"
 	"github.com/JinlongWukong/CloudLab/utils"
@@ -24,7 +26,7 @@ var scheduleLock sync.Mutex
 var newNodeLock sync.Mutex
 
 // VM live status retry times and interval(unit seconds) setting, 2mins
-var vmStatusRetry, vmStatusInterval = 20, 6
+var vmStatusRetry, vmStatusInterval = 50, 6
 
 // initialize configuration
 func Initialize() {
@@ -37,13 +39,11 @@ func Initialize() {
 }
 
 // Create VMs
-func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
+func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.VirtualMachine, error) {
 
-	//No more new create task accept during vm creation
-	myAccount.StatusVm = "running"
-	defer func() {
-		myAccount.StatusVm = "idle"
-	}()
+	myAccount.Lock()
+	defer myAccount.Unlock()
+	defer db.NotifyToSave()
 
 	//Fetch all existing VM Name, get the last index as the start index of new VM
 	vmNames := myAccount.GetVmNameList()
@@ -90,11 +90,10 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 			myAccount.AppendVM(newVm)
 			newVmGroup = append(newVmGroup, newVm)
 		} else {
-			return fmt.Errorf("Input paramters not valid")
+			log.Println("Error: Input paramters not valid")
+			return nil, fmt.Errorf("Input paramters not valid")
 		}
 	}
-
-	db.NotifyToSave()
 
 	go func() {
 		changeTaskCount(1)
@@ -193,7 +192,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) error {
 		log.Println("VM creation done")
 	}()
 
-	return nil
+	return newVmGroup, nil
 }
 
 // Take specify action on VM(start/delete/shutdown/reboot)
@@ -443,4 +442,150 @@ func ActionNode(nodeRequest node.NodeRequest) error {
 	}
 
 	return nil
+}
+
+//Create k8s cluster
+func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
+
+	myAccount.Lock()
+	defer myAccount.Unlock()
+	defer db.NotifyToSave()
+
+	//Fetch all existing k8s Name, get the last index as the start index of new k8s
+	k8sNames := myAccount.GetK8sNameList()
+	log.Printf("The current existing k8s cluster list: %v", k8sNames)
+	k8sIndex := func(v []string) []int {
+		indexes := make([]int, 0)
+		for _, v := range v {
+			t := strings.Split(v, "-")
+			i, _ := strconv.Atoi(t[len(t)-1])
+			indexes = append(indexes, i)
+		}
+		return indexes
+	}(k8sNames)
+	sort.Ints(k8sIndex)
+	var lastIndex int
+	if len(k8sIndex) > 0 {
+		lastIndex = k8sIndex[len(k8sIndex)-1]
+		log.Printf("The last index of K8S: %v", lastIndex)
+	}
+
+	newK8s := k8s.NewK8s(k8sRequest.Account+"-k8s-"+strconv.Itoa(lastIndex+1), k8sRequest)
+	if newK8s != nil {
+		myAccount.AppendK8S(newK8s)
+	} else {
+		return fmt.Errorf("Input paramters not valid")
+	}
+
+	log.Printf("K8S cluster %v creating ...", newK8s.Name)
+	go func() {
+		changeTaskCount(1)
+		defer changeTaskCount(-1)
+		defer db.NotifyToSave()
+
+		//task1: VM instantiation
+		newK8s.SetStatus(k8s.K8sStatusBootingVm)
+
+		vmRequest := vm.VmRequest{
+			Account:  myAccount.Name,
+			Hostname: newK8s.Name,
+			Type:     "centos7",
+			Flavor:   "middle",
+			Number:   1,
+			Duration: k8sRequest.Duration,
+		}
+		vmGroup, err := CreateVMs(myAccount, vmRequest)
+		if err != nil || len(vmGroup) != 1 {
+			log.Println("k8s vm creation failed")
+			return
+		}
+
+		hostVm := vmGroup[0]
+		//binding vm and k8s
+		newK8s.HostVm = hostVm.Name
+		//make sure vm is active before k8s installation
+		var ipv4Addr net.IP
+		retry := 1
+		for retry <= vmStatusRetry {
+			ipv4Addr, _, err = net.ParseCIDR(hostVm.IpAddress)
+			if err == nil {
+				break
+			}
+			log.Println("k8s vm ipaddress not assigned, will try again")
+			time.Sleep(time.Second * time.Duration(vmStatusInterval))
+			retry++
+		}
+		if retry > vmStatusRetry {
+			log.Println("k8s vm get ipaddress timeout, exited")
+			return
+		}
+
+		//task2: K8S installation
+		newK8s.SetStatus(k8s.K8sStatusInstalling)
+
+		payload, _ := json.Marshal(map[string]interface{}{
+			"Ip":         ipv4Addr.String(),
+			"Pass":       hostVm.RootPass,
+			"User":       "root",
+			"Controller": newK8s.NumOfContronller,
+			"Worker":     newK8s.NumOfWorker,
+		})
+
+		//install k8s take long time,so better to notify db to save before activity
+		db.NotifyToSave()
+
+		log.Println("Remote http call to install k8s cluster")
+		url := deployer.GetDeployerBaseUrl() + "/k8s"
+		err, _ = utils.HttpSendJsonData(url, "POST", payload)
+		if err != nil {
+			newK8s.SetStatus(k8s.K8sStatusInstallFailed)
+			log.Printf("k8s cluster %v installation failed with error -> %v", newK8s.Name, err)
+			return
+		} else {
+			newK8s.SetStatus(k8s.K8sStatusRunning)
+			log.Printf("k8s cluster %v installation successfully", newK8s.Name)
+		}
+
+		//task3, send notification
+		myAccount.SendNotification(fmt.Sprintf("Your k8s cluster %v is ready to use, Please login vm %v to access cluster", newK8s.Name, hostVm.Name))
+	}()
+
+	return nil
+}
+
+//Delete k8s cluster
+func DeleteK8S(request k8s.K8sRequestAction) error {
+
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
+	defer db.NotifyToSave()
+
+	myaccount, exists := account.AccountDB.Get(request.Account)
+	if exists == false {
+		return fmt.Errorf("account not found")
+	}
+	myk8s, err := myaccount.GetK8sByName(request.Name)
+	if err != nil {
+		return fmt.Errorf("k8s not found")
+	}
+
+	myk8s.SetStatus(k8s.K8sStatusDeleting)
+
+	myvm, err := myaccount.GetVmByName(myk8s.HostVm)
+	if err != nil {
+		log.Printf("hostvm %v not found", myk8s.HostVm)
+	} else {
+		if err = ActionVM(myaccount, myvm, "delete"); err != nil {
+			return fmt.Errorf("k8s %v hostvm %v delete failed", myk8s.Name, myk8s.HostVm)
+		}
+	}
+
+	if err = myaccount.RemoveK8sByName(request.Name); err != nil {
+		log.Printf("Remove k8s failed with error: %v", err)
+		return err
+	}
+
+	log.Printf("k8s cluster %v removed successfully", myk8s.Name)
+	return nil
+
 }
