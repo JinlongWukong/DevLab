@@ -30,7 +30,6 @@ type K8S struct {
 type K8sRequest struct {
 	Account          string `form:"account" json:"account"`
 	Version          string `form:"version" json:"version"`
-	Type             string `form:"type" json:"type"`
 	NumOfContronller uint16 `form:"numOfContronller" json:"numOfContronller"`
 	NumOfWorker      uint16 `form:"numOfWorker" json:"numOfWorker"`
 	Duration         int    `form:"duration" json:"duration"`

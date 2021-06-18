@@ -35,6 +35,11 @@ func VmRequestIndexHandler(c *gin.Context) {
 	c.HTML(200, "vmRequest.html", nil)
 }
 
+//K8S request index page
+func K8sRequestIndexHandler(c *gin.Context) {
+	c.HTML(200, "k8sRequest.html", nil)
+}
+
 // Get VMs of specify account
 // Args:
 //   VM Name or empty(means get all vm)
@@ -240,11 +245,10 @@ func NodeRequestActionNodeHandler(c *gin.Context) {
 func K8sRequestCreateHandler(c *gin.Context) {
 	var k8sRequest k8s.K8sRequest
 	c.Bind(&k8sRequest)
-	log.Println(k8sRequest.Account, k8sRequest.Type, k8sRequest.Version,
-		k8sRequest.NumOfContronller, k8sRequest.NumOfWorker, k8sRequest.Duration)
+	log.Println(k8sRequest.Account, k8sRequest.Version,
+		k8sRequest.NumOfContronller, k8sRequest.NumOfWorker)
 
 	if k8sRequest.Account == "" ||
-		k8sRequest.Type == "" ||
 		k8sRequest.Version == "" ||
 		k8sRequest.NumOfWorker < 1 ||
 		k8sRequest.NumOfContronller < 1 {
@@ -272,12 +276,17 @@ func K8sRequestDeleteHandler(c *gin.Context) {
 	var g k8s.K8sRequestAction
 	c.Bind(&g)
 
+	log.Println(g)
+
 	if g.Name == "" {
-		c.JSON(http.StatusBadRequest, "k8s name not specify")
+		err_msg := "k8s name not specify"
+		log.Println(err_msg)
+		c.JSON(http.StatusBadRequest, err_msg)
 	} else {
 		if err := workflow.DeleteK8S(g); err == nil {
 			c.JSON(http.StatusOK, "")
 		} else {
+			log.Println(err)
 			c.JSON(http.StatusInternalServerError, err.Error())
 		}
 	}

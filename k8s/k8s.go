@@ -13,11 +13,21 @@ import (
 func NewK8s(name string, k8sRequest K8sRequest) *K8S {
 
 	if name == "" ||
-		k8sRequest.Version == "" ||
-		k8sRequest.Type == "" {
+		k8sRequest.Version == "" {
 		log.Println("Error: k8s name version, type must specify")
 		return nil
 	}
+
+	//define default value if not give
+	if k8sRequest.NumOfContronller == 0 {
+		k8sRequest.NumOfContronller = 1
+	}
+	if k8sRequest.NumOfWorker == 0 {
+		k8sRequest.NumOfWorker = 3
+	}
+
+	//k8s lifecycle forever
+	k8sRequest.Duration = 365
 
 	newK8S := K8S{
 		Name:             name,
