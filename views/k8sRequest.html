@@ -156,7 +156,7 @@ function CreateK8STableFromJSON(myK8sList) {
             if (col[j] == "action"){
                 tabCell.innerHTML = `
                 <form id="actionForm" action="/k8s" onsubmit="event.preventDefault();return k8sAction(this)">
-                   <button type="submit">Confirm</button>
+                   <button type="submit">Delete</button>
                   `+ '<input type="hidden" name="name"' + 'value=' + myK8sList[i]["name"] + ' >'
                    + '<input type="hidden" name="account" ' + 'value=' + document.getElementById("account").value + ' >'
                 + '</form>';
