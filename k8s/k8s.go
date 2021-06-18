@@ -21,7 +21,6 @@ func NewK8s(name string, k8sRequest K8sRequest) *K8S {
 
 	newK8S := K8S{
 		Name:             name,
-		Type:             k8sRequest.Type,
 		Version:          k8sRequest.Version,
 		NumOfContronller: k8sRequest.NumOfContronller,
 		NumOfWorker:      k8sRequest.NumOfWorker,

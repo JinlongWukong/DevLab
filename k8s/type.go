@@ -18,7 +18,6 @@ const (
 
 type K8S struct {
 	Name             string        `json:"name"`
-	Type             string        `json:"type"`
 	Version          string        `json:"version"`
 	NumOfContronller uint16        `json:"numOfContronller"`
 	NumOfWorker      uint16        `json:"numOfWorker"`
