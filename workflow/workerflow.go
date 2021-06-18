@@ -492,7 +492,7 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 			Type:     "centos7",
 			Flavor:   "middle",
 			Number:   1,
-			Duration: k8sRequest.Duration,
+			Duration: int(newK8s.Lifetime),
 		}
 		vmGroup, err := CreateVMs(myAccount, vmRequest)
 		if err != nil || len(vmGroup) != 1 {
