@@ -10,6 +10,7 @@ type K8sStatus string
 const (
 	K8sStatusInit          K8sStatus = "init"
 	K8sStatusBootingVm     K8sStatus = "bootingvm"
+	K8sStatusBootVmFailed  K8sStatus = "bootvmFailed"
 	K8sStatusInstalling    K8sStatus = "installing"
 	K8sStatusInstallFailed K8sStatus = "installFailed"
 	K8sStatusRunning       K8sStatus = "running"

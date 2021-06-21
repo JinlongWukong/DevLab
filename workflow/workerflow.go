@@ -516,6 +516,7 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 			retry++
 		}
 		if retry > vmStatusRetry {
+			newK8s.SetStatus(k8s.K8sStatusBootVmFailed)
 			log.Println("k8s vm get ipaddress timeout, exited")
 			return
 		}
