@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VM Operation</title>
+    <title>K8S Operation</title>
     <link rel="stylesheet" type="text/css" href="css/common.css">
     <style>
 * {
@@ -60,51 +60,41 @@ input[type=submit]:hover {
         <a href="https://github.com/JinlongWukong/CloudLab#readme">Help</a>
     </nav>
     
-    <div class="vmForm">
-    <form id="vmCreateForm" action="/vm" method="POST">
+    <div class="k8sForm">
+    <form id="k8sCreateForm" action="/k8s" method="POST">
 
         <br>
         <label class="required" for="account">Account ID: </label>
         <input type="text" id="account" name="account" placeholder="Your cecid.." required> <br>
-    
-        <label for="hostname">Hostname: </label>
-        <input type="text" id="hostname" name="hostname" placeholder="optional"> <br>
 
-        <label for="rootPass">root passwd: </label>
-        <input type="password" id="rootPass" name="rootPass" placeholder="optional"> <br>
-
-        <label for="type">Select OS type: </label>
-        <select name="type">
-            <option value="centos7">Centos7</option>
-            <option value="ubuntu18">Ubuntu18</option>
+        <br>
+        <label for="version">Select k8s version: </label>
+        <select name="version">
+            <option value="v1.21.1">v1.21.1</option>
+            <option value="v1.20.7">v1.20.7</option>
+            <option value="v1.19.11">v1.19.11</option>
         </select>
         <br>
     
-        <label for="flavor">Select VM Size: </label>
-        <select name="flavor">
-            <option value="small">small</option>
-            <option value="middle">middle</option>
-            <option value="large">large</option>
+        <label for="controller">Select controller numbers: </label>
+        <select name="numOfContronller">
+            <option value="1">1</option>
         </select>
         <br>
     
-        <label for="numbers">Select numbers of VM: </label>
-        <select name="numbers">
+        <label for="worker">Select worker numbers: </label>
+        <select name="numOfWorker">
             <option value="1">1</option>
             <option value="2">2</option>
-            <option value="3">3</option>
+            <option selected value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
         </select>
-    
         <br>
-        <label for="duration">Specify vm lifecycle: </label>
-        <select name="duration">
-            <option value="1">one day</option>
-            <option value="7">one week</option>
-            <option value="14">two weeks</option>
-            <option value="30">one month</option>
-            <option value="180">three months</option>
-            <option value="365">forever</option>
-        </select>
+
         <br><br>
         <input type="submit"/>
         <br>
@@ -112,10 +102,10 @@ input[type=submit]:hover {
     </div>
 
     <br>
-    <input type="button" class="button" id = "vmListGenerate" value="VM Info" />
+    <input type="button" class="button" id = "k8sListGenerate" value="K8S Info" />
     <div>
         <div id="tableDiv" style="margin-top: 20px">
-            <p>Click button to list all your Virtual Machine here </p>
+            <p>Click button to list all your k8s cluster here </p>
         </div>
     </div>
     
@@ -125,13 +115,13 @@ input[type=submit]:hover {
 <script src="http://malsup.github.io/jquery.blockUI.js"></script>
 <script>
 
-function CreateVMTableFromJSON(myVmList) {
-    //var myVmList = [{"Name":"jinlliu-1","CPU":2,"Mem":2048,"Disk":30,"Address":"192.168.122.50/24","Status":"running","Type":"centos7","Host":{"Name":"","CPU":0,"Memory":0,"IpAddress":"127.0.0.1","Status":"","UserName":"root","Passwd":"Cisco123!"},"LifeTime":86400000000000}]
+function CreateK8STableFromJSON(myK8sList) {
+    //var myK8sList = [{"Name":"jinlliu-1","CPU":2,"Mem":2048,"Disk":30,"Address":"192.168.122.50/24","Status":"running","Type":"centos7","Host":{"Name":"","CPU":0,"Memory":0,"IpAddress":"127.0.0.1","Status":"","UserName":"root","Passwd":"Cisco123!"},"LifeTime":86400000000000}]
 
     // EXTRACT VALUE FOR HTML HEADER. 
     var col = [];
-    for (var i = 0; i < myVmList.length; i++) {
-        for (var key in myVmList[i]) {
+    for (var i = 0; i < myK8sList.length; i++) {
+        for (var key in myK8sList[i]) {
             if (col.indexOf(key) === -1) {
                 col.push(key);
             }
@@ -139,7 +129,7 @@ function CreateVMTableFromJSON(myVmList) {
     }
 
     // ADD NEW COL, DEFINE ACTION
-    if (myVmList.length > 0) {
+    if (myK8sList.length > 0) {
         col.push("action")
     }
 
@@ -157,43 +147,21 @@ function CreateVMTableFromJSON(myVmList) {
     }
 
     // ADD JSON DATA TO THE TABLE AS ROWS.
-    for (var i = 0; i < myVmList.length; i++) {
+    for (var i = 0; i < myK8sList.length; i++) {
 
         tr = table.insertRow(-1);
 
         for (var j = 0; j < col.length; j++) {
             var tabCell = tr.insertCell(-1);
-            if (col[j] == "node") {
-                tabCell.innerHTML = myVmList[i][col[j]];
-            } else if (col[j] == "portMap"){
-                var result = ""
-                for(var key in myVmList[i][col[j]]) {
-                    var value = myVmList[i][col[j]][key];
-                    result = result + key + "->" + value + "<br>"
-                }
-                tabCell.innerHTML = result
-            } else if (col[j] == "vnc"){
-                tabCell.innerHTML = myVmList[i][col[j]]["port"];
-            } else if (col[j] == "lifeTime"){
-                tabCell.innerHTML = myVmList[i][col[j]]/3600000000000 + "h";
-            } else if (col[j] == "rootPass"){
-                tabCell.innerHTML = "******"
-            } else if (col[j] == "action"){
+            if (col[j] == "action"){
                 tabCell.innerHTML = `
-                <form id="actionForm" action="/vm" onsubmit="event.preventDefault();return vmAction(this)">
-                   <select class="selection" name="action" style="width: 60%">
-                       <option value="start">start</option>
-                       <option value="shutdown">shutdown</option>
-                       <option value="reboot">reboot</option>
-                       <option value="delete">delete</option>
-                       <option value="expose-port">expose-port</option>
-                   </select>
-                   <button type="submit">Confirm</button>
-                  `+ '<input type="hidden" name="name"' + 'value=' + myVmList[i]["name"] + ' >'
+                <form id="actionForm" action="/k8s" onsubmit="event.preventDefault();return k8sAction(this)">
+                   <button type="submit">Delete</button>
+                  `+ '<input type="hidden" name="name"' + 'value=' + myK8sList[i]["name"] + ' >'
                    + '<input type="hidden" name="account" ' + 'value=' + document.getElementById("account").value + ' >'
                 + '</form>';
             } else {
-                tabCell.innerHTML = myVmList[i][col[j]];
+                tabCell.innerHTML = myK8sList[i][col[j]];
             }
         }
     }
@@ -204,35 +172,14 @@ function CreateVMTableFromJSON(myVmList) {
     divContainer.appendChild(table);
 }
 
-function vmAction(element) {
+function k8sAction(element) {
     var form = $(element);
     var url = form.attr('action');
-    var payload = form.serialize();
-    if (form.find(".selection").val() == "expose-port") {
-        var portInput = prompt("Please enter the port to be exposed, format(22 or 22:tcp or 22:udp)");
-        if (portInput) {
-            var res = portInput.split(":")
-            if (res.length == 1) {
-                payload = payload + '&port=' + res[0] + '&protocol=' + 'tcp'
-            } else if (res.length == 2) {
-                payload = payload + '&port=' + res[0] + '&protocol=' + res[1]
-            } else {
-                alert("invalid port format")
-                return
-            }
-            console.log(payload)
-            url = url + '/expose-port'
-        } else {
-            return
-        }
-    } else {
-        url = url + '/action'
-    }
+    var payload = form.serialize(); // serializes the form's elements.
     $.blockUI({timeout:   8000});
     $.ajax({
-           type: "POST",
-           url: url,
-           data: payload, // serializes the form's elements.
+           type: "DELETE",
+           url: url + '?' + payload,
            error: function(data) {
                console.log(data)
                alert(data.status); // show response
@@ -246,15 +193,14 @@ function vmAction(element) {
 function btnAutoClick() {
     var account = document.getElementById("account").value;
     if (account != "") {
-        var vmList = document.getElementById("vmListGenerate");
+        var vmList = document.getElementById("k8sListGenerate");
         vmList.click();
     }
 }
 
 $(document).ready(function(){
-  window.onload = btnAutoClick;
 
-  $("#vmCreateForm").submit(function(event) {
+  $("#k8sCreateForm").submit(function(event) {
     $.blockUI({timeout:   10000});
     event.preventDefault(); //prevent default action
     var post_url = $(this).attr("action"); //get form action url
@@ -275,7 +221,7 @@ $(document).ready(function(){
     });
   })
 
-  $("#vmListGenerate").click(function(){ 
+  $("#k8sListGenerate").click(function(){ 
         var account = document.getElementById("account").value;
         if (account == "") {
             alert("Account ID must be filled");
@@ -283,11 +229,11 @@ $(document).ready(function(){
         }
         var baseurl = location.origin;
         $.ajax({
-              //url: "http://127.0.0.1:8088/vm?account=" + account,
-              url: baseurl + "/vm?account=" + account,
+              //url: "http://127.0.0.1:8088/k8s?account=" + account,
+              url: baseurl + "/k8s?account=" + account,
               success: function(data){
                 console.log(data)
-                CreateVMTableFromJSON(data)
+                CreateK8STableFromJSON(data)
               },
               error: function(data){
                 alert(data.status + ':' + data.statusText,data.responseText);

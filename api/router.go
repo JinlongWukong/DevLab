@@ -42,8 +42,13 @@ func setupRouter() *gin.Engine {
 	//workflow related api
 	r.GET("/task", WorkflowTaskHandler)
 
+	//k8s related api
+	r.GET("/k8s-request", K8sRequestIndexHandler)
+	r.POST("/k8s", K8sRequestCreateHandler)
+	r.DELETE("/k8s", K8sRequestDeleteHandler)
+	r.GET("/k8s", K8sRequestGetHandler)
+
 	//TODO api
-	r.GET("/k8s", ToDoHandler)
 	r.GET("/container", ToDoHandler)
 
 	return r
