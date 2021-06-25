@@ -17,6 +17,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/deployer"
 	"github.com/JinlongWukong/CloudLab/k8s"
 	"github.com/JinlongWukong/CloudLab/node"
+	"github.com/JinlongWukong/CloudLab/saas"
 	"github.com/JinlongWukong/CloudLab/scheduler"
 	"github.com/JinlongWukong/CloudLab/utils"
 	"github.com/JinlongWukong/CloudLab/vm"
@@ -400,7 +401,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 			myNode.Memory = nodeInfo.Memory
 			myNode.Disk = nodeInfo.Disk
 			myNode.OSType = nodeInfo.OSType
-			log.Printf("Fetched node %v cpu -> %v, memory -> %v, disk -> %v, os type -> %v", myNode.Name, myNode.CPU, myNode.Memory, myNode.Disk, myNode.OSType)
+			log.Printf("Created node %v info: cpu -> %v, memory -> %v, disk -> %v, os type -> %v", myNode.Name, myNode.CPU, myNode.Memory, myNode.Disk, myNode.OSType)
 			myNode.SetStatus(node.NodeStatusInstalled)
 		}
 	}()
@@ -589,4 +590,158 @@ func DeleteK8S(request k8s.K8sRequestAction) error {
 	log.Printf("k8s cluster %v removed successfully", myk8s.Name)
 	return nil
 
+}
+
+//Create software
+func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareRequest) error {
+	myAccount.Lock()
+	defer myAccount.Unlock()
+	defer db.NotifyToSave()
+
+	//Get the last index as the start index of new software
+	lastIndex := utils.GetLastIndex(myAccount.GetSoftwareNameList())
+
+	newSoftware := saas.NewSoftware(softwareRequest.Account+"-"+softwareRequest.Kind+"-"+strconv.Itoa(lastIndex+1), softwareRequest)
+	if newSoftware != nil {
+		myAccount.AppendSoftware(newSoftware)
+	} else {
+		return fmt.Errorf("Software request may wrong, create new software failed")
+	}
+
+	log.Printf("Software %v creating ...", newSoftware.Name)
+	go func() {
+		changeTaskCount(1)
+		defer changeTaskCount(-1)
+		newSoftware.Lock()
+		defer newSoftware.Unlock()
+		defer db.NotifyToSave()
+
+		//task1: Software installation
+		if newSoftware.Backend == "container" {
+			newSoftware.SetStatus(saas.SoftwareStatusInstalling)
+			db.NotifyToSave()
+
+			payload, _ := json.Marshal(map[string]interface{}{
+				"Ip":       "192.168.0.35",
+				"Pass":     "c2WD8F2q",
+				"User":     "root",
+				"Name":     newSoftware.Name,
+				"Software": newSoftware.Kind,
+				"Version":  newSoftware.Version,
+				"Cpu":      newSoftware.CPU,
+				"Memory":   strconv.Itoa(int(newSoftware.Memory)) + "m",
+			})
+
+			log.Printf("Remote http call to install software %v", newSoftware.Name)
+			url := deployer.GetDeployerBaseUrl() + "/container"
+			err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
+			if err != nil {
+				newSoftware.SetStatus(saas.SoftwareStatusInstallFailed)
+				log.Printf("software %v installation failed with error -> %v", newSoftware.Name, err)
+				return
+			} else {
+				newSoftware.SetStatus(saas.SoftwareStatusRunning)
+				log.Printf("software %v installation successfully", newSoftware.Name)
+				var softwareInfo saas.SoftwareInfo
+				json.Unmarshal(reponse_data, &softwareInfo)
+				newSoftware.Address = softwareInfo.Address
+				newSoftware.AdditionalInfor = softwareInfo.AdditionalInfor
+				for _, v := range softwareInfo.PortMapping {
+					format1 := strings.Split(v, "->")
+					format2 := strings.Split(v, ":")
+					if len(format2) != 2 || len(format1) != 2 {
+						log.Printf("invalid format port mapping found %v, skip", v)
+						break
+					}
+					left := format1[0]
+					right := format2[1]
+					newSoftware.PortMapping[strings.Trim(left, " ")] = "192.168.0.35" + ":" + right
+				}
+				log.Printf("Created software %v info: Address -> %v, PortMapping -> %v, AdditionalInfor -> %v",
+					newSoftware.Name,
+					newSoftware.Address,
+					newSoftware.PortMapping,
+					newSoftware.AdditionalInfor)
+			}
+		} else {
+			log.Printf("%v backend not support", newSoftware.Backend)
+			newSoftware.SetStatus(saas.SoftwareStatusError)
+			return
+		}
+
+		//task2, send notification
+		myAccount.SendNotification(fmt.Sprintf("Your software %v is created", newSoftware.Name))
+	}()
+
+	return nil
+}
+
+func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.SoftwareRequestAction) error {
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
+	defer db.NotifyToSave()
+
+	mySoftware, err := myAccount.GetSoftwareByName(softwareActionRequest.Name)
+	if err != nil {
+		return err
+	}
+
+	mySoftware.Lock()
+	defer mySoftware.Unlock()
+
+	if mySoftware.Backend == "container" {
+		payload, _ := json.Marshal(map[string]interface{}{
+			"Name":     mySoftware.Name,
+			"Software": mySoftware.Kind,
+			"Action":   softwareActionRequest.Action,
+			"Ip":       "192.168.0.35",
+			"Pass":     "c2WD8F2q",
+			"User":     "root",
+		})
+		url := deployer.GetDeployerBaseUrl() + "/container/action"
+
+		log.Printf("Remote http call to %v software %v", softwareActionRequest.Action, softwareActionRequest.Name)
+		err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
+		if err != nil {
+			log.Printf("Remote http call to %v software %v failed with error: %v", softwareActionRequest.Action, softwareActionRequest.Name, err)
+			return err
+		}
+
+		switch softwareActionRequest.Action {
+		case saas.SoftwareActionStart, saas.SoftwareActionRestart:
+			var softwareInfo saas.SoftwareInfo
+			if err := json.Unmarshal(reponse_data, &softwareInfo); err == nil {
+				mySoftware.Address = softwareInfo.Address
+				for _, v := range softwareInfo.PortMapping {
+					format1 := strings.Split(v, "->")
+					format2 := strings.Split(v, ":")
+					if len(format2) != 2 || len(format1) != 2 {
+						log.Printf("invalid format port mapping found %v, skip", v)
+						break
+					}
+					left := format1[0]
+					right := format2[1]
+					mySoftware.PortMapping[strings.Trim(left, " ")] = "192.168.0.35" + ":" + right
+				}
+			} else {
+				log.Printf("Failed to unmarshal software %v return information", mySoftware.Name)
+			}
+			mySoftware.SetStatus(saas.SoftwareStatusRunning)
+		case saas.SoftwareActionStop:
+			mySoftware.Address = ""
+			mySoftware.PortMapping = nil
+			mySoftware.SetStatus(saas.SoftwareStatusStopped)
+		case saas.SoftwareActionDelete:
+			if err = myAccount.RemoveSoftwareByName(mySoftware.Name); err != nil {
+				log.Printf("Delete software %v failed with error: %v", mySoftware.Name, err)
+				return err
+			}
+		default:
+			return fmt.Errorf("Software action %v not supported", softwareActionRequest.Action)
+		}
+
+	}
+	log.Printf("%v software %v successfully", softwareActionRequest.Action, mySoftware.Name)
+
+	return nil
 }

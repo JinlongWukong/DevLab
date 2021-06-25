@@ -12,6 +12,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/account"
 	"github.com/JinlongWukong/CloudLab/k8s"
 	"github.com/JinlongWukong/CloudLab/node"
+	"github.com/JinlongWukong/CloudLab/saas"
 	"github.com/JinlongWukong/CloudLab/vm"
 	"github.com/JinlongWukong/CloudLab/workflow"
 )
@@ -120,7 +121,7 @@ func VmRequestVmActionHandler(c *gin.Context) {
 				return
 			}
 			if action_err != nil {
-				c.JSON(http.StatusInternalServerError, err.Error())
+				c.JSON(http.StatusInternalServerError, action_err.Error())
 				return
 			}
 		} else {
@@ -152,7 +153,7 @@ func VmRequestVmPortExposeHandler(c *gin.Context) {
 			var action_err error
 			action_err = workflow.ExposePort(myaccount, myVM, vmRequestPortExpose.Port, vmRequestPortExpose.Protocol)
 			if action_err != nil {
-				c.JSON(http.StatusInternalServerError, err.Error())
+				c.JSON(http.StatusInternalServerError, action_err.Error())
 				return
 			}
 		} else {
@@ -312,6 +313,99 @@ func K8sRequestGetHandler(c *gin.Context) {
 				c.JSON(http.StatusOK, myK8s)
 			} else {
 				c.JSON(http.StatusNotFound, "k8s not found")
+			}
+		}
+	} else {
+		c.JSON(http.StatusNotFound, "Account not found")
+	}
+}
+
+// Software part
+
+// Software request create handler
+// Args:
+//   software request
+// Return:
+//     20x     -> success
+//     40x/50x -> failed
+func SoftwareRequestCreateHandler(c *gin.Context) {
+	var request saas.SoftwareRequest
+	c.Bind(&request)
+	log.Printf("Get software creation request, %v,%v,%v", request.Account, request.Kind, request.Version)
+
+	myaccount, exists := account.AccountDB.Get(request.Account)
+	if exists == false {
+		// Acount not existed, add new
+		myaccount = &account.Account{Name: request.Account, Role: "guest"}
+		account.AccountDB.Set(request.Account, myaccount)
+	}
+
+	if err := workflow.CreateSoftware(myaccount, request); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, "Software creation request accepted")
+}
+
+// Software request action handler, start/stop/delete
+// Args:
+//   software Name
+// Return:
+//     20x     -> success
+//     40x/50x -> failed
+func SoftwareRequestActionHandler(c *gin.Context) {
+	var r saas.SoftwareRequestAction
+	c.Bind(&r)
+	log.Printf("Get Software action request: Account -> %v, Software -> %v, Action -> %v ", r.Account, r.Name, r.Action)
+
+	myAccount, exists := account.AccountDB.Get(r.Account)
+	if exists == true {
+		if r.Name == "" || r.Action == "" {
+			c.JSON(http.StatusBadRequest, "Software name or Action empty")
+		}
+		var action_err error
+		switch r.Action {
+		case "start", "stop", "restart", "delete":
+			action_err = workflow.ActionSoftware(myAccount, r)
+		default:
+			c.JSON(http.StatusBadRequest, "Action not support")
+			return
+		}
+		if action_err != nil {
+			c.JSON(http.StatusInternalServerError, action_err.Error())
+			return
+		}
+
+	} else {
+		c.JSON(http.StatusNotFound, "Account not found")
+		return
+	}
+
+	c.JSON(http.StatusNoContent, "")
+	return
+}
+
+// Get software of specify account
+// Args:
+//   software Name or empty(means get all software)
+// Return:
+//   20x: success with software info
+//   40x: fail Account/software not found
+func SoftwareRequestGetHandler(c *gin.Context) {
+	var g saas.SoftwareRequestGetInfo
+	c.Bind(&g)
+
+	myaccount, exists := account.AccountDB.Get(g.Account)
+	if exists == true {
+		if g.Name == "" {
+			// return all software
+			c.JSON(http.StatusOK, myaccount.Software)
+		} else {
+			if mySoftware, err := myaccount.GetSoftwareByName(g.Name); err == nil {
+				c.JSON(http.StatusOK, mySoftware)
+			} else {
+				c.JSON(http.StatusNotFound, "software not found")
 			}
 		}
 	} else {
