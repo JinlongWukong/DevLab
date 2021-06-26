@@ -366,7 +366,7 @@ func SoftwareRequestActionHandler(c *gin.Context) {
 		}
 		var action_err error
 		switch r.Action {
-		case "start", "stop", "restart", "delete":
+		case "start", "stop", "restart", "delete", "get":
 			action_err = workflow.ActionSoftware(myAccount, r)
 		default:
 			c.JSON(http.StatusBadRequest, "Action not support")

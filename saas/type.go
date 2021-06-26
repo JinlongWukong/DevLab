@@ -20,6 +20,7 @@ const (
 	SoftwareActionStop    SoftwareAction = "stop"
 	SoftwareActionRestart SoftwareAction = "restart"
 	SoftwareActionDelete  SoftwareAction = "delete"
+	SoftwareActionGet     SoftwareAction = "get"
 )
 
 type Software struct {

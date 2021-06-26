@@ -708,7 +708,7 @@ func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.Softw
 		}
 
 		switch softwareActionRequest.Action {
-		case saas.SoftwareActionStart, saas.SoftwareActionRestart:
+		case saas.SoftwareActionStart, saas.SoftwareActionRestart, saas.SoftwareActionGet:
 			var softwareInfo saas.SoftwareInfo
 			if err := json.Unmarshal(reponse_data, &softwareInfo); err == nil {
 				mySoftware.Address = softwareInfo.Address
