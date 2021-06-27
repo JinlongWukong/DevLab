@@ -14,7 +14,9 @@ const (
 	SoftwareStatusRunning       SoftwareStatus = "running"
 	SoftwareStatusStopped       SoftwareStatus = "stopped"
 	SoftwareStatusDeleting      SoftwareStatus = "deleting"
+	SoftwareStatusDeleted       SoftwareStatus = "deleted"
 	SoftwareStatusError         SoftwareStatus = "error"
+	SoftwareStatusUnknown       SoftwareStatus = "unknown"
 
 	SoftwareActionStart   SoftwareAction = "start"
 	SoftwareActionStop    SoftwareAction = "stop"
@@ -70,6 +72,7 @@ type SoftwareRequestAction struct {
 }
 */
 type SoftwareInfo struct {
+	Status          string            `json:"status"`
 	Address         string            `json:"address"`
 	PortMapping     []string          `json:"port_mapping"`
 	AdditionalInfor map[string]string `json:"additional_infor,omitempty"`

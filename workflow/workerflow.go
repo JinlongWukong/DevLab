@@ -598,7 +598,7 @@ func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareReq
 	defer myAccount.Unlock()
 	defer db.NotifyToSave()
 
-	//Get the last index as the start index of new software
+	//Get the last index as the index of new software
 	lastIndex := utils.GetLastIndex(myAccount.GetSoftwareNameList())
 
 	newSoftware := saas.NewSoftware(softwareRequest.Account+"-"+softwareRequest.Kind+"-"+strconv.Itoa(lastIndex+1), softwareRequest)
@@ -619,7 +619,8 @@ func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareReq
 		//task1: Software installation
 		if newSoftware.Backend == "container" {
 			newSoftware.SetStatus(saas.SoftwareStatusInstalling)
-			db.NotifyToSave()
+
+			//TODO node selection
 
 			payload, _ := json.Marshal(map[string]interface{}{
 				"Ip":       "192.168.0.35",
@@ -637,35 +638,19 @@ func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareReq
 			err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
 			if err != nil {
 				newSoftware.SetStatus(saas.SoftwareStatusInstallFailed)
-				log.Printf("software %v installation failed with error -> %v", newSoftware.Name, err)
+				err_msg := fmt.Sprintf("software %v installation failed with error -> %v", newSoftware.Name, err)
+				log.Printf(err_msg)
+				myAccount.SendNotification(err_msg)
 				return
 			} else {
-				newSoftware.SetStatus(saas.SoftwareStatusRunning)
 				log.Printf("software %v installation successfully", newSoftware.Name)
-				var softwareInfo saas.SoftwareInfo
-				json.Unmarshal(reponse_data, &softwareInfo)
-				newSoftware.Address = softwareInfo.Address
-				newSoftware.AdditionalInfor = softwareInfo.AdditionalInfor
-				for _, v := range softwareInfo.PortMapping {
-					format1 := strings.Split(v, "->")
-					format2 := strings.Split(v, ":")
-					if len(format2) != 2 || len(format1) != 2 {
-						log.Printf("invalid format port mapping found %v, skip", v)
-						break
-					}
-					left := format1[0]
-					right := format2[1]
-					newSoftware.PortMapping[strings.Trim(left, " ")] = "192.168.0.35" + ":" + right
-				}
-				log.Printf("Created software %v info: Address -> %v, PortMapping -> %v, AdditionalInfor -> %v",
-					newSoftware.Name,
-					newSoftware.Address,
-					newSoftware.PortMapping,
-					newSoftware.AdditionalInfor)
+				readContainerStatus(newSoftware, reponse_data)
 			}
 		} else {
-			log.Printf("%v backend not support", newSoftware.Backend)
 			newSoftware.SetStatus(saas.SoftwareStatusError)
+			err_msg := fmt.Sprintf("%v backend not support", newSoftware.Backend)
+			log.Printf(err_msg)
+			myAccount.SendNotification(err_msg)
 			return
 		}
 
@@ -683,6 +668,7 @@ func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.Softw
 
 	mySoftware, err := myAccount.GetSoftwareByName(softwareActionRequest.Name)
 	if err != nil {
+		log.Printf("Software action failed with error: %v", err)
 		return err
 	}
 
@@ -691,47 +677,33 @@ func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.Softw
 
 	if mySoftware.Backend == "container" {
 		payload, _ := json.Marshal(map[string]interface{}{
-			"Name":     mySoftware.Name,
-			"Software": mySoftware.Kind,
-			"Action":   softwareActionRequest.Action,
 			"Ip":       "192.168.0.35",
 			"Pass":     "c2WD8F2q",
 			"User":     "root",
+			"Name":     mySoftware.Name,
+			"Software": mySoftware.Kind,
+			"Action":   softwareActionRequest.Action,
 		})
 		url := deployer.GetDeployerBaseUrl() + "/container/action"
 
 		log.Printf("Remote http call to %v software %v", softwareActionRequest.Action, softwareActionRequest.Name)
 		err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
 		if err != nil {
+			mySoftware.SetStatus(saas.SoftwareStatusError)
 			log.Printf("Remote http call to %v software %v failed with error: %v", softwareActionRequest.Action, softwareActionRequest.Name, err)
+			myAccount.SendNotification(fmt.Sprintf("%v your software %v failed with error: %v", softwareActionRequest.Action, mySoftware.Name, err))
 			return err
 		}
 
 		switch softwareActionRequest.Action {
 		case saas.SoftwareActionStart, saas.SoftwareActionRestart, saas.SoftwareActionGet:
-			var softwareInfo saas.SoftwareInfo
-			if err := json.Unmarshal(reponse_data, &softwareInfo); err == nil {
-				mySoftware.Address = softwareInfo.Address
-				for _, v := range softwareInfo.PortMapping {
-					format1 := strings.Split(v, "->")
-					format2 := strings.Split(v, ":")
-					if len(format2) != 2 || len(format1) != 2 {
-						log.Printf("invalid format port mapping found %v, skip", v)
-						break
-					}
-					left := format1[0]
-					right := format2[1]
-					mySoftware.PortMapping[strings.Trim(left, " ")] = "192.168.0.35" + ":" + right
-				}
-			} else {
-				log.Printf("Failed to unmarshal software %v return information", mySoftware.Name)
-			}
-			mySoftware.SetStatus(saas.SoftwareStatusRunning)
+			readContainerStatus(mySoftware, reponse_data)
 		case saas.SoftwareActionStop:
 			mySoftware.Address = ""
 			mySoftware.PortMapping = nil
 			mySoftware.SetStatus(saas.SoftwareStatusStopped)
 		case saas.SoftwareActionDelete:
+			mySoftware.SetStatus(saas.SoftwareStatusDeleting)
 			if err = myAccount.RemoveSoftwareByName(mySoftware.Name); err != nil {
 				log.Printf("Delete software %v failed with error: %v", mySoftware.Name, err)
 				return err
