@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>K8S Operation</title>
+    <title>SaaS Operation</title>
     <link rel="stylesheet" type="text/css" href="css/common.css">
     <style>
 * {
@@ -13,25 +13,12 @@ label {
   display: inline-block;
 }
 
-label[for="one-day"], label[for="one-week"], label[for="two-week"], label[for="forever"] {
-  width: 5%;
-}
-
-input[type=text], input[type=password], select {
+input[type=text], select {
   width: 10%;
   margin-top: 6px;
   padding: 4px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  resize: vertical;
-}
-
-input[type=radio]{
-  width: 1%;
-  margin-top: 6px;
-  padding: 4px;
-  border: 1px solid #ccc;
-  border-radius: 1px;
   resize: vertical;
 }
 
@@ -60,39 +47,54 @@ input[type=submit]:hover {
         <a href="https://github.com/JinlongWukong/CloudLab#readme">Help</a>
     </nav>
     
-    <div class="k8sForm">
-    <form id="k8sCreateForm" action="/k8s" method="POST">
+    <div class="SaaSForm">
+    <form id="SaaSCreateForm" action="/saas" method="POST">
 
         <br>
         <label class="required" for="account">Account ID: </label>
         <input type="text" id="account" name="account" placeholder="Your cecid.." required> <br>
 
-        <label for="version">Select k8s version: </label>
-        <select name="version">
-            <option value="v1.21.1">v1.21.1</option>
-            <option value="v1.20.7">v1.20.7</option>
-            <option value="v1.19.11">v1.19.11</option>
-        </select>
-        <br>
+        <label for="kind">Select software: </label>
+        <select name="kind">
+            <option value="jenkins">Jenkins</option>
+            <option value="gitlab">Gitlab</option>
+            <option value="sonaqube">Sonaqube</option>
+            <option value="mysql">Mysql</option>
+            <option value="postsql">Postsql</option>
+            <option value="mongodb">Mongodb</option>
+            <option value="redis">Redis</option>
+            <option value="nso">NSO</option>
+            <option value="cxta">CXTA</option>
+        </select> <br>
+
+        <label for="version">Specify version: </label>
+        <input type="text" id="version" name="version" value="latest" required> <br>
     
-        <label for="controller">Select controller numbers: </label>
-        <select name="numOfContronller">
+        <label for="cpu">Select cpu numbers: </label>
+        <select name="cpu">
             <option value="1">1</option>
-        </select>
-        <br>
-    
-        <label for="worker">Select worker numbers: </label>
-        <select name="numOfWorker">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option selected value="3">3</option>
+            <option selected value="2">2</option>
+            <option value="3">3</option>
             <option value="4">4</option>
             <option value="5">5</option>
             <option value="6">6</option>
             <option value="7">7</option>
             <option value="8">8</option>
-        </select>
-        <br>
+            <option value="0">9</option>
+            <option value="10">10</option>
+        </select> <br>
+    
+        <label for="memory">Select memory size: </label>
+        <select name="memory">
+            <option value="512">500m</option>
+            <option value="1024">1g</option>
+            <option selected value="2048">2g</option>
+            <option value="3072">3g</option>
+            <option value="4096">4g</option>
+            <option value="6144">6g</option>
+            <option value="8192">8g</option>
+            <option value="16384">16g</option>
+        </select> <br>
 
         <br>
         <input type="submit"/>
@@ -101,10 +103,10 @@ input[type=submit]:hover {
     </div>
 
     <br>
-    <input type="button" class="button" id = "k8sListGenerate" value="K8S Info" />
+    <input type="button" class="button" id = "SaaSListGenerate" value="SaaS table" />
     <div>
         <div id="tableDiv" style="margin-top: 20px">
-            <p>Click button to list all your k8s cluster here </p>
+            <p>Click button to list all your software here </p>
         </div>
     </div>
     
@@ -114,13 +116,13 @@ input[type=submit]:hover {
 <script src="http://malsup.github.io/jquery.blockUI.js"></script>
 <script>
 
-function CreateK8STableFromJSON(myK8sList) {
-    //var myK8sList = [{"Name":"jinlliu-1","CPU":2,"Mem":2048,"Disk":30,"Address":"192.168.122.50/24","Status":"running","Type":"centos7","Host":{"Name":"","CPU":0,"Memory":0,"IpAddress":"127.0.0.1","Status":"","UserName":"root","Passwd":"Cisco123!"},"LifeTime":86400000000000}]
+function CreateSaaSTableFromJSON(mySaaSList) {
+    //var mySaaSList = [{"Name":"jinlliu-1","CPU":2,"Mem":2048,"Disk":30,"Address":"192.168.122.50/24","Status":"running","Type":"centos7","Host":{"Name":"","CPU":0,"Memory":0,"IpAddress":"127.0.0.1","Status":"","UserName":"root","Passwd":"Cisco123!"},"LifeTime":86400000000000}]
 
     // EXTRACT VALUE FOR HTML HEADER. 
     var col = [];
-    for (var i = 0; i < myK8sList.length; i++) {
-        for (var key in myK8sList[i]) {
+    for (var i = 0; i < mySaaSList.length; i++) {
+        for (var key in mySaaSList[i]) {
             if (col.indexOf(key) === -1) {
                 col.push(key);
             }
@@ -128,7 +130,7 @@ function CreateK8STableFromJSON(myK8sList) {
     }
 
     // ADD NEW COL, DEFINE ACTION
-    if (myK8sList.length > 0) {
+    if (mySaaSList.length > 0) {
         col.push("action")
     }
 
@@ -146,21 +148,42 @@ function CreateK8STableFromJSON(myK8sList) {
     }
 
     // ADD JSON DATA TO THE TABLE AS ROWS.
-    for (var i = 0; i < myK8sList.length; i++) {
+    for (var i = 0; i < mySaaSList.length; i++) {
 
         tr = table.insertRow(-1);
 
         for (var j = 0; j < col.length; j++) {
             var tabCell = tr.insertCell(-1);
-            if (col[j] == "action"){
+            if (col[j] == "port_mapping"){
+                var result = ""
+                for(var key in mySaaSList[i][col[j]]) {
+                    var value = mySaaSList[i][col[j]][key];
+                    result = result + key + "->" + value + "<br>"
+                }
+                tabCell.innerHTML = result
+            } else if (col[j] == "additional_infor"){
+                var result = ""
+                for(var key in mySaaSList[i][col[j]]) {
+                    var value = mySaaSList[i][col[j]][key];
+                    result = result + key + "->" + value + "<br>"
+                }
+                tabCell.innerHTML = result              
+            } else if (col[j] == "action"){
                 tabCell.innerHTML = `
-                <form id="actionForm" action="/k8s" onsubmit="event.preventDefault();return k8sAction(this)">
-                   <button type="submit">Delete</button>
-                  `+ '<input type="hidden" name="name"' + 'value=' + myK8sList[i]["name"] + ' >'
+                <form id="actionForm" action="/saas" onsubmit="event.preventDefault();return SaaSAction(this)">
+                   <select class="selection" name="action" style="width: 60%">
+                       <option value="get">refresh</option> 
+                       <option value="start">start</option>
+                       <option value="stop">stop</option>
+                       <option value="restart">restart</option>
+                       <option value="delete">delete</option>
+                   </select>
+                   <button type="submit">Confirm</button>
+                  `+ '<input type="hidden" name="name"' + 'value=' + mySaaSList[i]["name"] + ' >'
                    + '<input type="hidden" name="account" ' + 'value=' + document.getElementById("account").value + ' >'
                 + '</form>';
             } else {
-                tabCell.innerHTML = myK8sList[i][col[j]];
+                tabCell.innerHTML = mySaaSList[i][col[j]];
             }
         }
     }
@@ -171,14 +194,15 @@ function CreateK8STableFromJSON(myK8sList) {
     divContainer.appendChild(table);
 }
 
-function k8sAction(element) {
+function SaaSAction(element) {
     var form = $(element);
     var url = form.attr('action');
     var payload = form.serialize(); // serializes the form's elements.
     $.blockUI({timeout:   8000});
     $.ajax({
-           type: "DELETE",
-           url: url + '?' + payload,
+           type: "POST",
+           url: url + "/action",
+           data: payload,
            error: function(data) {
                console.log(data)
                alert(data.status); // show response
@@ -192,14 +216,14 @@ function k8sAction(element) {
 function btnAutoClick() {
     var account = document.getElementById("account").value;
     if (account != "") {
-        var vmList = document.getElementById("k8sListGenerate");
-        vmList.click();
+        var SaaSList = document.getElementById("SaaSListGenerate");
+        SaaSList.click();
     }
 }
 
 $(document).ready(function(){
 
-  $("#k8sCreateForm").submit(function(event) {
+  $("#SaaSCreateForm").submit(function(event) {
     $.blockUI({timeout:   10000});
     event.preventDefault(); //prevent default action
     var post_url = $(this).attr("action"); //get form action url
@@ -220,7 +244,7 @@ $(document).ready(function(){
     });
   })
 
-  $("#k8sListGenerate").click(function(){ 
+  $("#SaaSListGenerate").click(function(){ 
         var account = document.getElementById("account").value;
         if (account == "") {
             alert("Account ID must be filled");
@@ -228,11 +252,11 @@ $(document).ready(function(){
         }
         var baseurl = location.origin;
         $.ajax({
-              //url: "http://127.0.0.1:8088/k8s?account=" + account,
-              url: baseurl + "/k8s?account=" + account,
+              //url: "http://127.0.0.1:8088/saas?account=" + account,
+              url: baseurl + "/saas?account=" + account,
               success: function(data){
                 console.log(data)
-                CreateK8STableFromJSON(data)
+                CreateSaaSTableFromJSON(data)
               },
               error: function(data){
                 alert(data.status + ':' + data.statusText,data.responseText);

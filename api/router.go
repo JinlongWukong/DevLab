@@ -49,6 +49,7 @@ func setupRouter() *gin.Engine {
 	r.GET("/k8s", K8sRequestGetHandler)
 
 	//SaaS api
+	r.GET("/saas-request", SoftwareIndexHandler)
 	r.GET("/saas", SoftwareRequestGetHandler)
 	r.POST("/saas", SoftwareRequestCreateHandler)
 	r.POST("/saas/action", SoftwareRequestActionHandler)

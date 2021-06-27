@@ -41,6 +41,11 @@ func K8sRequestIndexHandler(c *gin.Context) {
 	c.HTML(200, "k8sRequest.html", nil)
 }
 
+//SaaS request index page
+func SoftwareIndexHandler(c *gin.Context) {
+	c.HTML(200, "SaaSRequest.html", nil)
+}
+
 // Get VMs of specify account
 // Args:
 //   VM Name or empty(means get all vm)
