@@ -3,9 +3,16 @@ package saas
 import "log"
 
 var backendMap = map[string]string{
-	"jenkins":  "container",
-	"mysql":    "container",
-	"postgres": "container",
+	"jenkins":    "container",
+	"mysql":      "container",
+	"postgres":   "container",
+	"mongodb":    "container",
+	"redis":      "container",
+	"influxdb":   "container",
+	"prometheus": "container",
+	"grafana":    "container",
+	"nso":        "container",
+	"cxta":       "container",
 }
 
 //Factory a new software
