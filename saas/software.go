@@ -4,6 +4,7 @@ import "log"
 
 var backendMap = map[string]string{
 	"jenkins": "container",
+	"mysql":   "container",
 }
 
 //Factory a new software
