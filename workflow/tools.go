@@ -23,7 +23,9 @@ func readContainerStatus(mySoftware *saas.Software, reponse_data []byte) error {
 	var softwareInfo saas.SoftwareInfo
 	if err := json.Unmarshal(reponse_data, &softwareInfo); err == nil {
 		mySoftware.Address = softwareInfo.Address
-		mySoftware.AdditionalInfor = softwareInfo.AdditionalInfor
+		for k, v := range softwareInfo.AdditionalInfor {
+			mySoftware.AdditionalInfor[k] = v
+		}
 		switch softwareInfo.Status {
 		case "running":
 			mySoftware.SetStatus(saas.SoftwareStatusRunning)

@@ -3,8 +3,9 @@ package saas
 import "log"
 
 var backendMap = map[string]string{
-	"jenkins": "container",
-	"mysql":   "container",
+	"jenkins":  "container",
+	"mysql":    "container",
+	"postgres": "container",
 }
 
 //Factory a new software

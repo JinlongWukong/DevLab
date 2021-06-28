@@ -638,7 +638,7 @@ func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareReq
 			err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
 			if err != nil {
 				newSoftware.SetStatus(saas.SoftwareStatusInstallFailed)
-				err_msg := fmt.Sprintf("software %v installation failed with error -> %v", newSoftware.Name, err)
+				err_msg := fmt.Sprintf("software %v installation failed with error -> %v %v", newSoftware.Name, err, string(reponse_data))
 				log.Printf(err_msg)
 				myAccount.SendNotification(err_msg)
 				return
@@ -690,8 +690,8 @@ func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.Softw
 		err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
 		if err != nil {
 			mySoftware.SetStatus(saas.SoftwareStatusError)
-			log.Printf("Remote http call to %v software %v failed with error: %v", softwareActionRequest.Action, softwareActionRequest.Name, err)
-			myAccount.SendNotification(fmt.Sprintf("%v your software %v failed with error: %v", softwareActionRequest.Action, mySoftware.Name, err))
+			log.Printf("Remote http call to %v software %v failed with error: %v %v", softwareActionRequest.Action, softwareActionRequest.Name, err, string(reponse_data))
+			myAccount.SendNotification(fmt.Sprintf("%v your software %v failed with error: %v %v", softwareActionRequest.Action, mySoftware.Name, err, string(reponse_data)))
 			return err
 		}
 
