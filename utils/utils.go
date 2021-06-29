@@ -8,6 +8,9 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 func HttpSendJsonData(uri string, method string, data []byte) (error, []byte) {
@@ -23,12 +26,12 @@ func HttpSendJsonData(uri string, method string, data []byte) (error, []byte) {
 	}
 	defer resp.Body.Close()
 
+	resp_body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode/100 == 2 {
-		resp_body, _ := ioutil.ReadAll(resp.Body)
 		log.Printf("http response success with messages: %v", string(resp_body))
 		return nil, resp_body
 	} else {
-		return fmt.Errorf("unexpected status-code returned %v", resp.StatusCode), nil
+		return fmt.Errorf("unexpected status-code returned %v", resp.StatusCode), resp_body
 	}
 }
 
@@ -132,4 +135,26 @@ func EqualStringSlice(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+//Get last index of given nameList
+func GetLastIndex(nameSlice []string) (lastIndex int) {
+	log.Printf("The input name slice: %v", nameSlice)
+	nameIndex := func(v []string) []int {
+		indexes := make([]int, 0)
+		for _, v := range v {
+			t := strings.Split(v, "-")
+			i, _ := strconv.Atoi(t[len(t)-1])
+			indexes = append(indexes, i)
+		}
+		return indexes
+	}(nameSlice)
+
+	sort.Ints(nameIndex)
+	if len(nameIndex) > 0 {
+		lastIndex = nameIndex[len(nameIndex)-1]
+		log.Printf("The last index of input name slice: %v", lastIndex)
+	}
+
+	return
 }

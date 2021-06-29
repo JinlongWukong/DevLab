@@ -48,8 +48,11 @@ func setupRouter() *gin.Engine {
 	r.DELETE("/k8s", K8sRequestDeleteHandler)
 	r.GET("/k8s", K8sRequestGetHandler)
 
-	//TODO api
-	r.GET("/container", ToDoHandler)
+	//SaaS api
+	r.GET("/saas-request", SoftwareIndexHandler)
+	r.GET("/saas", SoftwareRequestGetHandler)
+	r.POST("/saas", SoftwareRequestCreateHandler)
+	r.POST("/saas/action", SoftwareRequestActionHandler)
 
 	return r
 }

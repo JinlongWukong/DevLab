@@ -22,11 +22,13 @@ func Initialize() {
 }
 
 //apply for a node
-func Schedule(reqCpu, reqMem, reqDisk int32) *node.Node {
+func Schedule(role node.NodeRole, reqCpu, reqMem, reqDisk int32) *node.Node {
 	//filter all nodes
 	winerNodes := make([]*node.Node, 0)
 	for n := range node.NodeDB.Iter() {
-		if n.Value.State != node.NodeStateEnable ||
+		if role != n.Value.Role {
+			continue
+		} else if n.Value.State != node.NodeStateEnable ||
 			n.Value.Status != node.NodeStatusReady ||
 			(n.Value.CPU*int32(allocationRatio)-n.Value.GetCpuUsed()) < reqCpu ||
 			(n.Value.Memory*int32(allocationRatio)-n.Value.GetMemUsed()) < reqMem ||
@@ -37,7 +39,7 @@ func Schedule(reqCpu, reqMem, reqDisk int32) *node.Node {
 		}
 	}
 	if len(winerNodes) == 0 {
-		log.Println("Not enough nodes left")
+		log.Println("No available node left")
 		return nil
 	}
 	//Select one node based on scheduleAlgorithm

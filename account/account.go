@@ -7,6 +7,7 @@ import (
 
 	"github.com/JinlongWukong/CloudLab/k8s"
 	"github.com/JinlongWukong/CloudLab/notification"
+	"github.com/JinlongWukong/CloudLab/saas"
 	"github.com/JinlongWukong/CloudLab/vm"
 )
 
@@ -71,15 +72,18 @@ func (m *AccountMap) Iter() <-chan AccountMapItem {
 }
 
 type Account struct {
-	Name           string               `json:"name"`
-	Role           string               `json:"role"`
-	VM             []*vm.VirtualMachine `json:"vm"`
-	K8S            []*k8s.K8S           `json:"k8s"`
-	lockerVMSlice  sync.Mutex           `json:"-"`
-	lockerK8SSlice sync.Mutex           `json:"-"`
-	sync.Mutex     `json:"-"`
+	Name                string               `json:"name"`
+	Role                string               `json:"role"`
+	VM                  []*vm.VirtualMachine `json:"vm"`
+	K8S                 []*k8s.K8S           `json:"k8s"`
+	Software            []*saas.Software     `json:"software"`
+	lockerVMSlice       sync.Mutex           `json:"-"`
+	lockerK8SSlice      sync.Mutex           `json:"-"`
+	lockerSoftwareSlice sync.Mutex           `json:"-"`
+	sync.Mutex          `json:"-"`
 }
 
+//VM part
 func (a *Account) GetNumbersOfVm() int {
 
 	a.lockerVMSlice.Lock()
@@ -160,6 +164,7 @@ func (a *Account) Iter() <-chan *vm.VirtualMachine {
 	return c
 }
 
+//K8S part
 func (a *Account) GetNumbersOfK8s() int {
 
 	a.lockerK8SSlice.Lock()
@@ -240,6 +245,88 @@ func (a *Account) IterK8S() <-chan *k8s.K8S {
 	return c
 }
 
+//Software part
+func (a *Account) GetNumbersOfSoftware() int {
+
+	a.lockerSoftwareSlice.Lock()
+	defer a.lockerSoftwareSlice.Unlock()
+
+	return len(a.Software)
+}
+
+func (a *Account) GetSoftwareNameList() []string {
+
+	a.lockerSoftwareSlice.Lock()
+	defer a.lockerSoftwareSlice.Unlock()
+
+	softwareNames := make([]string, 0)
+	for _, v := range a.Software {
+		softwareNames = append(softwareNames, v.Name)
+	}
+
+	return softwareNames
+}
+
+func (a *Account) GetSoftwareByName(name string) (*saas.Software, error) {
+
+	a.lockerSoftwareSlice.Lock()
+	defer a.lockerSoftwareSlice.Unlock()
+
+	for _, v := range a.Software {
+		if v.Name == name {
+			return v, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Software %v not found", name)
+}
+
+func (a *Account) AppendSoftware(software *saas.Software) {
+
+	a.lockerSoftwareSlice.Lock()
+	defer a.lockerSoftwareSlice.Unlock()
+
+	a.Software = append(a.Software, software)
+}
+
+func (a *Account) RemoveSoftwareByName(name string) error {
+
+	a.lockerSoftwareSlice.Lock()
+	defer a.lockerSoftwareSlice.Unlock()
+
+	//To remove item from slice, this is a fast version (changes order)
+	for i, v := range a.Software {
+		if v.Name == name {
+			// Remove the element at index i from a.
+			a.Software[i] = a.Software[len(a.Software)-1] // Copy last element to index i.
+			a.Software[len(a.Software)-1] = nil           // Erase last element (write zero value).
+			a.Software = a.Software[:len(a.Software)-1]   // Truncate slice.
+			log.Printf("Software %v has been removed from account %v", name, a.Name)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Software %v not found", name)
+}
+
+func (a *Account) IterSoftware() <-chan *saas.Software {
+	c := make(chan *saas.Software)
+
+	f := func() {
+		a.lockerSoftwareSlice.Lock()
+		defer a.lockerSoftwareSlice.Unlock()
+
+		for _, v := range a.Software {
+			c <- v
+		}
+		close(c)
+	}
+	go f()
+
+	return c
+}
+
+//Send notification to account user
 func (a *Account) SendNotification(msg string) {
 
 	notification.SendNotification(notification.Message{Target: a.Name + "@cisco.com", Text: msg})

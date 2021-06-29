@@ -17,6 +17,7 @@ import (
 	"github.com/JinlongWukong/CloudLab/deployer"
 	"github.com/JinlongWukong/CloudLab/k8s"
 	"github.com/JinlongWukong/CloudLab/node"
+	"github.com/JinlongWukong/CloudLab/saas"
 	"github.com/JinlongWukong/CloudLab/scheduler"
 	"github.com/JinlongWukong/CloudLab/utils"
 	"github.com/JinlongWukong/CloudLab/vm"
@@ -105,7 +106,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 		reqDisk := newVmGroup[0].Disk * 1024 * vmRequest.Number
 
 		scheduleLock.Lock()
-		selectNode := scheduler.Schedule(reqCpu, reqMem, reqDisk)
+		selectNode := scheduler.Schedule(node.NodeRoleCompute, reqCpu, reqMem, reqDisk)
 		if selectNode == nil {
 			log.Println("Error: No valid node selected, VM creation exit")
 			scheduleLock.Unlock()
@@ -400,7 +401,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 			myNode.Memory = nodeInfo.Memory
 			myNode.Disk = nodeInfo.Disk
 			myNode.OSType = nodeInfo.OSType
-			log.Printf("Fetched node %v cpu -> %v, memory -> %v, disk -> %v, os type -> %v", myNode.Name, myNode.CPU, myNode.Memory, myNode.Disk, myNode.OSType)
+			log.Printf("Created node %v info: cpu -> %v, memory -> %v, disk -> %v, os type -> %v", myNode.Name, myNode.CPU, myNode.Memory, myNode.Disk, myNode.OSType)
 			myNode.SetStatus(node.NodeStatusInstalled)
 		}
 	}()
@@ -589,4 +590,145 @@ func DeleteK8S(request k8s.K8sRequestAction) error {
 	log.Printf("k8s cluster %v removed successfully", myk8s.Name)
 	return nil
 
+}
+
+//Create software
+func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareRequest) error {
+	myAccount.Lock()
+	defer myAccount.Unlock()
+	defer db.NotifyToSave()
+
+	//Get the last index as the index of new software
+	lastIndex := utils.GetLastIndex(myAccount.GetSoftwareNameList())
+
+	newSoftware := saas.NewSoftware(softwareRequest.Account+"-"+softwareRequest.Kind+"-"+strconv.Itoa(lastIndex+1), softwareRequest)
+	if newSoftware != nil {
+		myAccount.AppendSoftware(newSoftware)
+	} else {
+		return fmt.Errorf("Software request may wrong, create new software failed")
+	}
+
+	log.Printf("Software %v creating ...", newSoftware.Name)
+	go func() {
+		changeTaskCount(1)
+		defer changeTaskCount(-1)
+		newSoftware.Lock()
+		defer newSoftware.Unlock()
+		defer db.NotifyToSave()
+
+		//task1: Software installation
+		if newSoftware.Backend == "container" {
+			//call scheduler to select a node
+			reqCpu := newSoftware.CPU
+			reqMem := newSoftware.Memory
+			scheduleLock.Lock()
+			selectNode := scheduler.Schedule(node.NodeRoleContainer, int32(reqCpu), int32(reqMem), 0)
+			if selectNode == nil {
+				log.Printf("Error: No valid node selected, software %v creation exit", newSoftware.Name)
+				scheduleLock.Unlock()
+				return
+			}
+			log.Printf("node selected -> %v for software %v", selectNode.Name, newSoftware.Name)
+			selectNode.ChangeCpuUsed(int32(reqCpu))
+			selectNode.ChangeMemUsed(int32(reqMem))
+			selectNode.ChangeDiskUsed(0)
+			scheduleLock.Unlock()
+
+			newSoftware.Node = selectNode.Name
+			newSoftware.SetStatus(saas.SoftwareStatusScheduled)
+			newSoftware.SetStatus(saas.SoftwareStatusInstalling)
+			payload, _ := json.Marshal(map[string]interface{}{
+				"Ip":       "192.168.0.35",
+				"Pass":     "c2WD8F2q",
+				"User":     "root",
+				"Name":     newSoftware.Name,
+				"Software": newSoftware.Kind,
+				"Version":  newSoftware.Version,
+				"Cpu":      newSoftware.CPU,
+				"Memory":   strconv.Itoa(int(newSoftware.Memory)) + "m",
+			})
+
+			log.Printf("Remote http call to install software %v", newSoftware.Name)
+			url := deployer.GetDeployerBaseUrl() + "/container"
+			err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
+			if err != nil {
+				newSoftware.SetStatus(saas.SoftwareStatusInstallFailed)
+				err_msg := fmt.Sprintf("software %v installation failed with error -> %v %v", newSoftware.Name, err, string(reponse_data))
+				log.Printf(err_msg)
+				myAccount.SendNotification(err_msg)
+				return
+			} else {
+				log.Printf("software %v installation successfully", newSoftware.Name)
+				readContainerStatus(newSoftware, reponse_data)
+			}
+		} else {
+			newSoftware.SetStatus(saas.SoftwareStatusError)
+			err_msg := fmt.Sprintf("%v backend not support", newSoftware.Backend)
+			log.Printf(err_msg)
+			myAccount.SendNotification(err_msg)
+			return
+		}
+
+		//task2, send notification
+		myAccount.SendNotification(fmt.Sprintf("Your software %v is created", newSoftware.Name))
+	}()
+
+	return nil
+}
+
+func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.SoftwareRequestAction) error {
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
+	defer db.NotifyToSave()
+
+	mySoftware, err := myAccount.GetSoftwareByName(softwareActionRequest.Name)
+	if err != nil {
+		log.Printf("Software action failed with error: %v", err)
+		return err
+	}
+
+	mySoftware.Lock()
+	defer mySoftware.Unlock()
+
+	if mySoftware.Backend == "container" {
+		payload, _ := json.Marshal(map[string]interface{}{
+			"Ip":       "192.168.0.35",
+			"Pass":     "c2WD8F2q",
+			"User":     "root",
+			"Name":     mySoftware.Name,
+			"Software": mySoftware.Kind,
+			"Action":   softwareActionRequest.Action,
+		})
+		url := deployer.GetDeployerBaseUrl() + "/container/action"
+
+		log.Printf("Remote http call to %v software %v", softwareActionRequest.Action, softwareActionRequest.Name)
+		err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
+		if err != nil {
+			mySoftware.SetStatus(saas.SoftwareStatusError)
+			log.Printf("Remote http call to %v software %v failed with error: %v %v", softwareActionRequest.Action, softwareActionRequest.Name, err, string(reponse_data))
+			myAccount.SendNotification(fmt.Sprintf("%v your software %v failed with error: %v %v", softwareActionRequest.Action, mySoftware.Name, err, string(reponse_data)))
+			return err
+		}
+
+		switch softwareActionRequest.Action {
+		case saas.SoftwareActionStart, saas.SoftwareActionRestart, saas.SoftwareActionGet:
+			readContainerStatus(mySoftware, reponse_data)
+		case saas.SoftwareActionStop:
+			mySoftware.Address = ""
+			mySoftware.PortMapping = nil
+			mySoftware.SetStatus(saas.SoftwareStatusStopped)
+		case saas.SoftwareActionDelete:
+			mySoftware.SetStatus(saas.SoftwareStatusDeleting)
+			if err = myAccount.RemoveSoftwareByName(mySoftware.Name); err != nil {
+				log.Printf("Delete software %v failed with error: %v", mySoftware.Name, err)
+				return err
+			}
+		default:
+			return fmt.Errorf("Software action %v not supported", softwareActionRequest.Action)
+		}
+
+	}
+	log.Printf("%v software %v successfully", softwareActionRequest.Action, mySoftware.Name)
+
+	return nil
 }
