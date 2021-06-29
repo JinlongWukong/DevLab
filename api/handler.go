@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"runtime"
@@ -55,7 +54,10 @@ func SoftwareIndexHandler(c *gin.Context) {
 //   40x: fail Account/VM not found
 func VmRequestGetVmHandler(c *gin.Context) {
 	var g vm.VmRequestGetVm
-	c.Bind(&g)
+	if err := c.Bind(&g); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	myaccount, exists := account.AccountDB.Get(g.Account)
 	if exists == true {
@@ -77,7 +79,11 @@ func VmRequestGetVmHandler(c *gin.Context) {
 // VM reqeust POST handler, Create VM
 func VmRequestCreateVmHandler(c *gin.Context) {
 	var vmRequest vm.VmRequest
-	c.Bind(&vmRequest)
+	if err := c.Bind(&vmRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	log.Println(vmRequest.Account, vmRequest.Type, vmRequest.Flavor, vmRequest.Number, vmRequest.Duration)
 
 	if vmRequest.Account == "" ||
@@ -109,7 +115,11 @@ func VmRequestCreateVmHandler(c *gin.Context) {
 //     40x/50x -> failed
 func VmRequestVmActionHandler(c *gin.Context) {
 	var vmRequestAction vm.VmRequestPostAction
-	c.ShouldBind(&vmRequestAction)
+	if err := c.Bind(&vmRequestAction); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	log.Printf("Get VM action request: Account -> %v, VM -> %v, Action -> %v ", vmRequestAction.Account, vmRequestAction.Name, vmRequestAction.Action)
 
 	myaccount, exists := account.AccountDB.Get(vmRequestAction.Account)
@@ -151,7 +161,11 @@ func VmRequestVmActionHandler(c *gin.Context) {
 //     40x/50x -> failed
 func VmRequestVmPortExposeHandler(c *gin.Context) {
 	var vmRequestPortExpose vm.VmRequestPortExpose
-	c.ShouldBind(&vmRequestPortExpose)
+	if err := c.Bind(&vmRequestPortExpose); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	log.Printf("Get VM port expose request: Account -> %v, VM -> %v, Port -> %v, Protocol -> %v ", vmRequestPortExpose.Account, vmRequestPortExpose.Name,
 		vmRequestPortExpose.Port, vmRequestPortExpose.Protocol)
 
@@ -184,10 +198,11 @@ func VmRequestVmPortExposeHandler(c *gin.Context) {
 //   200: success -> with Node info
 //   404: fail -> Node not found
 func NodeRequestGetNodeHandler(c *gin.Context) {
-	x, _ := ioutil.ReadAll(c.Request.Body)
-	fmt.Printf("%s", string(x))
 	var r node.NodeRequest
-	c.ShouldBind(&r)
+	if err := c.Bind(&r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	if r.Name == "" {
 		log.Println("Receive node request -> get all nodes info")
@@ -214,7 +229,11 @@ func NodeRequestGetNodeHandler(c *gin.Context) {
 func NodeRequestActionNodeHandler(c *gin.Context) {
 
 	var nodeRequest node.NodeRequest
-	c.ShouldBind(&nodeRequest)
+	if err := c.Bind(&nodeRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	log.Printf("Node request coming, node name -> %v action -> %v", nodeRequest.Name, nodeRequest.Action)
 
 	switch nodeRequest.Action {
@@ -253,7 +272,11 @@ func NodeRequestActionNodeHandler(c *gin.Context) {
 // K8s request POST handler, Create K8S
 func K8sRequestCreateHandler(c *gin.Context) {
 	var k8sRequest k8s.K8sRequest
-	c.Bind(&k8sRequest)
+	if err := c.Bind(&k8sRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	log.Println(k8sRequest.Account, k8sRequest.Version,
 		k8sRequest.NumOfContronller, k8sRequest.NumOfWorker)
 
@@ -283,7 +306,10 @@ func K8sRequestCreateHandler(c *gin.Context) {
 // K8s request Delete handler, remove K8S
 func K8sRequestDeleteHandler(c *gin.Context) {
 	var g k8s.K8sRequestAction
-	c.Bind(&g)
+	if err := c.Bind(&g); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	log.Println(g)
 
@@ -309,7 +335,10 @@ func K8sRequestDeleteHandler(c *gin.Context) {
 //   40x: fail Account/k8s not found
 func K8sRequestGetHandler(c *gin.Context) {
 	var g k8s.K8sRequestAction
-	c.Bind(&g)
+	if err := c.Bind(&g); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	myaccount, exists := account.AccountDB.Get(g.Account)
 	if exists == true {
@@ -338,7 +367,11 @@ func K8sRequestGetHandler(c *gin.Context) {
 //     40x/50x -> failed
 func SoftwareRequestCreateHandler(c *gin.Context) {
 	var request saas.SoftwareRequest
-	c.Bind(&request)
+	if err := c.Bind(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	log.Printf("Get software creation request, %v,%v,%v", request.Account, request.Kind, request.Version)
 
 	myaccount, exists := account.AccountDB.Get(request.Account)
@@ -364,7 +397,11 @@ func SoftwareRequestCreateHandler(c *gin.Context) {
 //     40x/50x -> failed
 func SoftwareRequestActionHandler(c *gin.Context) {
 	var r saas.SoftwareRequestAction
-	c.Bind(&r)
+	if err := c.Bind(&r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	log.Printf("Get Software action request: Account -> %v, Software -> %v, Action -> %v ", r.Account, r.Name, r.Action)
 
 	myAccount, exists := account.AccountDB.Get(r.Account)
@@ -402,7 +439,10 @@ func SoftwareRequestActionHandler(c *gin.Context) {
 //   40x: fail Account/software not found
 func SoftwareRequestGetHandler(c *gin.Context) {
 	var g saas.SoftwareRequestGetInfo
-	c.Bind(&g)
+	if err := c.Bind(&g); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	myaccount, exists := account.AccountDB.Get(g.Account)
 	if exists == true {

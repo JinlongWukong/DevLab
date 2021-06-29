@@ -56,34 +56,34 @@ type VirtualMachine struct {
 }
 
 type VmRequest struct {
-	Account  string `form:"account" json:"account"`
+	Account  string `form:"account" json:"account" binding:"required"`
 	Hostname string `form:"hostname" json:"hostname"`
 	RootPass string `form:"rootPass" json:"rootPass"`
-	Type     string `form:"type" json:"type"`
+	Type     string `form:"type" json:"type" binding:"required"`
 	Flavor   string `form:"flavor" json:"flavor"`
 	CPU      int32  `form:"cpu" json:"cpu"`
 	Memory   int32  `form:"mem" json:"memory"`
 	Disk     int32  `form:"disk" json:"disk"`
-	Number   int32  `form:"numbers" json:"number"`
-	Duration int    `form:"duration" json:"duration"`
+	Number   int32  `form:"numbers" json:"number" binding:"required,min=1,max=5"`
+	Duration int    `form:"duration" json:"duration" binding:"required"`
 }
 
 type VmRequestGetVm struct {
-	Account string `form:"account" json:"account"`
-	Name    string `form:"name" json:"name"`
+	Account string `form:"account" json:"account" binding:"required"`
+	Name    string `form:"name,omitempty" json:"name,omitempty"`
 }
 
 type VmRequestPostAction struct {
-	Account string `form:"account" json:"account"`
-	Name    string `form:"name" json:"name"`
-	Action  string `form:"action" json:"action"`
+	Account string `form:"account" json:"account" binding:"required"`
+	Name    string `form:"name" json:"name" binding:"required"`
+	Action  string `form:"action" json:"action" binding:"required"`
 }
 
 type VmRequestPortExpose struct {
-	Account  string `form:"account" json:"account"`
-	Name     string `form:"name" json:"name"`
-	Port     int    `form:"port" json:"port"`
-	Protocol string `form:"protocol" json:"protocol"`
+	Account  string `form:"account" json:"account" binding:"required"`
+	Name     string `form:"name" json:"name" binding:"required"`
+	Port     uint16 `form:"port" json:"port" binding:"required"`
+	Protocol string `form:"protocol,default=tcp" json:"protocol,default=tcp" binding:"required"`
 }
 
 type VmLiveStatus struct {

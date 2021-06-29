@@ -73,11 +73,10 @@ func (m *NodeMap) Iter() <-chan NodeMapItem {
 //   new node pointer
 func NewNode(nodeRequest NodeRequest) *Node {
 
-	if nodeRequest.Name == "" ||
-		nodeRequest.IpAddress == "" ||
+	if nodeRequest.IpAddress == "" ||
 		nodeRequest.User == "" ||
 		nodeRequest.Passwd == "" {
-		log.Println("Error: node name,ip,user,password must give")
+		log.Println("Error: node ip,user,password must specify")
 		return nil
 	}
 

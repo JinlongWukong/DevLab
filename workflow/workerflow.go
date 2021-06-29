@@ -308,14 +308,6 @@ func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int, p
 		return fmt.Errorf("VM in deleting or deleted")
 	}
 
-	//Input param check
-	if port <= 0 {
-		return fmt.Errorf("invalid port given")
-	}
-	if protocol != "tcp" && protocol != "udp" {
-		return fmt.Errorf("invalid protocol given")
-	}
-
 	if _, existed := myVM.PortMap[port]; existed == true {
 		msg := fmt.Sprintf("Port %v already exposed", port)
 		log.Println(msg)

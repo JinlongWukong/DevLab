@@ -54,12 +54,12 @@ type Node struct {
 }
 
 type NodeRequest struct {
-	Name      string     `json:"name" form:"name"`
+	Name      string     `json:"name" form:"name" binding:"required"`
 	User      string     `json:"user,omitempty" form:"user,omitempty"`
 	Passwd    string     `json:"password,omitempty" form:"password,omitempty"`
 	IpAddress string     `json:"ip,omitempty" form:"ip,omitempty"`
 	Role      NodeRole   `json:"role,omitempty" form:"role,omitempty"`
-	Action    NodeAction `json:"action,omitempty" form:"action,omitempty"`
+	Action    NodeAction `json:"action" form:"action" binding:"required"`
 }
 
 type NodeInfo struct {

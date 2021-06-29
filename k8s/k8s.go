@@ -12,9 +12,8 @@ import (
 //   new k8s pointer
 func NewK8s(name string, k8sRequest K8sRequest) *K8S {
 
-	if name == "" ||
-		k8sRequest.Version == "" {
-		log.Println("Error: k8s name version, type must specify")
+	if name == "" {
+		log.Println("Error: k8sc cluster name must specify")
 		return nil
 	}
 

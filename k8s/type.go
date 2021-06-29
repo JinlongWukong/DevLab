@@ -29,15 +29,15 @@ type K8S struct {
 }
 
 type K8sRequest struct {
-	Account          string `form:"account" json:"account"`
-	Version          string `form:"version" json:"version"`
-	NumOfContronller uint16 `form:"numOfContronller" json:"numOfContronller"`
-	NumOfWorker      uint16 `form:"numOfWorker" json:"numOfWorker"`
-	Duration         int    `form:"duration" json:"duration"`
+	Account          string `form:"account" json:"account" binding:"required"`
+	Version          string `form:"version" json:"version" binding:"required"`
+	NumOfContronller uint16 `form:"numOfContronller" json:"numOfContronller" binding:"omitempty,max=5"`
+	NumOfWorker      uint16 `form:"numOfWorker" json:"numOfWorker" binding:"omitempty,max=100"`
+	Duration         int    `form:"duration" json:"duration" binding:"omitempty"`
 }
 
 type K8sRequestAction struct {
-	Account string `form:"account" json:"account"`
-	Name    string `form:"name" json:"name"`
+	Account string `form:"account" json:"account" binding:"required"`
+	Name    string `form:"name" json:"name" binding:"required"`
 	Action  string `form:"action,omitempty" json:"action,omitempty"`
 }

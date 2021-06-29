@@ -43,11 +43,11 @@ type Software struct {
 }
 
 type SoftwareRequest struct {
-	Account string `form:"account" json:"account"`
-	Kind    string `form:"kind" json:"kind"`
-	Version string `form:"version" json:"version"`
-	CPU     uint8  `form:"cpu" json:"cpu"`
-	Memory  uint32 `form:"memory" json:"memory"`
+	Account string `form:"account" json:"account" binding:"required"`
+	Kind    string `form:"kind" json:"kind" binding:"required"`
+	Version string `form:"version" json:"version" binding:"required"`
+	CPU     uint8  `form:"cpu" json:"cpu" binding:"required,min=1,max=20"`
+	Memory  uint32 `form:"memory" json:"memory" binding:"required,min=10,max=65536"`
 }
 
 type SoftwareRequestGetInfo struct {
