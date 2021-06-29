@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -46,24 +45,8 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 	defer myAccount.Unlock()
 	defer db.NotifyToSave()
 
-	//Fetch all existing VM Name, get the last index as the start index of new VM
-	vmNames := myAccount.GetVmNameList()
-	log.Println(vmNames)
-	vmIndex := func(v []string) []int {
-		indexes := make([]int, 0)
-		for _, v := range v {
-			t := strings.Split(v, "-")
-			i, _ := strconv.Atoi(t[len(t)-1])
-			indexes = append(indexes, i)
-		}
-		return indexes
-	}(vmNames)
-	sort.Ints(vmIndex)
-	var lastIndex int
-	if len(vmIndex) > 0 {
-		lastIndex = vmIndex[len(vmIndex)-1]
-		log.Printf("The last index of VM: %v", lastIndex)
-	}
+	//Get the last index as the index of new virtual machine
+	lastIndex := utils.GetLastIndex(myAccount.GetVmNameList())
 
 	// New VM instance
 	log.Printf("VM creation starting... total numbers: %v", vmRequest.Number)
@@ -391,7 +374,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 		err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
 
 		if err != nil {
-			log.Printf("Install node  %v failed with error -> %v", myNode.Name, err)
+			log.Printf("Install node  %v failed with error -> %v %v", myNode.Name, err, string(reponse_data))
 			myNode.SetStatus(node.NodeStatusFailed)
 			return
 		} else {
@@ -452,24 +435,8 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 	defer myAccount.Unlock()
 	defer db.NotifyToSave()
 
-	//Fetch all existing k8s Name, get the last index as the start index of new k8s
-	k8sNames := myAccount.GetK8sNameList()
-	log.Printf("The current existing k8s cluster list: %v", k8sNames)
-	k8sIndex := func(v []string) []int {
-		indexes := make([]int, 0)
-		for _, v := range v {
-			t := strings.Split(v, "-")
-			i, _ := strconv.Atoi(t[len(t)-1])
-			indexes = append(indexes, i)
-		}
-		return indexes
-	}(k8sNames)
-	sort.Ints(k8sIndex)
-	var lastIndex int
-	if len(k8sIndex) > 0 {
-		lastIndex = k8sIndex[len(k8sIndex)-1]
-		log.Printf("The last index of K8S: %v", lastIndex)
-	}
+	//Get the last index as the index of new k8s
+	lastIndex := utils.GetLastIndex(myAccount.GetK8sNameList())
 
 	newK8s := k8s.NewK8s(k8sRequest.Account+"-k8s-"+strconv.Itoa(lastIndex+1), k8sRequest)
 	if newK8s != nil {
@@ -538,10 +505,12 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 
 		log.Println("Remote http call to install k8s cluster")
 		url := deployer.GetDeployerBaseUrl() + "/k8s"
-		err, _ = utils.HttpSendJsonData(url, "POST", payload)
+		err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
 		if err != nil {
 			newK8s.SetStatus(k8s.K8sStatusInstallFailed)
-			log.Printf("k8s cluster %v installation failed with error -> %v", newK8s.Name, err)
+			err_msg := fmt.Sprintf("k8s cluster %v installation failed with error -> %v %v", newK8s.Name, err, string(reponse_data))
+			log.Printf(err_msg)
+			myAccount.SendNotification(err_msg)
 			return
 		} else {
 			newK8s.SetStatus(k8s.K8sStatusRunning)
