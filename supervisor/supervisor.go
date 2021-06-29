@@ -91,7 +91,7 @@ func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 							"Role": string(n.Role),
 						}
 						log.Printf("Remote http call to check node usage %v", n.Name)
-						var nodeUsage node.NodeUsage
+						var nodeCondition node.NodeCondition
 						url := deployer.GetDeployerBaseUrl() + "/host"
 						err, reponse_data := utils.HttpGetJsonData(url, query)
 						if err != nil {
@@ -103,16 +103,19 @@ func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 							}
 						} else {
 							log.Printf("Remote http call to check node %v successfully", n.Name)
-							if err := json.Unmarshal(reponse_data, &nodeUsage); err != nil {
+							if err := json.Unmarshal(reponse_data, &nodeCondition); err != nil {
 								log.Printf("Parse node %v response data failed -> %v", n.Name, err)
 								break
 							}
-							diskUsage, _ := strconv.Atoi(strings.Split(nodeUsage.DiskUsage, "%")[0])
+							diskUsage, _ := strconv.Atoi(strings.Split(nodeCondition.DiskUsage, "%")[0])
 							//If at least one of below conditions not satisfied, means overload
-							if nodeUsage.CpuLoad > float64(n.CPU)*nodeLimitCPU ||
-								nodeUsage.MemAvail < nodeMinimumMem ||
+							if nodeCondition.CpuLoad > float64(n.CPU)*nodeLimitCPU ||
+								nodeCondition.MemAvail < nodeMinimumMem ||
 								diskUsage > nodeLimitDisk {
 								n.SetStatus(node.NodeStatusOverload)
+							} else if nodeCondition.Engine != 0 {
+								log.Printf("node %v engine %v is down", n.Name, n.Role)
+								n.SetStatus(node.NodeStatusUnhealth)
 							} else {
 								n.SetStatus(node.NodeStatusReady)
 							}

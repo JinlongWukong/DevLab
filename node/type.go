@@ -69,8 +69,9 @@ type NodeInfo struct {
 	OSType string `json:"type"`
 }
 
-type NodeUsage struct {
+type NodeCondition struct {
 	CpuLoad   float64 `json:"cpu_load"`
 	MemAvail  int     `json:"memory_avail"`
 	DiskUsage string  `json:"disk_usage"`
+	Engine    uint8   `json:"engine_status"`
 }
