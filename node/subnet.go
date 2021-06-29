@@ -14,7 +14,7 @@ var subnets = make([]string, 0)
 var subnetRange = "192.168.0.0/16"
 
 //translate subnet range to subnet pool
-func Initialize() {
+func init() {
 	if config.Node.SubnetRange != "" {
 		subnetRange = config.Node.SubnetRange
 	}

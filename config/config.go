@@ -80,6 +80,15 @@ var Supervisor SupervisorConfig
 var Node NodeConfig
 var Network NetworkConfig
 
+func init() {
+
+	//Load config.ini
+	if err := LoadConfig(); err != nil {
+		log.Fatalf("configuration file loadling failed %v, program exited", err)
+	}
+
+}
+
 func LoadConfig() error {
 
 	log.Println("Start loading config.ini")
@@ -100,7 +109,6 @@ func LoadConfig() error {
 		log.Printf("Fail to parse section %v: %v", "Workflow", err)
 		return err
 	}
-
 	err = cfg.Section("Schedule").MapTo(&Schedule)
 	if err != nil {
 		log.Printf("Fail to parse section %v: %v", "Schedule", err)

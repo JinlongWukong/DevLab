@@ -11,7 +11,7 @@ import (
 var baseUrl string
 
 //Load deployer info from ENV first, if not ok, then load from config.ini
-func Initialize() {
+func init() {
 
 	regUrl, _ := regexp.Compile("^http[s]?://[[:ascii:]]*:\\d*$")
 

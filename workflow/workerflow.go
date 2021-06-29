@@ -29,7 +29,7 @@ var newNodeLock sync.Mutex
 var vmStatusRetry, vmStatusInterval = 50, 6
 
 // initialize configuration
-func Initialize() {
+func init() {
 	if config.Workflow.VmStatusRetry > 0 {
 		vmStatusRetry = config.Workflow.VmStatusRetry
 	}
