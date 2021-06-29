@@ -32,7 +32,7 @@ func readContainerStatus(mySoftware *saas.Software, reponse_data []byte) error {
 		case "stopped":
 			mySoftware.SetStatus(saas.SoftwareStatusStopped)
 		case "deleted":
-			mySoftware.SetStatus(saas.SoftwareStatusDeleted)
+			mySoftware.SetStatus(saas.SoftwareStatusNotFound)
 		case "unknown":
 			mySoftware.SetStatus(saas.SoftwareStatusUnknown)
 		default:

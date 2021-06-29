@@ -144,9 +144,9 @@
             <input type="text" id="inputAddress" placeholder="address"><br>
             <br><br>
             <label>node role: </label>
-            <input type="radio" id="radioRoleCompute" name="radioRole" value="compute", checked="checked">
+            <input type="radio" id="radioRoleCompute" name="radioRole" value="compute">
             <label class="radio" for="radioRoleCompute">Compute</label>
-            <input type="radio" id="radioRoleContainer" name="radioRole" value="container">
+            <input type="radio" id="radioRoleContainer" name="radioRole" value="container", checked="checked">
             <label class="radio" for="radioRoleContainer">Container</label>
             <br><br>
             <input type="button" value="Confirm" id="confirm">
@@ -304,7 +304,7 @@ $(document).ready(function(){
              user: $("#inputUser").val(),
              password: $("#inputPasswd").val(),
              ip: $("#inputAddress").val(),
-             role: $('input[name="radioRole"]').val(),
+             role: $('input[name="radioRole"]:checked').val(),
              action: "add",
         };
         console.log(requestData)

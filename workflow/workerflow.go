@@ -361,6 +361,8 @@ func AddNode(nodeRequest node.NodeRequest) error {
 		defer db.NotifyToSave()
 
 		//Install node
+		myNode.SetStatus(node.NodeStatusInstalling)
+		db.NotifyToSave()
 		payload, _ := json.Marshal(map[string]interface{}{
 			"Ip":     myNode.IpAddress,
 			"Pass":   myNode.Passwd,
@@ -377,7 +379,7 @@ func AddNode(nodeRequest node.NodeRequest) error {
 
 		if err != nil {
 			log.Printf("Install node  %v failed with error -> %v %v", myNode.Name, err, string(reponse_data))
-			myNode.SetStatus(node.NodeStatusFailed)
+			myNode.SetStatus(node.NodeStatusInstallFailed)
 			return
 		} else {
 			log.Printf("Install node %v successfully", myNode.Name)
@@ -589,33 +591,32 @@ func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareReq
 
 		//task1: Software installation
 		if newSoftware.Backend == "container" {
-			/*
-				//call scheduler to select a node
-				reqCpu := newSoftware.CPU
-				reqMem := newSoftware.Memory
-				scheduleLock.Lock()
-				selectNode := scheduler.Schedule(node.NodeRoleContainer, int32(reqCpu), int32(reqMem), 0)
-				if selectNode == nil {
-					err_msg := fmt.Sprintf("Error: No valid node selected, software %v creation exit", newSoftware.Name)
-					log.Printf(err_msg)
-					myAccount.SendNotification(err_msg)
-					scheduleLock.Unlock()
-					return
-				}
-				log.Printf("node selected -> %v for software %v", selectNode.Name, newSoftware.Name)
-				selectNode.ChangeCpuUsed(int32(reqCpu))
-				selectNode.ChangeMemUsed(int32(reqMem))
-				selectNode.ChangeDiskUsed(0)
-				scheduleLock.Unlock()
 
-				newSoftware.Node = selectNode.Name
-			*/
+			//call scheduler to select a node
+			reqCpu := newSoftware.CPU
+			reqMem := newSoftware.Memory
+			scheduleLock.Lock()
+			selectNode := scheduler.Schedule(node.NodeRoleContainer, int32(reqCpu), int32(reqMem), 0)
+			if selectNode == nil {
+				err_msg := fmt.Sprintf("Error: No valid node selected, software %v creation exit", newSoftware.Name)
+				log.Printf(err_msg)
+				myAccount.SendNotification(err_msg)
+				scheduleLock.Unlock()
+				return
+			}
+			log.Printf("node selected -> %v for software %v", selectNode.Name, newSoftware.Name)
+			selectNode.ChangeCpuUsed(int32(reqCpu))
+			selectNode.ChangeMemUsed(int32(reqMem))
+			selectNode.ChangeDiskUsed(0)
+			scheduleLock.Unlock()
+
+			newSoftware.Node = selectNode.Name
 			newSoftware.SetStatus(saas.SoftwareStatusScheduled)
 			newSoftware.SetStatus(saas.SoftwareStatusInstalling)
 			payload, _ := json.Marshal(map[string]interface{}{
-				"Ip":       "192.168.0.35",
-				"Pass":     "c2WD8F2q",
-				"User":     "root",
+				"Ip":       selectNode.IpAddress,
+				"Pass":     selectNode.Passwd,
+				"User":     selectNode.UserName,
 				"Name":     newSoftware.Name,
 				"Software": newSoftware.Kind,
 				"Version":  newSoftware.Version,
@@ -665,11 +666,16 @@ func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.Softw
 	mySoftware.Lock()
 	defer mySoftware.Unlock()
 
+	selectNode := node.GetNodeByName(mySoftware.Node)
+	if selectNode == nil {
+		return fmt.Errorf("Error: software %v hosted node %v not found", mySoftware.Name, mySoftware.Node)
+	}
+
 	if mySoftware.Backend == "container" {
 		payload, _ := json.Marshal(map[string]interface{}{
-			"Ip":       "192.168.0.35",
-			"Pass":     "c2WD8F2q",
-			"User":     "root",
+			"Ip":       selectNode.IpAddress,
+			"Pass":     selectNode.Passwd,
+			"User":     selectNode.UserName,
 			"Name":     mySoftware.Name,
 			"Software": mySoftware.Kind,
 			"Action":   softwareActionRequest.Action,
@@ -693,7 +699,15 @@ func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.Softw
 			mySoftware.PortMapping = nil
 			mySoftware.SetStatus(saas.SoftwareStatusStopped)
 		case saas.SoftwareActionDelete:
-			mySoftware.SetStatus(saas.SoftwareStatusDeleting)
+			mySoftware.SetStatus(saas.SoftwareStatusDeleted)
+			//Recycle node resouces
+			if mySoftware.GetStatus() != saas.SoftwareStatusInit {
+				log.Println("Recycle node resources")
+				selectNode.ChangeCpuUsed(-int32(mySoftware.CPU))
+				selectNode.ChangeMemUsed(-int32(mySoftware.Memory))
+				selectNode.ChangeDiskUsed(0)
+			}
+
 			if err = myAccount.RemoveSoftwareByName(mySoftware.Name); err != nil {
 				log.Printf("Delete software %v failed with error: %v", mySoftware.Name, err)
 				return err

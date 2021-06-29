@@ -76,7 +76,7 @@ func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 				for _, n := range allNodes {
 					//if node status not installed or failed, skip
 					nodeStatus := n.GetStatus()
-					if nodeStatus == node.NodeStatusInit || nodeStatus == node.NodeStatusFailed {
+					if nodeStatus == node.NodeStatusInit || nodeStatus == node.NodeStatusInstallFailed {
 						continue
 					}
 

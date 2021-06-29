@@ -8,12 +8,13 @@ type NodeStatus string
 type NodeRole string
 
 const (
-	NodeStatusInit      NodeStatus = "init"
-	NodeStatusFailed    NodeStatus = "failed"
-	NodeStatusInstalled NodeStatus = "installed"
-	NodeStatusReady     NodeStatus = "ready"
-	NodeStatusUnhealth  NodeStatus = "unhealth"
-	NodeStatusOverload  NodeStatus = "overload"
+	NodeStatusInit          NodeStatus = "init"
+	NodeStatusInstalling    NodeStatus = "installing"
+	NodeStatusInstallFailed NodeStatus = "installFailed"
+	NodeStatusInstalled     NodeStatus = "installed"
+	NodeStatusReady         NodeStatus = "ready"
+	NodeStatusUnhealth      NodeStatus = "unhealth"
+	NodeStatusOverload      NodeStatus = "overload"
 
 	NodeStateEnable  NodeState = "enable"
 	NodeStateDisable NodeState = "disable"
@@ -54,12 +55,12 @@ type Node struct {
 }
 
 type NodeRequest struct {
-	Name      string     `json:"name" form:"name" binding:"required"`
+	Name      string     `json:"name,omitempty" form:"name,omitempty"`
 	User      string     `json:"user,omitempty" form:"user,omitempty"`
 	Passwd    string     `json:"password,omitempty" form:"password,omitempty"`
 	IpAddress string     `json:"ip,omitempty" form:"ip,omitempty"`
 	Role      NodeRole   `json:"role,omitempty" form:"role,omitempty"`
-	Action    NodeAction `json:"action" form:"action" binding:"required"`
+	Action    NodeAction `json:"action,omitempty" form:"action,omitempty"`
 }
 
 type NodeInfo struct {
