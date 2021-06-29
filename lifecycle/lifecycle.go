@@ -27,7 +27,7 @@ type LifeCycle struct {
 var _ manager.Manager = LifeCycle{}
 
 //initialize configuration
-func initialize() {
+func init() {
 
 	if config.LifeCycle.CheckInterval != "" {
 		checkInterval = config.LifeCycle.CheckInterval
@@ -47,8 +47,6 @@ func (l LifeCycle) Control(ctx context.Context, wg *sync.WaitGroup) {
 		log.Println("Lifecycle manager exited")
 		wg.Done()
 	}()
-
-	initialize()
 
 	if enabled == true {
 		log.Println("Lifecycle is enabled, begin to work")
@@ -71,18 +69,18 @@ func (l LifeCycle) Control(ctx context.Context, wg *sync.WaitGroup) {
 					}
 					for _, vm := range vmSlice {
 						//whether forever
-						if vm.Lifetime >= forever {
+						if vm.GetLifeTime() >= forever {
 							continue
 						}
-						vm.Lifetime = vm.Lifetime - period
-						log.Printf("Accout %v vm %v lifetime is %v", ac.Value.Name, vm.Name, vm.Lifetime)
-						if vm.Lifetime <= 0 {
+						vmLifeTime := vm.ChangeLifeTime(-period)
+						log.Printf("Accout %v vm %v lifetime is %v", ac.Value.Name, vm.Name, vmLifeTime)
+						if vmLifeTime <= 0 {
 							log.Printf("%v Lifetime is over, begin to delete vm", vm.Name)
 							if err := workflow.ActionVM(ac.Value, vm, "delete"); err != nil {
 								log.Println(err)
 							}
-						} else if vm.Lifetime < 6*time.Hour {
-							ac.Value.SendNotification(fmt.Sprintf("Warning, Your VM %v still have %v life left", vm.Name, vm.Lifetime))
+						} else if vmLifeTime < 6*time.Hour {
+							ac.Value.SendNotification(fmt.Sprintf("Warning, Your VM %v still have %v life left", vm.Name, vmLifeTime))
 						}
 					}
 					db.NotifyToSave()

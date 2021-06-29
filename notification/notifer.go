@@ -29,6 +29,16 @@ type Notifier struct {
 
 var _ manager.Manager = Notifier{}
 
+//initialize configuration
+func init() {
+	if config.Notification.Kind != "" {
+		notificationKind = config.Notification.Kind
+	}
+	if config.Notification.QueueSize > 0 {
+		queueSize = config.Notification.QueueSize
+	}
+}
+
 //notficaiont internal api interface
 func SendNotification(message Message) {
 
@@ -38,16 +48,6 @@ func SendNotification(message Message) {
 		log.Println("Message buffer is full!!!")
 	}
 
-}
-
-//initialize configuration
-func initialize() {
-	if config.Notification.Kind != "" {
-		notificationKind = config.Notification.Kind
-	}
-	if config.Notification.QueueSize > 0 {
-		queueSize = config.Notification.QueueSize
-	}
 }
 
 //controller loop

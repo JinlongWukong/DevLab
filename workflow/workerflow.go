@@ -285,6 +285,16 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 	return action_err
 }
 
+func ExtendVMLifetime(myVM *vm.VirtualMachine, period time.Duration) error {
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
+	defer db.NotifyToSave()
+
+	myVM.ChangeLifeTime(period)
+
+	return nil
+}
+
 // Set dnat rule to expose vm port with node port
 func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int, protocol string) error {
 	changeTaskCount(1)

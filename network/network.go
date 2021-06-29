@@ -23,7 +23,7 @@ type NetworkController struct {
 var _ manager.Manager = NetworkController{}
 
 //initialize configuration
-func initialize() {
+func init() {
 	if config.Network.CheckInterval != "" {
 		checkInterval = config.Network.CheckInterval
 	}
@@ -39,8 +39,6 @@ func (n NetworkController) Control(ctx context.Context, wg *sync.WaitGroup) {
 		log.Println("NetworkController manager exited")
 		wg.Done()
 	}()
-
-	initialize()
 
 	period, err := time.ParseDuration(checkInterval)
 	if err != nil {

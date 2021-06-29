@@ -28,7 +28,7 @@ type Supervisor struct {
 
 var _ manager.Manager = Supervisor{}
 
-func initialize() {
+func init() {
 	if config.Supervisor.NodeCheckInterval != "" {
 		nodeCheckInterval = config.Supervisor.NodeCheckInterval
 	}
@@ -53,8 +53,6 @@ func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 		log.Println("Supervisor manager exited")
 		wg.Done()
 	}()
-
-	initialize()
 
 	if enable == "true" {
 		interval, err := time.ParseDuration(nodeCheckInterval)

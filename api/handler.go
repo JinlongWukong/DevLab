@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -121,6 +122,8 @@ func VmRequestVmActionHandler(c *gin.Context) {
 			switch vmRequestAction.Action {
 			case "start", "shutdown", "reboot", "delete":
 				action_err = workflow.ActionVM(myaccount, myVM, vmRequestAction.Action)
+			case "extend":
+				action_err = workflow.ExtendVMLifetime(myVM, 24*time.Hour)
 			default:
 				c.JSON(http.StatusBadRequest, "Action not support")
 				return

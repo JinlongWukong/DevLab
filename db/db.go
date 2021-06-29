@@ -25,7 +25,7 @@ type DB struct {
 var _ manager.Manager = DB{}
 
 //initialize configuration
-func initialize() {
+func init() {
 
 	if config.DB.SyncPeriod > 0 {
 		dbSyncPeriod = config.DB.SyncPeriod
@@ -150,8 +150,6 @@ func (db DB) Control(ctx context.Context, wg *sync.WaitGroup) {
 		log.Println("DB manager exited")
 		wg.Done()
 	}()
-
-	initialize()
 
 	//Load data from db into map
 	LoadFromDB()

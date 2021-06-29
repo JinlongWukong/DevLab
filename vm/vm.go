@@ -6,7 +6,6 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/JinlongWukong/CloudLab/deployer"
@@ -47,8 +46,19 @@ func NewVirtualMachine(name, flavor, vmType, hostname, rootPass string, cpu, mem
 		rootPass = utils.RandomString(8)
 	}
 
-	ipadd, status, node := "unknown", VmStatusInit, "unknown"
-	return &VirtualMachine{name, hostname, cpu, mem, disk, ipadd, status, vnc, vmType, node, Duration, map[int]string{}, rootPass, sync.RWMutex{}}
+	return &VirtualMachine{
+		Name:     name,
+		Hostname: hostname,
+		CPU:      cpu,
+		Memory:   mem,
+		Disk:     disk,
+		Status:   VmStatusInit,
+		Vnc:      vnc,
+		Type:     vmType,
+		Lifetime: Duration,
+		PortMap:  map[int]string{},
+		RootPass: rootPass,
+	}
 }
 
 //Create VM by calling remote deployer
@@ -223,6 +233,21 @@ func (myvm *VirtualMachine) ActionDnatRule(port []int, action string) error {
 
 	return nil
 
+}
+
+func (myvm *VirtualMachine) ChangeLifeTime(delta time.Duration) time.Duration {
+	myvm.lifeMutex.Lock()
+	defer myvm.lifeMutex.Unlock()
+
+	myvm.Lifetime += delta
+	return myvm.Lifetime
+}
+
+func (myvm *VirtualMachine) GetLifeTime() time.Duration {
+	myvm.lifeMutex.RLock()
+	defer myvm.lifeMutex.RUnlock()
+
+	return myvm.Lifetime
 }
 
 func GetFlavordetail(flavor string) (map[string]int32, error) {
