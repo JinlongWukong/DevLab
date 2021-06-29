@@ -82,7 +82,7 @@ type VmRequestPostAction struct {
 type VmRequestPortExpose struct {
 	Account  string `form:"account" json:"account" binding:"required"`
 	Name     string `form:"name" json:"name" binding:"required"`
-	Port     uint16 `form:"port" json:"port" binding:"required"`
+	Port     int    `form:"port" json:"port" binding:"required,min=1"`
 	Protocol string `form:"protocol,default=tcp" json:"protocol,default=tcp" binding:"required"`
 }
 

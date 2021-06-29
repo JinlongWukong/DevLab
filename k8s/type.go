@@ -38,6 +38,6 @@ type K8sRequest struct {
 
 type K8sRequestAction struct {
 	Account string `form:"account" json:"account" binding:"required"`
-	Name    string `form:"name" json:"name" binding:"required"`
+	Name    string `form:"name" json:"name"`
 	Action  string `form:"action,omitempty" json:"action,omitempty"`
 }

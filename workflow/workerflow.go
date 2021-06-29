@@ -589,23 +589,27 @@ func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareReq
 
 		//task1: Software installation
 		if newSoftware.Backend == "container" {
-			//call scheduler to select a node
-			reqCpu := newSoftware.CPU
-			reqMem := newSoftware.Memory
-			scheduleLock.Lock()
-			selectNode := scheduler.Schedule(node.NodeRoleContainer, int32(reqCpu), int32(reqMem), 0)
-			if selectNode == nil {
-				log.Printf("Error: No valid node selected, software %v creation exit", newSoftware.Name)
+			/*
+				//call scheduler to select a node
+				reqCpu := newSoftware.CPU
+				reqMem := newSoftware.Memory
+				scheduleLock.Lock()
+				selectNode := scheduler.Schedule(node.NodeRoleContainer, int32(reqCpu), int32(reqMem), 0)
+				if selectNode == nil {
+					err_msg := fmt.Sprintf("Error: No valid node selected, software %v creation exit", newSoftware.Name)
+					log.Printf(err_msg)
+					myAccount.SendNotification(err_msg)
+					scheduleLock.Unlock()
+					return
+				}
+				log.Printf("node selected -> %v for software %v", selectNode.Name, newSoftware.Name)
+				selectNode.ChangeCpuUsed(int32(reqCpu))
+				selectNode.ChangeMemUsed(int32(reqMem))
+				selectNode.ChangeDiskUsed(0)
 				scheduleLock.Unlock()
-				return
-			}
-			log.Printf("node selected -> %v for software %v", selectNode.Name, newSoftware.Name)
-			selectNode.ChangeCpuUsed(int32(reqCpu))
-			selectNode.ChangeMemUsed(int32(reqMem))
-			selectNode.ChangeDiskUsed(0)
-			scheduleLock.Unlock()
 
-			newSoftware.Node = selectNode.Name
+				newSoftware.Node = selectNode.Name
+			*/
 			newSoftware.SetStatus(saas.SoftwareStatusScheduled)
 			newSoftware.SetStatus(saas.SoftwareStatusInstalling)
 			payload, _ := json.Marshal(map[string]interface{}{
