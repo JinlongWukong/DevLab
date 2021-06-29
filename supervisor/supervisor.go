@@ -90,7 +90,7 @@ func (s Supervisor) Control(ctx context.Context, wg *sync.WaitGroup) {
 							"Ip":   n.IpAddress,
 							"Pass": n.Passwd,
 							"User": n.UserName,
-							"Role": n.Role,
+							"Role": string(n.Role),
 						}
 						log.Printf("Remote http call to check node usage %v", n.Name)
 						var nodeUsage node.NodeUsage

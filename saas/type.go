@@ -7,6 +7,7 @@ type SoftwareAction string
 
 const (
 	SoftwareStatusInit          SoftwareStatus = "init"
+	SoftwareStatusScheduled     SoftwareStatus = "scheduled"
 	SoftwareStatusBootingVm     SoftwareStatus = "bootingvm"
 	SoftwareStatusBootVmFailed  SoftwareStatus = "bootvmFailed"
 	SoftwareStatusInstalling    SoftwareStatus = "installing"
@@ -31,6 +32,7 @@ type Software struct {
 	Backend         string            `json:"backend"`
 	Version         string            `json:"version"`
 	Address         string            `json:"address"`
+	Node            string            `json:"node"`
 	CPU             uint8             `json:"cpu"`
 	Memory          uint32            `json:"memory"`
 	Status          SoftwareStatus    `json:"status"`

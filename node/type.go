@@ -5,6 +5,7 @@ import "sync"
 type NodeState string
 type NodeAction string
 type NodeStatus string
+type NodeRole string
 
 const (
 	NodeStatusInit      NodeStatus = "init"
@@ -22,15 +23,19 @@ const (
 	NodeActionReboot  NodeAction = "reboot"
 	NodeActionEnable  NodeAction = "enable"
 	NodeActionDisable NodeAction = "disable"
-	NodePortRangeMin             = 20000
-	NodePortRangeMax             = 25000
+
+	NodeRoleCompute   NodeRole = "compute"
+	NodeRoleContainer NodeRole = "container"
+
+	NodePortRangeMin = 20000
+	NodePortRangeMax = 25000
 )
 
 type Node struct {
 	Name        string         `json:"name"`
 	UserName    string         `json:"user"`
 	Passwd      string         `json:"passwd"`
-	Role        string         `json:"role"`
+	Role        NodeRole       `json:"role"`
 	IpAddress   string         `json:"address"`
 	OSType      string         `json:"os"`
 	Subnet      string         `json:"subnet"`
@@ -53,7 +58,7 @@ type NodeRequest struct {
 	User      string     `json:"user,omitempty" form:"user,omitempty"`
 	Passwd    string     `json:"password,omitempty" form:"password,omitempty"`
 	IpAddress string     `json:"ip,omitempty" form:"ip,omitempty"`
-	Role      string     `json:"role,omitempty" form:"role,omitempty"`
+	Role      NodeRole   `json:"role,omitempty" form:"role,omitempty"`
 	Action    NodeAction `json:"action,omitempty" form:"action,omitempty"`
 }
 

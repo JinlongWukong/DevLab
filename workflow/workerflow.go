@@ -106,7 +106,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 		reqDisk := newVmGroup[0].Disk * 1024 * vmRequest.Number
 
 		scheduleLock.Lock()
-		selectNode := scheduler.Schedule(reqCpu, reqMem, reqDisk)
+		selectNode := scheduler.Schedule(node.NodeRoleCompute, reqCpu, reqMem, reqDisk)
 		if selectNode == nil {
 			log.Println("Error: No valid node selected, VM creation exit")
 			scheduleLock.Unlock()
@@ -618,10 +618,25 @@ func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareReq
 
 		//task1: Software installation
 		if newSoftware.Backend == "container" {
+			//call scheduler to select a node
+			reqCpu := newSoftware.CPU
+			reqMem := newSoftware.Memory
+			scheduleLock.Lock()
+			selectNode := scheduler.Schedule(node.NodeRoleContainer, int32(reqCpu), int32(reqMem), 0)
+			if selectNode == nil {
+				log.Printf("Error: No valid node selected, software %v creation exit", newSoftware.Name)
+				scheduleLock.Unlock()
+				return
+			}
+			log.Printf("node selected -> %v for software %v", selectNode.Name, newSoftware.Name)
+			selectNode.ChangeCpuUsed(int32(reqCpu))
+			selectNode.ChangeMemUsed(int32(reqMem))
+			selectNode.ChangeDiskUsed(0)
+			scheduleLock.Unlock()
+
+			newSoftware.Node = selectNode.Name
+			newSoftware.SetStatus(saas.SoftwareStatusScheduled)
 			newSoftware.SetStatus(saas.SoftwareStatusInstalling)
-
-			//TODO node selection
-
 			payload, _ := json.Marshal(map[string]interface{}{
 				"Ip":       "192.168.0.35",
 				"Pass":     "c2WD8F2q",
