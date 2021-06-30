@@ -15,7 +15,7 @@ func updateRoutes(nodes []*node.Node) error {
 	routes := []map[string]string{}
 
 	for _, n := range nodes {
-		login := []string{n.IpAddress, n.UserName, n.Passwd}
+		login := []string{n.IpAddress, n.UserName, n.Passwd, string(n.Role)}
 		route := map[string]string{"subnet": n.Subnet, "via": n.IpAddress}
 		hosts = append(hosts, login)
 		routes = append(routes, route)
