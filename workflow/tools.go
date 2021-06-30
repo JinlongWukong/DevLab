@@ -2,10 +2,12 @@ package workflow
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 	"sync/atomic"
 
+	"github.com/JinlongWukong/CloudLab/node"
 	"github.com/JinlongWukong/CloudLab/saas"
 )
 
@@ -39,6 +41,10 @@ func readContainerStatus(mySoftware *saas.Software, reponse_data []byte) error {
 			mySoftware.SetStatus(saas.SoftwareStatusError)
 		}
 		mySoftware.PortMapping = map[string]string{}
+		softwareNode := node.GetNodeByName(mySoftware.Node)
+		if softwareNode == nil {
+			return fmt.Errorf("Error: software %v hosted node %v not found", mySoftware.Name, mySoftware.Node)
+		}
 		for _, v := range softwareInfo.PortMapping {
 			format1 := strings.Split(v, "->")
 			format2 := strings.Split(v, ":")
@@ -48,7 +54,7 @@ func readContainerStatus(mySoftware *saas.Software, reponse_data []byte) error {
 			}
 			left := format1[0]
 			right := format2[1]
-			mySoftware.PortMapping[strings.Trim(left, " ")] = "192.168.0.35" + ":" + right
+			mySoftware.PortMapping[strings.Trim(left, " ")] = softwareNode.IpAddress + ":" + right
 		}
 	} else {
 		log.Printf("Failed to unmarshal software %v status information", mySoftware.Name)
