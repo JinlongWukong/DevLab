@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/JinlongWukong/CloudLab/deployer"
-	"github.com/JinlongWukong/CloudLab/node"
-	"github.com/JinlongWukong/CloudLab/utils"
+	"github.com/JinlongWukong/DevLab/deployer"
+	"github.com/JinlongWukong/DevLab/node"
+	"github.com/JinlongWukong/DevLab/utils"
 )
 
 func updateRoutes(nodes []*node.Node) error {

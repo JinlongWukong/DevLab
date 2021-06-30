@@ -5,7 +5,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/JinlongWukong/CloudLab/config"
+	"github.com/JinlongWukong/DevLab/config"
 )
 
 var baseUrl string

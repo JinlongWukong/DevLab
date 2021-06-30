@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/JinlongWukong/CloudLab/deployer"
-	"github.com/JinlongWukong/CloudLab/node"
-	"github.com/JinlongWukong/CloudLab/utils"
+	"github.com/JinlongWukong/DevLab/deployer"
+	"github.com/JinlongWukong/DevLab/node"
+	"github.com/JinlongWukong/DevLab/utils"
 )
 
 //check parameters, return struct pointer if ok, otherwise return nil

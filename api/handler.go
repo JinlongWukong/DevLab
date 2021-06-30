@@ -9,12 +9,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/JinlongWukong/CloudLab/account"
-	"github.com/JinlongWukong/CloudLab/k8s"
-	"github.com/JinlongWukong/CloudLab/node"
-	"github.com/JinlongWukong/CloudLab/saas"
-	"github.com/JinlongWukong/CloudLab/vm"
-	"github.com/JinlongWukong/CloudLab/workflow"
+	"github.com/JinlongWukong/DevLab/account"
+	"github.com/JinlongWukong/DevLab/k8s"
+	"github.com/JinlongWukong/DevLab/node"
+	"github.com/JinlongWukong/DevLab/saas"
+	"github.com/JinlongWukong/DevLab/vm"
+	"github.com/JinlongWukong/DevLab/workflow"
 )
 
 // Head Page

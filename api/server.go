@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/JinlongWukong/CloudLab/config"
+	"github.com/JinlongWukong/DevLab/config"
 )
 
 var apiHost = ""

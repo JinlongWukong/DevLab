@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/JinlongWukong/CloudLab/account"
-	"github.com/JinlongWukong/CloudLab/config"
-	"github.com/JinlongWukong/CloudLab/db"
-	"github.com/JinlongWukong/CloudLab/manager"
-	"github.com/JinlongWukong/CloudLab/vm"
-	"github.com/JinlongWukong/CloudLab/workflow"
+	"github.com/JinlongWukong/DevLab/account"
+	"github.com/JinlongWukong/DevLab/config"
+	"github.com/JinlongWukong/DevLab/db"
+	"github.com/JinlongWukong/DevLab/manager"
+	"github.com/JinlongWukong/DevLab/vm"
+	"github.com/JinlongWukong/DevLab/workflow"
 )
 
 var checkInterval = "1h"

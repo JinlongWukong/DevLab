@@ -9,13 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/JinlongWukong/CloudLab/api"
-	"github.com/JinlongWukong/CloudLab/db"
-	"github.com/JinlongWukong/CloudLab/lifecycle"
-	"github.com/JinlongWukong/CloudLab/manager"
-	"github.com/JinlongWukong/CloudLab/network"
-	"github.com/JinlongWukong/CloudLab/notification"
-	"github.com/JinlongWukong/CloudLab/supervisor"
+	"github.com/JinlongWukong/DevLab/api"
+	"github.com/JinlongWukong/DevLab/db"
+	"github.com/JinlongWukong/DevLab/lifecycle"
+	"github.com/JinlongWukong/DevLab/manager"
+	"github.com/JinlongWukong/DevLab/network"
+	"github.com/JinlongWukong/DevLab/notification"
+	"github.com/JinlongWukong/DevLab/supervisor"
 )
 
 func main() {

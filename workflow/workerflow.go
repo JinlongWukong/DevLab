@@ -10,16 +10,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/JinlongWukong/CloudLab/account"
-	"github.com/JinlongWukong/CloudLab/config"
-	"github.com/JinlongWukong/CloudLab/db"
-	"github.com/JinlongWukong/CloudLab/deployer"
-	"github.com/JinlongWukong/CloudLab/k8s"
-	"github.com/JinlongWukong/CloudLab/node"
-	"github.com/JinlongWukong/CloudLab/saas"
-	"github.com/JinlongWukong/CloudLab/scheduler"
-	"github.com/JinlongWukong/CloudLab/utils"
-	"github.com/JinlongWukong/CloudLab/vm"
+	"github.com/JinlongWukong/DevLab/account"
+	"github.com/JinlongWukong/DevLab/config"
+	"github.com/JinlongWukong/DevLab/db"
+	"github.com/JinlongWukong/DevLab/deployer"
+	"github.com/JinlongWukong/DevLab/k8s"
+	"github.com/JinlongWukong/DevLab/node"
+	"github.com/JinlongWukong/DevLab/saas"
+	"github.com/JinlongWukong/DevLab/scheduler"
+	"github.com/JinlongWukong/DevLab/utils"
+	"github.com/JinlongWukong/DevLab/vm"
 )
 
 var scheduleLock sync.Mutex

@@ -7,9 +7,9 @@ import (
 	"os"
 	"sync"
 
-	"github.com/JinlongWukong/CloudLab/config"
-	"github.com/JinlongWukong/CloudLab/manager"
-	"github.com/JinlongWukong/CloudLab/utils"
+	"github.com/JinlongWukong/DevLab/config"
+	"github.com/JinlongWukong/DevLab/manager"
+	"github.com/JinlongWukong/DevLab/utils"
 )
 
 var notificationKind = "webex"

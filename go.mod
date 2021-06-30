@@ -1,4 +1,4 @@
-module github.com/JinlongWukong/CloudLab
+module github.com/JinlongWukong/DevLab
 
 go 1.15
 

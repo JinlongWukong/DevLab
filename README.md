@@ -3,7 +3,7 @@
 The basic idea is to give a web portal for develper  which can support create VM, k8s, some middle softwares in an very fast and simple way
 
 ## Architecture Diagram
-![architecture diagram](./views/image/cloudLab.png)
+![architecture diagram](./views/image/DevLab.png)
 
 ## Features
 - Virtual Machine Management(libvirt, kvm)
@@ -28,9 +28,9 @@ docker run -d --net host --env HTTPS_PROXY=xxxxx --env NO_PROXY="xxxx" --env BOT
 - deployer
 
 
-How to install deployer? refer to [Deployer repo](https://github.com/JinlongWukong/CloudLab-ansible)
+How to install deployer? refer to [Deployer repo](https://github.com/JinlongWukong/DevLab-ansible)
 
 ## How to use
 - Edit config.ini 
 - Run docker container
-- Open web brower -> http://cloudLab ip:8088/
+- Open web brower -> http://DevLab ip:8088/

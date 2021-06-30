@@ -5,10 +5,10 @@ import (
 	"log"
 	"sync"
 
-	"github.com/JinlongWukong/CloudLab/k8s"
-	"github.com/JinlongWukong/CloudLab/notification"
-	"github.com/JinlongWukong/CloudLab/saas"
-	"github.com/JinlongWukong/CloudLab/vm"
+	"github.com/JinlongWukong/DevLab/k8s"
+	"github.com/JinlongWukong/DevLab/notification"
+	"github.com/JinlongWukong/DevLab/saas"
+	"github.com/JinlongWukong/DevLab/vm"
 )
 
 var AccountDB = AccountMap{Map: make(map[string]*Account)}

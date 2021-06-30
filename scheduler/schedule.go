@@ -4,8 +4,8 @@ import (
 	"log"
 	"math/rand"
 
-	"github.com/JinlongWukong/CloudLab/config"
-	"github.com/JinlongWukong/CloudLab/node"
+	"github.com/JinlongWukong/DevLab/config"
+	"github.com/JinlongWukong/DevLab/node"
 )
 
 var allocationRatio = 2
