@@ -14,5 +14,6 @@ COPY --from=builder /go/src/devlab/config.ini .
 COPY --from=builder /go/src/devlab/views/*.html ./views/
 COPY --from=builder /go/src/devlab/views/image/ ./views/image/
 COPY --from=builder /go/src/devlab/views/css/ ./views/css/
+RUN mkdir .db/
 EXPOSE 8088
 ENTRYPOINT ["/app/controller"]
