@@ -12,8 +12,8 @@ The basic idea is to give a web portal for develper  which can support create VM
 - Auto Lifecycle Management
 - In-Memory Persistant
 - Webex Events Notification
-- K8s Cluster Management(Todo)
-- SaaS Management(Todo)
+- K8s Cluster Management
+- SaaS Management
 
 ## Installation
 - controller 
@@ -23,6 +23,8 @@ docker build -t controller .
 ```
 #### Run container
 ```
+Download source code here
+Get and edit config.ini
 mkdir .db/
 docker run -d --net host --env HTTPS_PROXY=xxxxx --env NO_PROXY="xxxx" --env BOT_TOKEN=xxxxx -v "$(pwd)"/.db/:/app/.db -v "$(pwd)"/config.ini:/app/config.ini controller
 ```
