@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/JinlongWukong/DevLab/auth"
 	"github.com/JinlongWukong/DevLab/k8s"
 	"github.com/JinlongWukong/DevLab/notification"
 	"github.com/JinlongWukong/DevLab/saas"
@@ -73,6 +74,7 @@ func (m *AccountMap) Iter() <-chan AccountMapItem {
 
 type Account struct {
 	Name                string               `json:"name"`
+	OneTimePass         string               `json:"-"`
 	Role                string               `json:"role"`
 	VM                  []*vm.VirtualMachine `json:"vm"`
 	K8S                 []*k8s.K8S           `json:"k8s"`
@@ -331,4 +333,21 @@ func (a *Account) SendNotification(msg string) {
 
 	notification.SendNotification(notification.Message{Target: a.Name + "@cisco.com", Text: msg})
 
+}
+
+//Set one-time password
+//flag -> true, set a random password
+//flag -> false, clear this password, set to ""
+func (a *Account) SetOneTimePass(flag bool) {
+	if flag {
+		a.OneTimePass = auth.OneTimePassGen(a.Name)
+		log.Printf("One-time password %v generated for account %v", a.OneTimePass, a.Name)
+	} else {
+		a.OneTimePass = ""
+	}
+}
+
+//Get one-time password
+func (a *Account) GetOneTimePass() string {
+	return a.OneTimePass
 }

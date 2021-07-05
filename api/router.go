@@ -12,6 +12,7 @@ func setupRouter() *gin.Engine {
 
 	r.Static("/css", "views/css")
 	r.Static("/img", "views/image")
+	r.Static("/scripts", "views/scripts")
 	r.LoadHTMLGlob("views/*.html")
 	//readness/liveness check point
 	r.GET("/ping", func(c *gin.Context) {
@@ -27,32 +28,36 @@ func setupRouter() *gin.Engine {
 	//vm request first page
 	r.GET("/vm-request", VmRequestIndexHandler)
 	//Get vm http://127.0.0.1:8088/vm?account=1234
-	r.GET("/vm", VmRequestGetVmHandler)
+	r.GET("/vm", AuthorizeToken(), VmRequestGetVmHandler)
 	//Create vm
-	r.POST("/vm", VmRequestCreateVmHandler)
+	r.POST("/vm", AuthorizeToken(), VmRequestCreateVmHandler)
 	//Generate vm action(start/stop/reboot/delete)
-	r.POST("/vm/action", VmRequestVmActionHandler)
+	r.POST("/vm/action", AuthorizeToken(), VmRequestVmActionHandler)
 	//Port expose
-	r.POST("/vm/expose-port", VmRequestVmPortExposeHandler)
+	r.POST("/vm/expose-port", AuthorizeToken(), VmRequestVmPortExposeHandler)
 
 	//node related api
-	r.GET("/node", NodeRequestGetNodeHandler)
-	r.POST("/node", NodeRequestActionNodeHandler)
+	r.GET("/node", AuthorizeToken(), NodeRequestGetNodeHandler)
+	r.POST("/node", AuthorizeToken(), NodeRequestActionNodeHandler)
 
 	//workflow related api
 	r.GET("/task", WorkflowTaskHandler)
 
 	//k8s related api
 	r.GET("/k8s-request", K8sRequestIndexHandler)
-	r.POST("/k8s", K8sRequestCreateHandler)
-	r.DELETE("/k8s", K8sRequestDeleteHandler)
-	r.GET("/k8s", K8sRequestGetHandler)
+	r.POST("/k8s", AuthorizeToken(), K8sRequestCreateHandler)
+	r.DELETE("/k8s", AuthorizeToken(), K8sRequestDeleteHandler)
+	r.GET("/k8s", AuthorizeToken(), K8sRequestGetHandler)
 
 	//SaaS api
 	r.GET("/saas-request", SoftwareIndexHandler)
-	r.GET("/saas", SoftwareRequestGetHandler)
-	r.POST("/saas", SoftwareRequestCreateHandler)
-	r.POST("/saas/action", SoftwareRequestActionHandler)
+	r.GET("/saas", AuthorizeToken(), SoftwareRequestGetHandler)
+	r.POST("/saas", AuthorizeToken(), SoftwareRequestCreateHandler)
+	r.POST("/saas/action", AuthorizeToken(), SoftwareRequestActionHandler)
+
+	//auth api
+	r.POST("/one-time-password", oneTimePassGenHandler)
+	r.POST("/login", accountLogin)
 
 	return r
 }

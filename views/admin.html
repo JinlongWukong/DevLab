@@ -5,110 +5,105 @@
     <title>VM Operation</title>
     <link rel="stylesheet" type="text/css" href="css/common.css">
     <style>
-* {
-  box-sizing: border-box;
-}
-
-#container {
-    display: flex;
-    justify-content: center;
-}
-
-#hidden {
-    width: 100%;
-    height: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    background-color: #000000;
-    opacity: 0.3;
-    display: none;
-}
-
-#box {
-    color: #fff;
-    width: 400px;
-    height: 320px;
-    background-color: #40527e;
-    display: none;
-    flex-direction: column;
-    border-radius: 10px;
-    align-items: center;
-    padding-top: 40px;
-    position: absolute;
-    top: 200px;
-    cursor: move;
-}
-
-#box #close {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    font-weight: normal;
-    display: block;
-    width: 50px;
-    height: 25px;
-    line-height: 25px;
-    text-align: center;
-    border-radius: 20px;
-    color: #7a9ae4;
-}
-
-#box #close:hover {
-    background-color: #52699e;
-    cursor: pointer;
-}
-
-#box input {
-    width: 150px;
-    height: 25px;
-    border-radius: 25px;
-    border: none;
-    outline: none;
-    padding-left: 20px;
-    background-color: #536a9e;
-    color: #fff;
-}
-
-#box input[type=radio] {
-    width: 20px;
-    height: 15px;
-    border-radius: 25px;
-    border: none;
-    outline: none;
-    padding-left: 20px;
-}
-
-#box label {
-  width: 40%;
-  display: inline-block;
-}
-
-#box label[class="radio"] {
-  width: 18%;
-  display: inline-block;
-}
-
-#box input::-webkit-input-placeholder {
-    color: rgb(255, 255, 255);
-    opacity: 0.4;
-}
-
-#box input:first-child {
-    margin-bottom: 20px;
-}
-
-#box #confirm {
-    cursor: pointer;
-    width: 300px;
-    height: 30px;
-    background-color: #02a0a0;
-}
-
-#box #confirm:hover {
-    background-color: #019191;
-}
-
+    #container {
+        display: flex;
+        justify-content: center;
+    }
+    
+    #hidden {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #000000;
+        opacity: 0.3;
+        display: none;
+    }
+    
+    #box {
+        color: #fff;
+        width: 400px;
+        height: 320px;
+        background-color: #40527e;
+        display: none;
+        flex-direction: column;
+        border-radius: 10px;
+        align-items: center;
+        padding-top: 40px;
+        position: absolute;
+        top: 200px;
+        cursor: move;
+    }
+    
+    #box #close {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-weight: normal;
+        display: block;
+        width: 50px;
+        height: 25px;
+        line-height: 25px;
+        text-align: center;
+        border-radius: 20px;
+        color: #7a9ae4;
+    }
+    
+    #box #close:hover {
+        background-color: #52699e;
+        cursor: pointer;
+    }
+    
+    #box input {
+        width: 150px;
+        height: 25px;
+        border-radius: 25px;
+        border: none;
+        outline: none;
+        padding-left: 20px;
+        background-color: #536a9e;
+        color: #fff;
+    }
+    
+    #box input[type=radio] {
+        width: 20px;
+        height: 15px;
+        border-radius: 25px;
+        border: none;
+        outline: none;
+        padding-left: 20px;
+    }
+    
+    #box label {
+      width: 40%;
+      display: inline-block;
+    }
+    
+    #box label[class="radio"] {
+      width: 18%;
+      display: inline-block;
+    }
+    
+    #box input::-webkit-input-placeholder {
+        color: rgb(255, 255, 255);
+        opacity: 0.4;
+    }
+    
+    #box input:first-child {
+        margin-bottom: 20px;
+    }
+    
+    #box #confirm {
+        cursor: pointer;
+        width: 300px;
+        height: 30px;
+        background-color: #02a0a0;
+    }
+    
+    #box #confirm:hover {
+        background-color: #019191;
+    }
     </style>
 </head>
 
@@ -120,6 +115,8 @@
         <a href="/saas-request">SaaS</a>
         <a href="/admin">Administration</a>
         <a href="https://github.com/JinlongWukong/DevLab#readme">Help</a>
+        <a> <button id="signBtn" style="width: auto;float: right; margin-left: 20px;">Sign in</button></a>
+        <a> <p id="accountName" style="width: auto;float: right; margin-top: 0px; color: red;"></p> </a>
     </nav>
 
 <div class="node">
@@ -159,10 +156,30 @@
         </div>
     </div>
 </div>
+
+<div id="loginDiv" class="modal">
+    <form id="loginForm" class="modal-content animate">
+      <div class="container">
+        <label for="account"><b>Account</b></label>
+        <input id="loginAccount" type="text" placeholder="Enter account" name="account" required>
+  
+        <label for="password"><b>Password</b></label>
+        <input id="loginPass" type="password" placeholder="Enter Password" name="password" required>
+          
+        <button type="submit">Login</button>
+        <button class="generate-password" type="button">Generate one-time password</button>
+      </div>
+  
+      <div class="container" style="background-color:#f1f1f1">
+        <button type="button" onclick="document.getElementById('loginDiv').style.display='none'" class="cancelbtn">Cancel</button>
+      </div>
+    </form>
+  </div>
 </body>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="http://malsup.github.io/jquery.blockUI.js"></script>
+<script src="scripts/auth.js"></script>
 <script>
 
 function CreateNodeTable(myNodeList) {
@@ -271,25 +288,32 @@ function nodeAction(element) {
 }
 
 function btnAutoClick() {
-    var vmList = document.getElementById("nodeListGenerate");
-    vmList.click();
+    var nodeList = document.getElementById("nodeListGenerate");
+    nodeList.click();
 }
 
 $(document).ready(function(){
-    window.onload = btnAutoClick;
+    window.onload = loadAuth;
+
     $("#nodeListGenerate").click(function(){
         var baseurl = location.origin;
+        var loginInfo = getLoginInfo();
+        var account = loginInfo.account;
+        var token = loginInfo.token;
         $.ajax({
-              //url: "http://localhost:8088/node",
-              url: baseurl + "/node",
-              success: function(data){
+            //url: "http://localhost:8088/node",
+            url: baseurl + "/node",
+            headers: {
+                "Authorization": "Bearer "+ token +""
+            },
+            success: function(data){
                 console.log(data)
                 CreateNodeTable(data)
-              },
-              error: function(data){
+            },
+            error: function(data){
                 alert(data.status + ':' + data.statusText,data.responseText);
-              },
-              type: 'GET'
+            },
+            type: 'GET'
           });
     });
     $("#nodeGenerate").click(function () {
@@ -300,40 +324,88 @@ $(document).ready(function(){
     $("#confirm").click(function () {
         var baseurl = location.origin;
         var requestData = {
-             name: $("#inputName").val(),
-             user: $("#inputUser").val(),
-             password: $("#inputPasswd").val(),
-             ip: $("#inputAddress").val(),
-             role: $('input[name="radioRole"]:checked').val(),
-             action: "add",
+            name: $("#inputName").val(),
+            user: $("#inputUser").val(),
+            password: $("#inputPasswd").val(),
+            ip: $("#inputAddress").val(),
+            role: $('input[name="radioRole"]:checked').val(),
+            action: "add",
         };
         console.log(requestData)
         $.ajax({
-              //url: "http://localhost:8088/node",
-              url: baseurl + "/node",
-              data: requestData,
-              success: function(data){
+            //url: "http://localhost:8088/node",
+            url: baseurl + "/node",
+            headers: {
+                "Authorization": "Bearer "+ token +""
+            },
+            data: requestData,
+            success: function(data){
                 console.log(data)
                 var nodeList = document.getElementById("nodeListGenerate");
                 nodeList.click()
-              },
-              error: function(data){
+            },
+            error: function(data){
                 alert(data.status + ':' + data.statusText,data.responseText);
-              },
-              type: 'POST'
-          });
-       box.style.display = 'none';
-       hidden.style.display = 'none';
-       box.style.top = '200px';
-       box.style.left = '';
+            },
+            type: 'POST'
+        });
+        box.style.display = 'none';
+        hidden.style.display = 'none';
+        box.style.top = '200px';
+        box.style.left = '';
     });
 
     $("#close").click(function () {
-       box.style.display = 'none';
-       hidden.style.display = 'none';
-       box.style.top = '200px';
-       box.style.left = '';
+        box.style.display = 'none';
+        hidden.style.display = 'none';
+        box.style.top = '200px';
+        box.style.left = '';
     });
+
+    $("#loginDiv .generate-password").click(function(){
+        var baseurl = location.origin;
+        var username = $('#loginDiv input[name="account"]').val()
+        $.ajax({
+            type: "POST",
+            url: baseurl + "/one-time-password?account=" + username,
+            error: function(data) {
+                console.log(data)
+                alert(data.status); // show response
+            }
+        })
+    })
+    $('#loginForm').submit(function(event) {
+        event.preventDefault(); // prevent PageReLoad
+        var baseurl = location.origin
+	    var form_data = $(this).serialize(); //Encode form elements for submiss
+        console.log(form_data)
+        $.ajax({
+            type: "POST",
+            url: baseurl + "/login",
+            data: form_data,
+            error: function(data) {
+                console.log(data)
+                alert(data.status); // show response
+            },
+            success: function(data) {
+                console.log(data)
+                window.localStorage.setItem("access_token", data.access_token)
+                document.getElementById('loginDiv').style.display = 'none'
+                document.getElementById("signBtn").innerText = "Sign out"
+                document.getElementById("accountName").innerText = $("#loginAccount").val()
+            }
+        })
+    })
+    $('#signBtn').click(function() {
+        var text = document.getElementById("signBtn").innerText
+        if(text == "Sign in") {
+            document.getElementById('loginDiv').style.display='block'
+        } else {
+            window.localStorage.removeItem("access_token")
+            document.getElementById("accountName").innerText = ""
+            document.getElementById("signBtn").innerText = "Sign in"
+        }
+    })
 });
 </script>
 </html>
