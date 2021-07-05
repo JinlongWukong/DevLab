@@ -4,36 +4,32 @@
     <title>SaaS Operation</title>
     <link rel="stylesheet" type="text/css" href="css/common.css">
     <style>
-* {
-  box-sizing: border-box;
-}
+    label {
+        width: 12%;
+        display: inline-block;
+    }
 
-label {
-  width: 12%;
-  display: inline-block;
-}
-
-input[type=text], select {
-  width: 10%;
-  margin-top: 6px;
-  padding: 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  resize: vertical;
-}
-
-input[type=submit] {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-input[type=submit]:hover {
-  background-color: #45a049;
-}
+    input[type=text], select {
+        width: 10%;
+        margin-top: 6px;
+        padding: 4px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        resize: vertical;
+    }
+    
+    input[type=submit] {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    input[type=submit]:hover {
+        background-color: #45a049;
+    }
     </style>
 </head>
 
@@ -45,15 +41,14 @@ input[type=submit]:hover {
         <a href="/saas-request">SaaS</a>
         <a href="/admin">Administration</a>
         <a href="https://github.com/JinlongWukong/DevLab#readme">Help</a>
+        <a> <button id="signBtn" style="width: auto;float: right; margin-left: 20px;">Sign in</button></a>
+        <a> <p id="accountName" style="width: auto;float: right; margin-top: 0px; color: red;"></p> </a>
     </nav>
     
     <div class="SaaSForm">
     <form id="SaaSCreateForm" action="/saas" method="POST">
 
         <br>
-        <label class="required" for="account">Account ID: </label>
-        <input type="text" id="account" name="account" placeholder="Your cecid.." required> <br>
-
         <label for="kind">Select software: </label>
         <select name="kind">
             <option value="jenkins">Jenkins</option>
@@ -108,11 +103,30 @@ input[type=submit]:hover {
             <p>Click button to list all your software here </p>
         </div>
     </div>
-    
+
+    <div id="loginDiv" class="modal">
+        <form id="loginForm" class="modal-content animate">
+          <div class="container">
+            <label for="account"><b>Account</b></label>
+            <input id="loginAccount" type="text" placeholder="Enter account" name="account" required>
+      
+            <label for="password"><b>Password</b></label>
+            <input id="loginPass" type="password" placeholder="Enter Password" name="password" required>
+              
+            <button type="submit">Login</button>
+            <button class="generate-password" type="button">Generate one-time password</button>
+          </div>
+      
+          <div class="container" style="background-color:#f1f1f1">
+            <button type="button" onclick="document.getElementById('loginDiv').style.display='none'" class="cancelbtn">Cancel</button>
+          </div>
+        </form>
+    </div>
 </body>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="http://malsup.github.io/jquery.blockUI.js"></script>
+<script src="scripts/auth.js"></script>
 <script>
 
 function CreateSaaSTableFromJSON(mySaaSList) {
@@ -179,7 +193,6 @@ function CreateSaaSTableFromJSON(mySaaSList) {
                    </select>
                    <button type="submit">Confirm</button>
                   `+ '<input type="hidden" name="name"' + 'value=' + mySaaSList[i]["name"] + ' >'
-                   + '<input type="hidden" name="account" ' + 'value=' + document.getElementById("account").value + ' >'
                 + '</form>';
             } else {
                 tabCell.innerHTML = mySaaSList[i][col[j]];
@@ -197,72 +210,130 @@ function SaaSAction(element) {
     var form = $(element);
     var url = form.attr('action');
     var payload = form.serialize(); // serializes the form's elements.
+    var loginInfo = getLoginInfo();
+    var account = loginInfo.account;
+    var token = loginInfo.token;
     $.blockUI({timeout:   8000});
     $.ajax({
-           type: "POST",
-           url: url + "/action",
-           data: payload,
-           error: function(data) {
-               console.log(data)
-               alert(data.status); // show response
-           }
-         }).always(function() {
-           $.unblockUI();
-           btnAutoClick();
-         });
+            type: "POST",
+            url: url + "/action",
+            headers: {
+                "Authorization": "Bearer "+ token +""
+            },
+            data: payload + "&account=" + account,
+            error: function(data) {
+                console.log(data)
+                alert(data.status); // show response
+            }
+    }).always(function() {
+        $.unblockUI();
+        btnAutoClick();
+    });
 }
 
 function btnAutoClick() {
-    var account = document.getElementById("account").value;
-    if (account != "") {
-        var SaaSList = document.getElementById("SaaSListGenerate");
-        SaaSList.click();
-    }
+    var SaaSList = document.getElementById("SaaSListGenerate");
+    SaaSList.click();
 }
 
 $(document).ready(function(){
+    window.onload = loadAuth;
 
-  $("#SaaSCreateForm").submit(function(event) {
-    $.blockUI({timeout:   10000});
-    event.preventDefault(); //prevent default action
-    var post_url = $(this).attr("action"); //get form action url
-	var request_method = $(this).attr("method"); //get form GET/POST method
-	var form_data = $(this).serialize(); //Encode form elements for submiss
-    $.ajax({
-           type: "POST",
-           url: post_url,
-           async: false,
-           data: form_data,
-           error: function(data) {
-               console.log(data)
-               alert(data.status); // show response
-           }
-         }).always(function() {
-           $.unblockUI();
-           btnAutoClick();
-    });
-  })
+    $("#SaaSCreateForm").submit(function(event) {
+        $.blockUI({timeout:   10000});
+        event.preventDefault(); //prevent default action
+        var post_url = $(this).attr("action"); //get form action url
+	    var request_method = $(this).attr("method"); //get form GET/POST method
+	    var form_data = $(this).serialize(); //Encode form elements for submiss
+        var loginInfo = getLoginInfo();
+        var account = loginInfo.account;
+        var token = loginInfo.token;
+        $.ajax({
+            type: "POST",
+            url: post_url,
+            headers: {
+                "Authorization": "Bearer "+ token +""
+            },
+            async: false,
+            data: form_data + "&account=" + account,
+            error: function(data) {
+                console.log(data)
+                alert(data.status); // show response
+            }
+            }).always(function() {
+                $.unblockUI();
+                btnAutoClick();
+        });
+    })
 
-  $("#SaaSListGenerate").click(function(){ 
-        var account = document.getElementById("account").value;
-        if (account == "") {
-            alert("Account ID must be filled");
-            return false;
-        }
+    $("#SaaSListGenerate").click(function(){ 
+        var loginInfo = getLoginInfo()
+        var account = loginInfo.account
+        var token = loginInfo.token 
         var baseurl = location.origin;
         $.ajax({
-              //url: "http://127.0.0.1:8088/saas?account=" + account,
-              url: baseurl + "/saas?account=" + account,
-              success: function(data){
+            //url: "http://127.0.0.1:8088/saas?account=" + account,
+            url: baseurl + "/saas?account=" + account,
+            headers: {
+                "Authorization": "Bearer "+ token +""
+            },
+            success: function(data){
                 console.log(data)
                 CreateSaaSTableFromJSON(data)
-              },
-              error: function(data){
+            },
+            error: function(data){
                 alert(data.status + ':' + data.statusText,data.responseText);
-              },
-              type: 'GET'
-          });
+            },
+            type: 'GET'
+        });
     });
+
+    $("#loginDiv .generate-password").click(function(){
+        var baseurl = location.origin;
+        var username = $('#loginDiv input[name="account"]').val()
+        $.ajax({
+            type: "POST",
+            url: baseurl + "/one-time-password?account=" + username,
+            error: function(data) {
+                console.log(data)
+                alert(data.status); // show response
+            }
+        })
+    })
+    $('#loginForm').submit(function(event) {
+        event.preventDefault(); // prevent PageReLoad
+        var baseurl = location.origin
+	    var form_data = $(this).serialize(); //Encode form elements for submiss
+        console.log(form_data)
+        $.ajax({
+            type: "POST",
+            url: baseurl + "/login",
+            data: form_data,
+            error: function(data) {
+                console.log(data)
+                alert(data.status); // show response
+            },
+            success: function(data) {
+                console.log(data)
+                window.localStorage.setItem("access_token", data.access_token)
+                window.localStorage.setItem("account", $("#loginAccount").val())
+                document.getElementById('loginDiv').style.display = 'none'
+                document.getElementById("signBtn").innerText = "Sign out"
+                document.getElementById("accountName").innerText = $("#loginAccount").val()
+            }
+        })
+    })
+    $('#signBtn').click(function() {
+        var text = document.getElementById("signBtn").innerText
+        if(text == "Sign in") {
+           document.getElementById('loginDiv').style.display='block'
+        } else {
+           window.localStorage.removeItem("access_token")
+           window.localStorage.removeItem("account")
+           document.getElementById("accountName").innerText = ""
+           document.getElementById("signBtn").innerText = "Sign in"
+        }
+    })
 });
 
 </script>

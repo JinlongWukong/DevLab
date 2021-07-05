@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/JinlongWukong/DevLab/account"
+	"github.com/JinlongWukong/DevLab/auth"
 	"github.com/JinlongWukong/DevLab/k8s"
 	"github.com/JinlongWukong/DevLab/node"
 	"github.com/JinlongWukong/DevLab/saas"
@@ -473,4 +474,56 @@ func metricsHandler(c *gin.Context) {
 
 	c.Writer.WriteString(fmt.Sprintf("GoroutineNumber %v", runtime.NumGoroutine()))
 
+}
+
+// account one-time password generate handler
+func oneTimePassGenHandler(c *gin.Context) {
+
+	accountName := c.Query("account")
+
+	if accountName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "account name not give"})
+		return
+	}
+
+	myaccount, exists := account.AccountDB.Get(accountName)
+	if exists == true {
+		myaccount.SetOneTimePass(true)
+		c.JSON(http.StatusOK, nil)
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{"error": "account not found"})
+	}
+
+	return
+}
+
+// account login handler
+/*
+{
+ "access_token": "xxxxxxxxxxxxxxxxxxx",
+ "token_type": "bearer",
+ "expires_in": 86400
+}
+*/
+func accountLogin(c *gin.Context) {
+	var r auth.LoginInfo
+	if err := c.Bind(&r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	myaccount, exists := account.AccountDB.Get(r.Account)
+	if exists == true {
+		if r.Password == myaccount.GetOneTimePass() {
+			log.Printf("account %v login successfully", r.Account)
+			//Clear one time password after a success login
+			myaccount.SetOneTimePass(false)
+			tokenInfo := auth.InvokeToken(r.Account)
+			c.JSON(http.StatusOK, tokenInfo)
+		} else {
+			c.JSON(http.StatusUnauthorized, nil)
+		}
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{"error": "account not found"})
+	}
 }
