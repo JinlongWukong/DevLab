@@ -8,10 +8,17 @@ import (
 	"github.com/JinlongWukong/DevLab/vm"
 )
 
+type RoleType string
+
+const (
+	RoleAdmin RoleType = "admin"
+	RoleGuest RoleType = "guest"
+)
+
 type Account struct {
 	Name                string               `json:"name"`
 	OneTimePass         string               `json:"-"`
-	Role                string               `json:"role"`
+	Role                RoleType             `json:"role"`
 	Contract            string               `json:"contract"`
 	VM                  []*vm.VirtualMachine `json:"vm"`
 	K8S                 []*k8s.K8S           `json:"k8s"`
@@ -23,6 +30,7 @@ type Account struct {
 }
 
 type AccountRequest struct {
-	Name string `form:"name" json:"name" binding:"required"`
-	Role string `form:"role" json:"role" binding:"required"`
+	Name     string   `form:"name" json:"name" binding:"required"`
+	Role     RoleType `form:"role" json:"role" binding:"required"`
+	Contract string   `form:"contract,omitempty" json:"contract,omitempty"`
 }

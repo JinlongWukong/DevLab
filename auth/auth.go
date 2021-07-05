@@ -17,7 +17,7 @@ func init() {
 func OneTimePassGen(target string) string {
 	password := utils.RandomString(8)
 	msg := fmt.Sprintf("From DevLab, your one-time password is:  %v", password)
-	notification.SendNotification(notification.Message{Target: target + "@cisco.com", Text: msg})
+	notification.SendNotification(notification.Message{Target: target, Text: msg})
 
 	return password
 }

@@ -37,14 +37,15 @@ func setupRouter() *gin.Engine {
 	r.POST("/vm/expose-port", AuthorizeToken(), VmRequestVmPortExposeHandler)
 
 	//node related api
-	r.GET("/node", AuthorizeToken(), NodeRequestGetNodeHandler)
-	r.POST("/node", AuthorizeToken(), NodeRequestActionNodeHandler)
+	r.GET("/node", AuthorizeToken(), AdminRoleOnlyAllowed(), NodeRequestGetNodeHandler)
+	r.POST("/node", AuthorizeToken(), AdminRoleOnlyAllowed(), NodeRequestActionNodeHandler)
 
 	//account related api
-	r.POST("/account", AuthorizeToken(), AccountRequestPostHandler)
-	r.GET("/account", AuthorizeToken(), AccountRequestGetAllHandler)
-	r.GET("/account/:name", AuthorizeToken(), AccountRequestGetByNameHandler)
-	r.DELETE("/account/:name", AuthorizeToken(), AccountRequestDelByNameHandler)
+	r.POST("/account", AuthorizeToken(), AdminRoleOnlyAllowed(), AccountRequestPostHandler)
+	r.GET("/account", AuthorizeToken(), AdminRoleOnlyAllowed(), AccountRequestGetAllHandler)
+	r.GET("/account/:name", AuthorizeToken(), AdminRoleOnlyAllowed(), AccountRequestGetByNameHandler)
+	r.PATCH("/account/:name", AuthorizeToken(), AdminRoleOnlyAllowed(), AccountRequestModifyHandler)
+	r.DELETE("/account/:name", AuthorizeToken(), AdminRoleOnlyAllowed(), AccountRequestDelByNameHandler)
 
 	//workflow related api
 	r.GET("/task", WorkflowTaskHandler)

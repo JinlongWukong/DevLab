@@ -11,6 +11,7 @@ import (
 
 	"github.com/JinlongWukong/DevLab/account"
 	"github.com/JinlongWukong/DevLab/auth"
+	"github.com/JinlongWukong/DevLab/db"
 	"github.com/JinlongWukong/DevLab/k8s"
 	"github.com/JinlongWukong/DevLab/node"
 	"github.com/JinlongWukong/DevLab/saas"
@@ -97,13 +98,12 @@ func VmRequestCreateVmHandler(c *gin.Context) {
 
 	myaccount, exists := account.AccountDB.Get(vmRequest.Account)
 	if exists == false {
-		// Acount not existed, add new
-		myaccount = &account.Account{Name: vmRequest.Account, Role: "guest"}
-		account.AccountDB.Set(vmRequest.Account, myaccount)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "account not found"})
+		return
 	}
 
 	if _, err := workflow.CreateVMs(myaccount, vmRequest); err != nil {
-		c.JSON(http.StatusInternalServerError, "")
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -291,9 +291,8 @@ func K8sRequestCreateHandler(c *gin.Context) {
 
 	myaccount, exists := account.AccountDB.Get(k8sRequest.Account)
 	if exists == false {
-		// Acount not existed, add new
-		myaccount = &account.Account{Name: k8sRequest.Account, Role: "guest"}
-		account.AccountDB.Set(k8sRequest.Account, myaccount)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "account not found"})
+		return
 	}
 
 	if err := workflow.CreateK8S(myaccount, k8sRequest); err != nil {
@@ -377,9 +376,8 @@ func SoftwareRequestCreateHandler(c *gin.Context) {
 
 	myaccount, exists := account.AccountDB.Get(request.Account)
 	if exists == false {
-		// Acount not existed, add new
-		myaccount = &account.Account{Name: request.Account, Role: "guest"}
-		account.AccountDB.Set(request.Account, myaccount)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "account not found"})
+		return
 	}
 
 	if err := workflow.CreateSoftware(myaccount, request); err != nil {
@@ -536,7 +534,7 @@ func AccountRequestGetAllHandler(c *gin.Context) {
 	for ac := range account.AccountDB.Iter() {
 		account := map[string]string{
 			"Name":     ac.Value.Name,
-			"Role":     ac.Value.Role,
+			"Role":     string(ac.Value.Role),
 			"Contract": ac.Value.Contract,
 		}
 		accountSlice = append(accountSlice, account)
@@ -553,7 +551,7 @@ func AccountRequestGetByNameHandler(c *gin.Context) {
 	if ac, exists := account.AccountDB.Get(name); exists {
 		c.JSON(http.StatusOK, map[string]string{
 			"Name":     ac.Name,
-			"Role":     ac.Role,
+			"Role":     string(ac.Role),
 			"Contract": ac.Contract,
 		})
 	} else {
@@ -579,6 +577,23 @@ func AccountRequestPostHandler(c *gin.Context) {
 	if err := account.AccountDB.Add(r); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	} else {
-		c.JSON(http.StatusOK, nil)
+		db.NotifyToSave()
+		c.JSON(http.StatusNoContent, nil)
+	}
+}
+
+//Modify account information
+func AccountRequestModifyHandler(c *gin.Context) {
+	var r account.AccountRequest
+	if err := c.Bind(&r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := account.AccountDB.Modify(r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		db.NotifyToSave()
+		c.JSON(http.StatusNoContent, nil)
 	}
 }

@@ -7,10 +7,10 @@ import (
 
 	"github.com/JinlongWukong/DevLab/auth"
 	"github.com/JinlongWukong/DevLab/config"
-	"github.com/JinlongWukong/DevLab/db"
 	"github.com/JinlongWukong/DevLab/k8s"
 	"github.com/JinlongWukong/DevLab/notification"
 	"github.com/JinlongWukong/DevLab/saas"
+	"github.com/JinlongWukong/DevLab/utils"
 	"github.com/JinlongWukong/DevLab/vm"
 )
 
@@ -26,19 +26,17 @@ type AccountMapItem struct {
 	Value *Account
 }
 
-func (m *AccountMap) Set(key string, value *Account) {
-
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
-	m.Map[key] = value
-
-}
-
 func (m *AccountMap) Add(accountRequest AccountRequest) error {
 
 	m.lock.Lock()
 	defer m.lock.Unlock()
+
+	switch accountRequest.Role {
+	case RoleAdmin:
+	case RoleGuest:
+	default:
+		return fmt.Errorf("account role not valid")
+	}
 
 	if _, exists := m.Map[accountRequest.Name]; exists {
 		return fmt.Errorf("account already existed")
@@ -51,10 +49,53 @@ func (m *AccountMap) Add(accountRequest AccountRequest) error {
 			newAccount.Contract = newAccount.Name + "@cisco.com"
 		}
 		m.Map[accountRequest.Name] = newAccount
-		db.NotifyToSave()
 	}
 
 	return nil
+}
+
+func (m *AccountMap) Modify(accountRequest AccountRequest) error {
+
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	switch accountRequest.Role {
+	case RoleAdmin:
+	case RoleGuest:
+	default:
+		return fmt.Errorf("account role not valid")
+	}
+
+	if account, exists := m.Map[accountRequest.Name]; exists {
+		account.Role = accountRequest.Role
+		account.Contract = accountRequest.Contract
+	} else {
+		newAccount := &Account{
+			Name: accountRequest.Name,
+			Role: accountRequest.Role,
+		}
+		if config.Notification.Kind == "webex" {
+			newAccount.Contract = newAccount.Name + "@cisco.com"
+		}
+		m.Map[accountRequest.Name] = newAccount
+	}
+
+	return nil
+}
+
+func (m *AccountMap) InitializeAdmin() {
+
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	m.Map["admin"] = &Account{
+		Name:        "admin",
+		Role:        "admin",
+		OneTimePass: utils.RandomString(10),
+	}
+
+	msg := fmt.Sprintf("Admin one-time random password: %v", m.Map["admin"].OneTimePass)
+	log.Printf(msg)
 }
 
 func (m *AccountMap) Get(key string) (account *Account, exists bool) {
@@ -73,7 +114,6 @@ func (m *AccountMap) Del(key string) {
 	defer m.lock.Unlock()
 
 	delete(m.Map, key)
-	db.NotifyToSave()
 }
 
 // Iter iterates over the items in a concurrent map
@@ -342,7 +382,7 @@ func (a *Account) IterSoftware() <-chan *saas.Software {
 //Send notification to account user
 func (a *Account) SendNotification(msg string) {
 
-	notification.SendNotification(notification.Message{Target: a.Name + "@cisco.com", Text: msg})
+	notification.SendNotification(notification.Message{Target: a.Contract, Text: msg})
 
 }
 
@@ -351,7 +391,7 @@ func (a *Account) SendNotification(msg string) {
 //flag -> false, clear this password, set to ""
 func (a *Account) SetOneTimePass(flag bool) {
 	if flag {
-		a.OneTimePass = auth.OneTimePassGen(a.Name)
+		a.OneTimePass = auth.OneTimePassGen(a.Contract)
 		log.Printf("One-time password %v generated for account %v", a.OneTimePass, a.Name)
 	} else {
 		a.OneTimePass = ""

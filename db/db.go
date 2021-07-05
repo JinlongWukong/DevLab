@@ -154,6 +154,8 @@ func (db DB) Control(ctx context.Context, wg *sync.WaitGroup) {
 	//Load data from db into map
 	LoadFromDB()
 
+	account.AccountDB.InitializeAdmin()
+
 	//for Loop to sync up db
 	SaveToDB(ctx)
 
