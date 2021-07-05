@@ -527,3 +527,58 @@ func accountLogin(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "account not found"})
 	}
 }
+
+//Get all account information
+//Return list include account name and role
+func AccountRequestGetAllHandler(c *gin.Context) {
+
+	accountSlice := []map[string]string{}
+	for ac := range account.AccountDB.Iter() {
+		account := map[string]string{
+			"Name":     ac.Value.Name,
+			"Role":     ac.Value.Role,
+			"Contract": ac.Value.Contract,
+		}
+		accountSlice = append(accountSlice, account)
+	}
+
+	c.JSON(http.StatusOK, accountSlice)
+}
+
+//Get account information by name
+//Return name and role
+func AccountRequestGetByNameHandler(c *gin.Context) {
+
+	name := c.Param("name")
+	if ac, exists := account.AccountDB.Get(name); exists {
+		c.JSON(http.StatusOK, map[string]string{
+			"Name":     ac.Name,
+			"Role":     ac.Role,
+			"Contract": ac.Contract,
+		})
+	} else {
+		c.JSON(http.StatusNotFound, nil)
+	}
+}
+
+//Delete account
+func AccountRequestDelByNameHandler(c *gin.Context) {
+	//TODO
+	c.JSON(http.StatusForbidden, nil)
+}
+
+// Create a new account api
+// params: name and role
+func AccountRequestPostHandler(c *gin.Context) {
+	var r account.AccountRequest
+	if err := c.Bind(&r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := account.AccountDB.Add(r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		c.JSON(http.StatusOK, nil)
+	}
+}

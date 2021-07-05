@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	"github.com/JinlongWukong/DevLab/auth"
+	"github.com/JinlongWukong/DevLab/config"
+	"github.com/JinlongWukong/DevLab/db"
 	"github.com/JinlongWukong/DevLab/k8s"
 	"github.com/JinlongWukong/DevLab/notification"
 	"github.com/JinlongWukong/DevLab/saas"
@@ -33,6 +35,28 @@ func (m *AccountMap) Set(key string, value *Account) {
 
 }
 
+func (m *AccountMap) Add(accountRequest AccountRequest) error {
+
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	if _, exists := m.Map[accountRequest.Name]; exists {
+		return fmt.Errorf("account already existed")
+	} else {
+		newAccount := &Account{
+			Name: accountRequest.Name,
+			Role: accountRequest.Role,
+		}
+		if config.Notification.Kind == "webex" {
+			newAccount.Contract = newAccount.Name + "@cisco.com"
+		}
+		m.Map[accountRequest.Name] = newAccount
+		db.NotifyToSave()
+	}
+
+	return nil
+}
+
 func (m *AccountMap) Get(key string) (account *Account, exists bool) {
 
 	m.lock.RLock()
@@ -49,7 +73,7 @@ func (m *AccountMap) Del(key string) {
 	defer m.lock.Unlock()
 
 	delete(m.Map, key)
-
+	db.NotifyToSave()
 }
 
 // Iter iterates over the items in a concurrent map
@@ -70,19 +94,6 @@ func (m *AccountMap) Iter() <-chan AccountMapItem {
 	go f()
 
 	return c
-}
-
-type Account struct {
-	Name                string               `json:"name"`
-	OneTimePass         string               `json:"-"`
-	Role                string               `json:"role"`
-	VM                  []*vm.VirtualMachine `json:"vm"`
-	K8S                 []*k8s.K8S           `json:"k8s"`
-	Software            []*saas.Software     `json:"software"`
-	lockerVMSlice       sync.Mutex           `json:"-"`
-	lockerK8SSlice      sync.Mutex           `json:"-"`
-	lockerSoftwareSlice sync.Mutex           `json:"-"`
-	sync.Mutex          `json:"-"`
 }
 
 //VM part

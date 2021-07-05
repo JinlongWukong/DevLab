@@ -40,6 +40,12 @@ func setupRouter() *gin.Engine {
 	r.GET("/node", AuthorizeToken(), NodeRequestGetNodeHandler)
 	r.POST("/node", AuthorizeToken(), NodeRequestActionNodeHandler)
 
+	//account related api
+	r.POST("/account", AuthorizeToken(), AccountRequestPostHandler)
+	r.GET("/account", AuthorizeToken(), AccountRequestGetAllHandler)
+	r.GET("/account/:name", AuthorizeToken(), AccountRequestGetByNameHandler)
+	r.DELETE("/account/:name", AuthorizeToken(), AccountRequestDelByNameHandler)
+
 	//workflow related api
 	r.GET("/task", WorkflowTaskHandler)
 
