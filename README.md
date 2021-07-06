@@ -9,11 +9,13 @@ The basic idea is to give a web portal for develper  which can support create VM
 - Virtual Machine Management(libvirt, kvm)
 - Multi-Node Inter-connection(hostgw)
 - External Access(iptables dnat)
-- Auto Lifecycle Management
+- Auto vm Lifecycle Management
 - In-Memory Persistant
 - Webex Events Notification
 - K8s Cluster Management
 - SaaS Management
+- Account Management
+- Token Authentication
 
 ## Installation
 - controller 
