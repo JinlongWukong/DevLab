@@ -561,8 +561,20 @@ func AccountRequestGetByNameHandler(c *gin.Context) {
 
 //Delete account
 func AccountRequestDelByNameHandler(c *gin.Context) {
-	//TODO
-	c.JSON(http.StatusForbidden, nil)
+
+	name := c.Param("name")
+	if ac, exists := account.AccountDB.Get(name); exists {
+		if ac.GetNumbersOfVm() > 0 ||
+			ac.GetNumbersOfK8s() > 0 ||
+			ac.GetNumbersOfSoftware() > 0 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "account still have resouces created"})
+		} else {
+			account.AccountDB.Del(name)
+			c.JSON(http.StatusNoContent, nil)
+		}
+	} else {
+		c.JSON(http.StatusNotFound, nil)
+	}
 }
 
 // Create a new account api
