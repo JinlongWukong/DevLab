@@ -2,7 +2,7 @@
 <html>
 <head>
 
-    <title>VM Operation</title>
+    <title>Admin Operation</title>
     <link rel="stylesheet" type="text/css" href="css/common.css">
     <style>
     #container {
@@ -10,7 +10,7 @@
         justify-content: center;
     }
     
-    #hidden {
+    #hidden, #hiddenAccount {
         width: 100%;
         height: 100%;
         position: fixed;
@@ -21,7 +21,7 @@
         display: none;
     }
     
-    #box {
+    #box, #boxAccount {
         color: #fff;
         width: 400px;
         height: 320px;
@@ -36,7 +36,7 @@
         cursor: move;
     }
     
-    #box #close {
+    #box #close, #boxAccount #closeAccount {
         position: absolute;
         top: 5px;
         right: 5px;
@@ -50,12 +50,12 @@
         color: #7a9ae4;
     }
     
-    #box #close:hover {
+    #box #close:hover, #boxAccount #closeAccount:hover {
         background-color: #52699e;
         cursor: pointer;
     }
     
-    #box input {
+    #box input, #boxAccount input {
         width: 150px;
         height: 25px;
         border-radius: 25px;
@@ -66,7 +66,7 @@
         color: #fff;
     }
     
-    #box input[type=radio] {
+    #box input[type=radio], #boxAccount input[type=radio] {
         width: 20px;
         height: 15px;
         border-radius: 25px;
@@ -75,33 +75,33 @@
         padding-left: 20px;
     }
     
-    #box label {
+    #box label, #boxAccount label {
       width: 40%;
       display: inline-block;
     }
     
-    #box label[class="radio"] {
+    #box label[class="radio"], #boxAccount label[class="radio"] {
       width: 18%;
       display: inline-block;
     }
     
-    #box input::-webkit-input-placeholder {
+    #box input::-webkit-input-placeholder, #boxAccount input::-webkit-input-placeholder {
         color: rgb(255, 255, 255);
         opacity: 0.4;
     }
     
-    #box input:first-child {
+    #box input:first-child, #boxAccount input:first-child {
         margin-bottom: 20px;
     }
     
-    #box #confirm {
+    #box #confirm, #boxAccount #confirmAccount {
         cursor: pointer;
         width: 300px;
         height: 30px;
         background-color: #02a0a0;
     }
     
-    #box #confirm:hover {
+    #box #confirm:hover, #boxAccount #confirmAccount:hover {
         background-color: #019191;
     }
     </style>
@@ -119,62 +119,95 @@
         <a> <p id="accountName" style="width: auto;float: right; margin-top: 0px; color: red;"></p> </a>
     </nav>
 
-<div class="node">
-    <p>Node Management</p>
-    <input type="button" class="button" id = "nodeListGenerate" value="List Nodes" />
-    <input type="button" class="button" id = "nodeGenerate" value="Add Node" />
-    <div id="container">
-        <div id="hidden"></div>
-        <div id="box">
-        <form class="boxFrom">
-            <strong id="close">Close</strong>
-            <label for="inputName">node name: </label>
-            <input type="text" id="inputName" placeholder="name">
-            <br><br>
-            <label for="inputUser">node user: </label>
-            <input type="text" id="inputUser" placeholder="user">
-            <br><br>
-            <label for="inputPasswd">node password: </label>
-            <input type="password" id="inputPasswd" placeholder="password">
-            <br><br>
-            <label for="inputAddress">node address: </label>
-            <input type="text" id="inputAddress" placeholder="address"><br>
-            <br><br>
-            <label>node role: </label>
-            <input type="radio" id="radioRoleCompute" name="radioRole" value="compute">
-            <label class="radio" for="radioRoleCompute">Compute</label>
-            <input type="radio" id="radioRoleContainer" name="radioRole" value="container", checked="checked">
-            <label class="radio" for="radioRoleContainer">Container</label>
-            <br><br>
-            <input type="button" value="Confirm" id="confirm">
-        </form>
+    <div class="node">
+        <p>Node Management</p>
+        <input type="button" class="button" id = "nodeListGenerate" value="List Nodes" />
+        <input type="button" class="button" id = "nodeGenerate" value="Add Node" />
+        <div id="container">
+            <div id="hidden"></div>
+            <div id="box">
+            <form class="boxFrom">
+                <strong id="close">Close</strong>
+                <label for="inputName">node name: </label>
+                <input type="text" id="inputName" placeholder="name">
+                <br><br>
+                <label for="inputUser">node user: </label>
+                <input type="text" id="inputUser" placeholder="user">
+                <br><br>
+                <label for="inputPasswd">node password: </label>
+                <input type="password" id="inputPasswd" placeholder="password">
+                <br><br>
+                <label for="inputAddress">node address: </label>
+                <input type="text" id="inputAddress" placeholder="address"><br>
+                <br><br>
+                <label>node role: </label>
+                <input type="radio" id="radioRoleCompute" name="radioRole" value="compute">
+                <label class="radio" for="radioRoleCompute">Compute</label>
+                <input type="radio" id="radioRoleContainer" name="radioRole" value="container", checked="checked">
+                <label class="radio" for="radioRoleContainer">Container</label>
+                <br><br>
+                <input type="button" value="Confirm" id="confirm">
+            </form>
+            </div>
+        </div>
+        <div>
+            <div id="tableDiv" style="margin-top: 20px">
+                <p>Click button -> List Nodes, to list all nodes information here </p>
+            </div>
         </div>
     </div>
-    <div>
-        <div id="tableDiv" style="margin-top: 20px">
-            <p>Click button -> List Nodes, to list all nodes information here </p>
-        </div>
-    </div>
-</div>
 
-<div id="loginDiv" class="modal">
-    <form id="loginForm" class="modal-content animate">
-      <div class="container">
-        <label for="account"><b>Account</b></label>
-        <input id="loginAccount" type="text" placeholder="Enter account" name="account" required>
-  
-        <label for="password"><b>Password</b></label>
-        <input id="loginPass" type="password" placeholder="Enter Password" name="password" required>
-          
-        <button type="submit">Login</button>
-        <button class="generate-password" type="button">Generate one-time password</button>
-      </div>
-  
-      <div class="container" style="background-color:#f1f1f1">
-        <button type="button" onclick="document.getElementById('loginDiv').style.display='none'" class="cancelbtn">Cancel</button>
-      </div>
-    </form>
-  </div>
+    <div class="account">
+        <p>Account Management</p>
+        <input type="button" class="button" id = "accountListGenerate" value="List accounts" />
+        <input type="button" class="button" id = "accountGenerate" value="Add account" />
+        <div>
+            <div id="AccountTableDiv" style="margin-top: 20px">
+                <p>Click button -> List Accounts, to list all acounts information here </p>
+            </div>
+        </div>
+        <div id="container">
+            <div id="hiddenAccount"></div>
+            <div id="boxAccount">
+            <form class="boxFrom">
+                <strong id="closeAccount">Close</strong>
+                <label for="accountRequestName">account name: </label>
+                <input type="text" id="accountRequestName" placeholder="name">
+                <br><br>
+                <br><br>
+                <br><br>
+                <label>account role: </label>
+                <input type="radio" id="radioRoleAdmin" name="accountRequestRole" value="admin">
+                <label class="radio" for="radioRoleAdmin">admin</label>
+                <input type="radio" id="radioRoleGuest" name="accountRequestRole" value="guest", checked="checked">
+                <label class="radio" for="radioRoleGuest">guest</label>
+                <br><br>
+                <br><br>
+                <br><br>
+                <input type="button" value="Confirm" id="confirmAccount">
+            </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginDiv" class="modal">
+        <form id="loginForm" class="modal-content animate">
+          <div class="container">
+            <label for="account"><b>Account</b></label>
+            <input id="loginAccount" type="text" placeholder="Enter account" name="account" required>
+      
+            <label for="password"><b>Password</b></label>
+            <input id="loginPass" type="password" placeholder="Enter Password" name="password" required>
+              
+            <button type="submit">Login</button>
+            <button class="generate-password" type="button">Generate one-time password</button>
+          </div>
+      
+          <div class="container" style="background-color:#f1f1f1">
+            <button type="button" onclick="document.getElementById('loginDiv').style.display='none'" class="cancelbtn">Cancel</button>
+          </div>
+        </form>
+    </div>
 </body>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
@@ -263,6 +296,62 @@ function CreateNodeTable(myNodeList) {
     divContainer.appendChild(table);
 }
 
+function CreateAccountTable(myAccountList) {
+    //var myAccountList = '[{contract: "jinlliu@cisco.com", name: "jinlliu", role: "admin"}]'
+
+    // EXTRACT VALUE FOR HTML HEADER. 
+    var col = [];
+    for (var i = 0; i < myAccountList.length; i++) {
+        for (var key in myAccountList[i]) {
+            if (col.indexOf(key) === -1) {
+                col.push(key);
+            }
+        }
+    }
+
+    // ADD NEW COL, DEFINE ACTION
+    if (myAccountList.length > 0) {
+        col.push("action")
+    }
+
+    // CREATE DYNAMIC TABLE.
+    var table = document.createElement("table");
+
+    // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
+
+    var tr = table.insertRow(-1);                   // TABLE ROW.
+
+    for (var i = 0; i < col.length; i++) {
+        var th = document.createElement("th");      // TABLE HEADER.
+        th.innerHTML = col[i];
+        tr.appendChild(th);
+    }
+
+    // ADD JSON DATA TO THE TABLE AS ROWS.
+    for (var i = 0; i < myAccountList.length; i++) {
+
+        tr = table.insertRow(-1);
+
+        for (var j = 0; j < col.length; j++) {
+            var tabCell = tr.insertCell(-1);
+            if (col[j] == "action"){
+               tabCell.innerHTML = `
+                <form id="actionForm" action="/account" onsubmit="event.preventDefault();return deleteAccount(this)">
+                   <button type="submit">Delete</button>
+                   `+ '<input type="hidden" name="account"' + 'value=' + myAccountList[i]["name"] + ' >'
+                + '</form>';
+            } else {
+                tabCell.innerHTML = myAccountList[i][col[j]];
+            }
+        }
+    }
+
+    // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
+    var divContainer = document.getElementById("AccountTableDiv");
+    divContainer.innerHTML = "";
+    divContainer.appendChild(table);
+}
+
 function nodeAction(element) {
     var form = $(element);
     var url = form.attr('action');
@@ -287,9 +376,34 @@ function nodeAction(element) {
          });
 }
 
+function deleteAccount(element) {
+    var form = $(element);
+    var url = form.attr('action');
+    var account = form.serializeArray()[0].value;
+    var loginInfo = getLoginInfo();
+    var token = loginInfo.token;
+    $.blockUI({timeout:   8000});
+    $.ajax({
+        type: "DELETE",
+        headers: {
+            "Authorization": "Bearer "+ token +""
+        },
+        url: url + "/" + account,
+        error: function(data) {
+            console.log(data)
+            alert(data.status); // show response
+        }
+    }).always(function() {
+        $.unblockUI();
+        btnAutoClick();
+    });
+}
+
 function btnAutoClick() {
     var nodeList = document.getElementById("nodeListGenerate");
     nodeList.click();
+    var accountList = document.getElementById("accountListGenerate");
+    accountList.click();
 }
 
 $(document).ready(function(){
@@ -314,15 +428,44 @@ $(document).ready(function(){
                 alert(data.status + ':' + data.statusText,data.responseText);
             },
             type: 'GET'
-          });
+        });
     });
     $("#nodeGenerate").click(function () {
         box.style.display = 'flex';
         hidden.style.display = 'block';
     });
 
+    $("#accountGenerate").click(function () {
+        boxAccount.style.display = 'flex';
+        hiddenAccount.style.display = 'block';
+    });
+
+    $("#accountListGenerate").click(function(){
+        var baseurl = location.origin;
+        var loginInfo = getLoginInfo();
+        var account = loginInfo.account;
+        var token = loginInfo.token;
+        $.ajax({
+            //url: "http://localhost:8088/account",
+            url: baseurl + "/account",
+            headers: {
+                "Authorization": "Bearer "+ token +""
+            },
+            success: function(data){
+                console.log(data)
+                CreateAccountTable(data)
+            },
+            error: function(data){
+                alert(data.status + ':' + data.statusText,data.responseText);
+            },
+            type: 'GET'
+        });
+    });
+
     $("#confirm").click(function () {
         var baseurl = location.origin;
+        var loginInfo = getLoginInfo();
+        var token = loginInfo.token;
         var requestData = {
             name: $("#inputName").val(),
             user: $("#inputUser").val(),
@@ -355,11 +498,49 @@ $(document).ready(function(){
         box.style.left = '';
     });
 
+    $("#confirmAccount").click(function () {
+        var baseurl = location.origin;
+        var loginInfo = getLoginInfo();
+        var token = loginInfo.token;
+        var requestData = {
+            name: $("#accountRequestName").val(),
+            role: $('input[name="accountRequestRole"]:checked').val(),
+        };
+        console.log(requestData)
+        $.ajax({
+            //url: "http://localhost:8088/account",
+            url: baseurl + "/account",
+            headers: {
+                "Authorization": "Bearer "+ token +""
+            },
+            data: requestData,
+            success: function(data){
+                var accountList = document.getElementById("accountListGenerate");
+                accountList.click()
+            },
+            error: function(data){
+                alert(data.status + ':' + data.statusText,data.responseText);
+            },
+            type: 'POST'
+        });
+        boxAccount.style.display = 'none';
+        hiddenAccount.style.display = 'none';
+        boxAccount.style.top = '200px';
+        boxAccount.style.left = '';
+    });
+
     $("#close").click(function () {
         box.style.display = 'none';
         hidden.style.display = 'none';
         box.style.top = '200px';
         box.style.left = '';
+    });
+
+    $("#closeAccount").click(function () {
+        boxAccount.style.display = 'none';
+        hiddenAccount.style.display = 'none';
+        boxAccount.style.top = '200px';
+        boxAccount.style.left = '';
     });
 
     $("#loginDiv .generate-password").click(function(){

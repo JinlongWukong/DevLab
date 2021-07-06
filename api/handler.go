@@ -533,9 +533,9 @@ func AccountRequestGetAllHandler(c *gin.Context) {
 	accountSlice := []map[string]string{}
 	for ac := range account.AccountDB.Iter() {
 		account := map[string]string{
-			"Name":     ac.Value.Name,
-			"Role":     string(ac.Value.Role),
-			"Contract": ac.Value.Contract,
+			"name":     ac.Value.Name,
+			"role":     string(ac.Value.Role),
+			"contract": ac.Value.Contract,
 		}
 		accountSlice = append(accountSlice, account)
 	}
@@ -550,9 +550,9 @@ func AccountRequestGetByNameHandler(c *gin.Context) {
 	name := c.Param("name")
 	if ac, exists := account.AccountDB.Get(name); exists {
 		c.JSON(http.StatusOK, map[string]string{
-			"Name":     ac.Name,
-			"Role":     string(ac.Role),
-			"Contract": ac.Contract,
+			"name":     ac.Name,
+			"role":     string(ac.Role),
+			"contract": ac.Contract,
 		})
 	} else {
 		c.JSON(http.StatusNotFound, nil)
@@ -570,6 +570,7 @@ func AccountRequestDelByNameHandler(c *gin.Context) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "account still have resouces created"})
 		} else {
 			account.AccountDB.Del(name)
+			db.NotifyToSave()
 			c.JSON(http.StatusNoContent, nil)
 		}
 	} else {

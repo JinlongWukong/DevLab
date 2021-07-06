@@ -37,7 +37,7 @@ func setupRouter() *gin.Engine {
 	r.POST("/vm/expose-port", AuthorizeToken(), VmRequestVmPortExposeHandler)
 
 	//node related api
-	r.GET("/node", AuthorizeToken(), AdminRoleOnlyAllowed(), NodeRequestGetNodeHandler)
+	r.GET("/node", AuthorizeToken(), NodeRequestGetNodeHandler)
 	r.POST("/node", AuthorizeToken(), AdminRoleOnlyAllowed(), NodeRequestActionNodeHandler)
 
 	//account related api

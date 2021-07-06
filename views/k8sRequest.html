@@ -186,14 +186,17 @@ function CreateK8STableFromJSON(myK8sList) {
 function k8sAction(element) {
     var form = $(element);
     var url = form.attr('action');
-    var payload = form.serialize() + "&account=" + account;
     var loginInfo = getLoginInfo()
     var account = loginInfo.account
-    var token = loginInfo.token 
+    var token = loginInfo.token
+    var payload = form.serialize(); // serializes the form's elements.
     $.blockUI({timeout:   8000});
     $.ajax({
         type: "DELETE",
-        url: url + '?' + payload,
+        headers: {
+                "Authorization": "Bearer "+ token +""
+        },
+        url: url + '?' + payload + "&account=" + account,
         error: function(data) {
             console.log(data)
             alert(data.status); // show response
