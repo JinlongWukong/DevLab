@@ -356,24 +356,29 @@ function nodeAction(element) {
     var form = $(element);
     var url = form.attr('action');
     var payload = form.serialize();
+    var loginInfo = getLoginInfo();
+    var token = loginInfo.token;
     $.blockUI({timeout:   8000});
     $.ajax({
-           type: "POST",
-           url: url,
-           async: false,
-           data: payload, // serializes the form's elements.
-           error: function(data) {
-               console.log(data)
-               alert(data.status); // show response
-           },
-           success: function(data) {
-               console.log(data)
-           }
-         }).always(function() {
-           $.unblockUI();
-           var nodeList = document.getElementById("nodeListGenerate");
-           nodeList.click()
-         });
+        type: "POST",
+        url: url,
+        headers: {
+            "Authorization": "Bearer "+ token +""
+        },
+        async: false,
+        data: payload, // serializes the form's elements.
+        error: function(data) {
+            console.log(data)
+            alert(data.status); // show response
+        },
+        success: function(data) {
+            console.log(data)
+        }
+    }).always(function() {
+        $.unblockUI();
+        var nodeList = document.getElementById("nodeListGenerate");
+        nodeList.click()
+    });
 }
 
 function deleteAccount(element) {
