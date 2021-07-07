@@ -11,7 +11,7 @@ import (
 var apiHost = ""
 var apiPort = 8088
 
-func LoadConfig() {
+func init() {
 	if config.ApiServer.Host != "" {
 		apiHost = config.ApiServer.Host
 	}
@@ -21,8 +21,6 @@ func LoadConfig() {
 }
 
 func Server() *http.Server {
-
-	LoadConfig()
 
 	srv := &http.Server{
 		Addr:    apiHost + ":" + strconv.Itoa(apiPort),

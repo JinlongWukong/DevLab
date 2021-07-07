@@ -56,7 +56,6 @@ type VirtualMachine struct {
 }
 
 type VmRequest struct {
-	Account  string `form:"account" json:"account" binding:"required"`
 	Hostname string `form:"hostname" json:"hostname"`
 	RootPass string `form:"rootPass" json:"rootPass"`
 	Type     string `form:"type" json:"type" binding:"required"`
@@ -68,20 +67,7 @@ type VmRequest struct {
 	Duration int    `form:"duration" json:"duration" binding:"required"`
 }
 
-type VmRequestGetVm struct {
-	Account string `form:"account" json:"account" binding:"required"`
-	Name    string `form:"name,omitempty" json:"name,omitempty"`
-}
-
-type VmRequestPostAction struct {
-	Account string `form:"account" json:"account" binding:"required"`
-	Name    string `form:"name" json:"name" binding:"required"`
-	Action  string `form:"action" json:"action" binding:"required"`
-}
-
 type VmRequestPortExpose struct {
-	Account  string `form:"account" json:"account" binding:"required"`
-	Name     string `form:"name" json:"name" binding:"required"`
 	Port     int    `form:"port" json:"port" binding:"required,min=1"`
 	Protocol string `form:"protocol,default=tcp" json:"protocol,default=tcp" binding:"required"`
 }

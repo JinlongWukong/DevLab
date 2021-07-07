@@ -48,95 +48,109 @@ func SoftwareIndexHandler(c *gin.Context) {
 	c.HTML(200, "SaaSRequest.html", nil)
 }
 
-// Get VMs of specify account
-// Args:
-//   VM Name or empty(means get all vm)
+// Get VMs
 // Return:
-//   20x: success with VM info
-//   40x: fail Account/VM not found
-func VmRequestGetVmHandler(c *gin.Context) {
-	var g vm.VmRequestGetVm
-	if err := c.Bind(&g); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+//   200: success with all VM info
+//   404: fail Account not found
+func VmRequestGetAllHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
+	log.Printf("Recevie vm request get all vm: %v", ac)
+
+	myaccount, exists := account.AccountDB.Get(ac)
+	if exists == true {
+		c.JSON(http.StatusOK, myaccount.VM)
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Account not found",
+		})
 	}
 
-	myaccount, exists := account.AccountDB.Get(g.Account)
+}
+
+// Get VM by name
+// Return:
+//   200: success with VM info
+//   404: fail Account/VM not found
+func VmRequestGetByNameHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
+	name := c.Param("name")
+	log.Printf("Recevie vm request get by name: %v, %v", ac, name)
+
+	myaccount, exists := account.AccountDB.Get(ac)
 	if exists == true {
-		if g.Name == "" {
-			// return all vm
-			c.JSON(http.StatusOK, myaccount.VM)
+		if myVM, err := myaccount.GetVmByName(name); err == nil {
+			c.JSON(http.StatusOK, myVM)
 		} else {
-			if myVM, err := myaccount.GetVmByName(g.Name); err == nil {
-				c.JSON(http.StatusOK, myVM)
-			} else {
-				c.JSON(http.StatusNotFound, "VM not found")
-			}
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "VM not found",
+			})
 		}
 	} else {
-		c.JSON(http.StatusNotFound, "Account not found")
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Account not found",
+		})
 	}
+
 }
 
-// VM reqeust POST handler, Create VM
-func VmRequestCreateVmHandler(c *gin.Context) {
+// Create VM
+// This is async call
+// Return:
+//   200: success with VM info
+//   404: fail Account/VM not found
+func VmRequestCreateHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
 	var vmRequest vm.VmRequest
 	if err := c.Bind(&vmRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
+	log.Printf("Recevie vm request to create vm: %v, %v, %v, %v, %v", ac, vmRequest.Type, vmRequest.Flavor, vmRequest.Number, vmRequest.Duration)
 
-	log.Println(vmRequest.Account, vmRequest.Type, vmRequest.Flavor, vmRequest.Number, vmRequest.Duration)
-
-	if vmRequest.Account == "" ||
-		vmRequest.Type == "" ||
-		vmRequest.Flavor == "" ||
-		vmRequest.Number < 1 {
-		c.JSON(http.StatusBadRequest, "input parameters error")
-		return
+	myaccount, exists := account.AccountDB.Get(ac)
+	if exists == true {
+		if _, err := workflow.CreateVMs(myaccount, vmRequest); err != nil {
+			c.JSON(http.StatusInternalServerError, err.Error())
+		} else {
+			c.JSON(http.StatusOK, "VM creation request accepted")
+		}
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Account not found",
+		})
 	}
 
-	myaccount, exists := account.AccountDB.Get(vmRequest.Account)
-	if exists == false {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "account not found"})
-		return
-	}
-
-	if _, err := workflow.CreateVMs(myaccount, vmRequest); err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	c.JSON(http.StatusOK, "VM creation request accepted")
 }
 
-// VM request VM action handler, start/stop/reboot/delete VM
+// VM action, start/stop/reboot/delete
 // Return:
-//     20x     -> success
+//     204     -> success
 //     40x/50x -> failed
-func VmRequestVmActionHandler(c *gin.Context) {
-	var vmRequestAction vm.VmRequestPostAction
-	if err := c.Bind(&vmRequestAction); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+func VmRequestActionHandler(c *gin.Context) {
 
-	log.Printf("Get VM action request: Account -> %v, VM -> %v, Action -> %v ", vmRequestAction.Account, vmRequestAction.Name, vmRequestAction.Action)
+	ac := c.GetHeader("account")
+	name := c.Param("name")
+	action := c.Param("action")
+	log.Printf("Receive VM action request: %v, %v, %v ", ac, name, action)
 
-	myaccount, exists := account.AccountDB.Get(vmRequestAction.Account)
+	myaccount, exists := account.AccountDB.Get(ac)
 	if exists == true {
-		if vmRequestAction.Name == "" || vmRequestAction.Action == "" {
-			c.JSON(http.StatusBadRequest, "VM name or Action empty")
-		}
-		if myVM, err := myaccount.GetVmByName(vmRequestAction.Name); err == nil {
+		if myVM, err := myaccount.GetVmByName(name); err == nil {
 			var action_err error
-			switch vmRequestAction.Action {
+			switch action {
 			case "start", "shutdown", "reboot", "delete":
-				action_err = workflow.ActionVM(myaccount, myVM, vmRequestAction.Action)
+				action_err = workflow.ActionVM(myaccount, myVM, action)
 			case "extend":
 				action_err = workflow.ExtendVMLifetime(myVM, 24*time.Hour)
 			default:
-				c.JSON(http.StatusBadRequest, "Action not support")
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "Action not support",
+				})
 				return
 			}
 			if action_err != nil {
@@ -144,35 +158,41 @@ func VmRequestVmActionHandler(c *gin.Context) {
 				return
 			}
 		} else {
-			c.JSON(http.StatusNotFound, "VM not found")
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "VM not found",
+			})
 			return
 		}
 	} else {
-		c.JSON(http.StatusNotFound, "Account not found")
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Account not found",
+		})
 		return
 	}
 
-	c.JSON(http.StatusNoContent, "")
-	return
+	c.JSON(http.StatusNoContent, nil)
+
 }
 
-// VM request port expose handler,
+// VM port expose,
 // Return:
 //     20x     -> success
 //     40x/50x -> failed
-func VmRequestVmPortExposeHandler(c *gin.Context) {
+func VmRequestPortExposeHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
+	name := c.Param("name")
 	var vmRequestPortExpose vm.VmRequestPortExpose
 	if err := c.Bind(&vmRequestPortExpose); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	log.Printf("Get VM port expose request: Account -> %v, VM -> %v, Port -> %v, Protocol -> %v ", vmRequestPortExpose.Account, vmRequestPortExpose.Name,
+	log.Printf("Receive VM port expose request: %v, %v, %v, %v ", ac, name,
 		vmRequestPortExpose.Port, vmRequestPortExpose.Protocol)
 
-	myaccount, exists := account.AccountDB.Get(vmRequestPortExpose.Account)
+	myaccount, exists := account.AccountDB.Get(ac)
 	if exists == true {
-		if myVM, err := myaccount.GetVmByName(vmRequestPortExpose.Name); err == nil {
+		if myVM, err := myaccount.GetVmByName(name); err == nil {
 			var action_err error
 			action_err = workflow.ExposePort(myaccount, myVM, vmRequestPortExpose.Port, vmRequestPortExpose.Protocol)
 			if action_err != nil {
@@ -180,54 +200,61 @@ func VmRequestVmPortExposeHandler(c *gin.Context) {
 				return
 			}
 		} else {
-			c.JSON(http.StatusNotFound, "VM not found")
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "VM not found",
+			})
 			return
 		}
 	} else {
-		c.JSON(http.StatusNotFound, "Account not found")
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Account not found",
+		})
 		return
 	}
 
-	c.JSON(http.StatusNoContent, "")
-	return
+	c.JSON(http.StatusNoContent, nil)
+
 }
 
-// Get nodes info
-// Request:
-//   node name or empty(means get all nodes)
+// Get all nodes information
 // Return:
-//   200: success -> with Node info
+//   200: success -> all node infor
 //   404: fail -> Node not found
-func NodeRequestGetNodeHandler(c *gin.Context) {
-	var r node.NodeRequest
-	if err := c.Bind(&r); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+func NodeRequestGetAllHandler(c *gin.Context) {
 
-	if r.Name == "" {
-		log.Println("Receive node request -> get all nodes info")
-		allNodesDetails := []*node.Node{}
-		for v := range node.NodeDB.Iter() {
-			allNodesDetails = append(allNodesDetails, v.Value)
-		}
-		c.JSON(http.StatusOK, allNodesDetails)
-	} else {
-		log.Printf("Receive node request -> get node %v info", r.Name)
-		mynode, exists := node.NodeDB.Get(r.Name)
-		if exists == true {
-			c.JSON(http.StatusOK, mynode)
-		} else {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Node not existed",
-			})
-		}
+	log.Println("Receive node request to get all nodes info")
+	allNodesDetails := []*node.Node{}
+	for v := range node.NodeDB.Iter() {
+		allNodesDetails = append(allNodesDetails, v.Value)
 	}
+	c.JSON(http.StatusOK, allNodesDetails)
+
 }
 
-// Node request action handler -> add/remove/reboot node
-// If action is add node -> async call, otherwise -> sync call
-func NodeRequestActionNodeHandler(c *gin.Context) {
+// Get node information by name
+// Return:
+//   200: success -> node infor
+//   404: fail -> node not found
+func NodeRequestGetByNameHandler(c *gin.Context) {
+
+	name := c.Param("name")
+	log.Printf("Receive node request to get node %v info", name)
+	if n, exists := node.NodeDB.Get(name); exists {
+		c.JSON(http.StatusOK, n)
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Node not found",
+		})
+	}
+
+}
+
+// Install and add node
+// This is async call
+// Return
+//     20x -> success
+//     400 -> bad request
+func NodeRequestCreateHandler(c *gin.Context) {
 
 	var nodeRequest node.NodeRequest
 	if err := c.Bind(&nodeRequest); err != nil {
@@ -235,32 +262,49 @@ func NodeRequestActionNodeHandler(c *gin.Context) {
 		return
 	}
 
-	log.Printf("Node request coming, node name -> %v action -> %v", nodeRequest.Name, nodeRequest.Action)
+	log.Printf("Receive node request, install and add node %v, %v, %v", nodeRequest.Name, nodeRequest.IpAddress, nodeRequest.Role)
 
-	switch nodeRequest.Action {
-	case node.NodeActionAdd:
-		_, exists := node.NodeDB.Get(nodeRequest.Name)
-		if exists == true {
-			log.Printf("Node %v already existed", nodeRequest.Name)
-		} else {
-			go func() {
-				workflow.AddNode(nodeRequest)
-			}()
-		}
-		c.JSON(http.StatusOK, "")
+	_, exists := node.NodeDB.Get(nodeRequest.Name)
+	if exists == true {
+		log.Printf("Node %v already existed, nothing to do", nodeRequest.Name)
+		c.JSON(http.StatusNoContent, gin.H{
+			"warn": "node already existed",
+		})
+	} else {
+		go func() {
+			workflow.AddNode(nodeRequest)
+		}()
+		c.JSON(http.StatusOK, nil)
+	}
+
+}
+
+// Node request action handler -> remove/reboot/enable/disable node
+// This is sync call
+//   200: success
+//   400: fail -> bad request
+//   404: fail -> node not found
+//   500: fail -> internal error
+func NodeRequestActionHandler(c *gin.Context) {
+
+	name := c.Param("name")
+	action := c.Param("action")
+	log.Printf("Receive node request, node name -> %v action -> %v", name, action)
+
+	switch node.NodeAction(action) {
 	case node.NodeActionRemove, node.NodeActionReboot, node.NodeActionEnable, node.NodeActionDisable:
-		_, exists := node.NodeDB.Get(nodeRequest.Name)
+		_, exists := node.NodeDB.Get(name)
 		if exists == true {
-			if err := workflow.ActionNode(nodeRequest); err != nil {
+			if err := workflow.ActionNode(name, node.NodeAction(action)); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": err.Error(),
 				})
 			} else {
-				c.JSON(http.StatusOK, "")
+				c.JSON(http.StatusOK, nil)
 			}
 		} else {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Node not existed",
+				"error": "node not existed",
 			})
 		}
 	default:
@@ -268,30 +312,30 @@ func NodeRequestActionNodeHandler(c *gin.Context) {
 			"error": "action not support",
 		})
 	}
+
 }
 
-// K8s request POST handler, Create K8S
+// Create K8S
+// Return:
+//   200: success
+//   404: fail -> account not found
+//   500: fail -> workflow k8s create failed
 func K8sRequestCreateHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
 	var k8sRequest k8s.K8sRequest
 	if err := c.Bind(&k8sRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	log.Println(k8sRequest.Account, k8sRequest.Version,
+	log.Printf("Recevie k8s create request: %v, %v, %v, %v", ac, k8sRequest.Version,
 		k8sRequest.NumOfContronller, k8sRequest.NumOfWorker)
 
-	if k8sRequest.Account == "" ||
-		k8sRequest.Version == "" ||
-		k8sRequest.NumOfWorker < 1 ||
-		k8sRequest.NumOfContronller < 1 {
-		c.JSON(http.StatusBadRequest, "input parameters error")
-		return
-	}
-
-	myaccount, exists := account.AccountDB.Get(k8sRequest.Account)
+	myaccount, exists := account.AccountDB.Get(ac)
 	if exists == false {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "account not found"})
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "account not found",
+		})
 		return
 	}
 
@@ -301,60 +345,78 @@ func K8sRequestCreateHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, "K8S creation request accepted")
+
 }
 
-// K8s request Delete handler, remove K8S
+// Delete k8s cluster by name
+// Return:
+//   200: success
+//   404: fail -> account not found
+//   500: fail -> workflow k8s delete failed
 func K8sRequestDeleteHandler(c *gin.Context) {
-	var g k8s.K8sRequestAction
-	if err := c.Bind(&g); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 
-	log.Println(g)
+	ac := c.GetHeader("account")
+	name := c.Param("name")
+	log.Printf("Recevie k8s delete request: %v, %v", ac, name)
 
-	if g.Name == "" {
-		err_msg := "k8s name not specify"
-		log.Println(err_msg)
-		c.JSON(http.StatusBadRequest, err_msg)
-	} else {
-		if err := workflow.DeleteK8S(g); err == nil {
-			c.JSON(http.StatusOK, "")
+	myAccount, exists := account.AccountDB.Get(ac)
+	if exists == true {
+		if err := workflow.DeleteK8S(myAccount, name); err == nil {
+			c.JSON(http.StatusOK, nil)
 		} else {
-			log.Println(err)
 			c.JSON(http.StatusInternalServerError, err.Error())
 		}
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "account not found",
+		})
 	}
+
 }
 
-// Get k8s of specify account
-// Args:
-//   k8s Name or empty(means get all k8s)
+// Get all k8s
 // Return:
-//   20x: success with k8s info
+//   200: success with k8s info
 //   40x: fail Account/k8s not found
-func K8sRequestGetHandler(c *gin.Context) {
-	var g k8s.K8sRequestAction
-	if err := c.Bind(&g); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+func K8sRequestGetAllHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
+	log.Printf("Recevie k8s get all request: %v", ac)
+
+	myaccount, exists := account.AccountDB.Get(ac)
+	if exists == true {
+		c.JSON(http.StatusOK, myaccount.K8S)
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Account not found",
+		})
 	}
 
-	myaccount, exists := account.AccountDB.Get(g.Account)
+}
+
+// Get all k8s by name
+// Return:
+//   200: success with k8s info
+//   40x: fail Account/k8s not found
+func K8sRequestGetByNameHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
+	name := c.Param("name")
+	log.Printf("Recevie k8s get request: %v, %v", ac, name)
+
+	myaccount, exists := account.AccountDB.Get(ac)
 	if exists == true {
-		if g.Name == "" {
-			// return all k8s
-			c.JSON(http.StatusOK, myaccount.K8S)
+		if myk8S, err := myaccount.GetK8sByName(name); err == nil {
+			c.JSON(http.StatusOK, myk8S)
 		} else {
-			if myK8s, err := myaccount.GetK8sByName(g.Name); err == nil {
-				c.JSON(http.StatusOK, myK8s)
-			} else {
-				c.JSON(http.StatusNotFound, "k8s not found")
-			}
+			c.JSON(http.StatusNotFound, "k8s not found")
 		}
 	} else {
-		c.JSON(http.StatusNotFound, "Account not found")
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "account not found",
+		})
 	}
+
 }
 
 // Software part
@@ -366,15 +428,16 @@ func K8sRequestGetHandler(c *gin.Context) {
 //     20x     -> success
 //     40x/50x -> failed
 func SoftwareRequestCreateHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
 	var request saas.SoftwareRequest
 	if err := c.Bind(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	log.Printf("Recevie software creation request, %v, %v, %v", ac, request.Kind, request.Version)
 
-	log.Printf("Get software creation request, %v,%v,%v", request.Account, request.Kind, request.Version)
-
-	myaccount, exists := account.AccountDB.Get(request.Account)
+	myaccount, exists := account.AccountDB.Get(ac)
 	if exists == false {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "account not found"})
 		return
@@ -388,76 +451,85 @@ func SoftwareRequestCreateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, "Software creation request accepted")
 }
 
-// Software request action handler, start/stop/delete
-// Args:
-//   software Name
+// Software request action handler, start/stop/delete/restart/refresh
 // Return:
 //     20x     -> success
 //     40x/50x -> failed
 func SoftwareRequestActionHandler(c *gin.Context) {
-	var r saas.SoftwareRequestAction
-	if err := c.Bind(&r); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 
-	log.Printf("Get Software action request: Account -> %v, Software -> %v, Action -> %v ", r.Account, r.Name, r.Action)
+	ac := c.GetHeader("account")
+	name := c.Param("name")
+	action := c.Param("action")
+	log.Printf("Recevie Software action request: %v, %v, %v ", ac, name, action)
 
-	myAccount, exists := account.AccountDB.Get(r.Account)
+	myAccount, exists := account.AccountDB.Get(ac)
 	if exists == true {
-		if r.Name == "" || r.Action == "" {
-			c.JSON(http.StatusBadRequest, "Software name or Action empty")
-		}
 		var action_err error
-		switch r.Action {
-		case "start", "stop", "restart", "delete", "get":
-			action_err = workflow.ActionSoftware(myAccount, r)
+		switch saas.SoftwareAction(action) {
+		case saas.SoftwareActionGet, saas.SoftwareActionStart, saas.SoftwareActionDelete,
+			saas.SoftwareActionStop, saas.SoftwareActionRestart:
+			action_err = workflow.ActionSoftware(myAccount, name, saas.SoftwareAction(action))
 		default:
-			c.JSON(http.StatusBadRequest, "Action not support")
-			return
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "action not support",
+			})
 		}
 		if action_err != nil {
 			c.JSON(http.StatusInternalServerError, action_err.Error())
-			return
+		} else {
+			c.JSON(http.StatusNoContent, nil)
 		}
-
 	} else {
-		c.JSON(http.StatusNotFound, "Account not found")
-		return
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "account not found",
+		})
 	}
 
-	c.JSON(http.StatusNoContent, "")
-	return
 }
 
-// Get software of specify account
-// Args:
-//   software Name or empty(means get all software)
+// Get all software info
 // Return:
-//   20x: success with software info
-//   40x: fail Account/software not found
-func SoftwareRequestGetHandler(c *gin.Context) {
-	var g saas.SoftwareRequestGetInfo
-	if err := c.Bind(&g); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+//   200: success with software info
+//   404: fail Account not found
+func SoftwareRequestGetAllHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
+	log.Printf("Recevie Software get all request: %v", ac)
+
+	myaccount, exists := account.AccountDB.Get(ac)
+	if exists == true {
+		c.JSON(http.StatusOK, myaccount.Software)
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Account not found",
+		})
 	}
 
-	myaccount, exists := account.AccountDB.Get(g.Account)
+}
+
+// Get software info
+// Return:
+//   200: success with software info
+//   404: fail -> Account/Software not found
+func SoftwareRequestGetByNameHandler(c *gin.Context) {
+
+	ac := c.GetHeader("account")
+	name := c.Param("name")
+	log.Printf("Recevie Software get request: %v, %v", ac, name)
+
+	myaccount, exists := account.AccountDB.Get(ac)
 	if exists == true {
-		if g.Name == "" {
-			// return all software
-			c.JSON(http.StatusOK, myaccount.Software)
+		if mySoftware, err := myaccount.GetSoftwareByName(name); err == nil {
+			c.JSON(http.StatusOK, mySoftware)
 		} else {
-			if mySoftware, err := myaccount.GetSoftwareByName(g.Name); err == nil {
-				c.JSON(http.StatusOK, mySoftware)
-			} else {
-				c.JSON(http.StatusNotFound, "software not found")
-			}
+			c.JSON(http.StatusNotFound, "software not found")
 		}
 	} else {
-		c.JSON(http.StatusNotFound, "Account not found")
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "account not found",
+		})
 	}
+
 }
 
 //Will return total task numbers
@@ -474,7 +546,7 @@ func metricsHandler(c *gin.Context) {
 
 }
 
-// account one-time password generate handler
+// generate one-time password
 func oneTimePassGenHandler(c *gin.Context) {
 
 	accountName := c.Query("account")
@@ -495,7 +567,7 @@ func oneTimePassGenHandler(c *gin.Context) {
 	return
 }
 
-// account login handler
+// use account/one-time-password to login for fetching a token
 /*
 {
  "access_token": "xxxxxxxxxxxxxxxxxxx",
@@ -503,7 +575,7 @@ func oneTimePassGenHandler(c *gin.Context) {
  "expires_in": 86400
 }
 */
-func accountLogin(c *gin.Context) {
+func accountLoginHandler(c *gin.Context) {
 	var r auth.LoginInfo
 	if err := c.Bind(&r); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -527,7 +599,6 @@ func accountLogin(c *gin.Context) {
 }
 
 //Get all account information
-//Return list include account name and role
 func AccountRequestGetAllHandler(c *gin.Context) {
 
 	accountSlice := []map[string]string{}
@@ -544,7 +615,6 @@ func AccountRequestGetAllHandler(c *gin.Context) {
 }
 
 //Get account information by name
-//Return name and role
 func AccountRequestGetByNameHandler(c *gin.Context) {
 
 	name := c.Param("name")
@@ -578,9 +648,9 @@ func AccountRequestDelByNameHandler(c *gin.Context) {
 	}
 }
 
-// Create a new account api
-// params: name and role
-func AccountRequestPostHandler(c *gin.Context) {
+//Create a new account
+//input params: name and role
+func AccountRequestCreateHandler(c *gin.Context) {
 	var r account.AccountRequest
 	if err := c.Bind(&r); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -596,6 +666,7 @@ func AccountRequestPostHandler(c *gin.Context) {
 }
 
 //Modify account information
+//input params: name and role
 func AccountRequestModifyHandler(c *gin.Context) {
 	var r account.AccountRequest
 	if err := c.Bind(&r); err != nil {

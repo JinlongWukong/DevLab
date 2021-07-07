@@ -55,12 +55,11 @@ type Node struct {
 }
 
 type NodeRequest struct {
-	Name      string     `json:"name,omitempty" form:"name,omitempty"`
-	User      string     `json:"user,omitempty" form:"user,omitempty"`
-	Passwd    string     `json:"password,omitempty" form:"password,omitempty"`
-	IpAddress string     `json:"ip,omitempty" form:"ip,omitempty"`
-	Role      NodeRole   `json:"role,omitempty" form:"role,omitempty"`
-	Action    NodeAction `json:"action,omitempty" form:"action,omitempty"`
+	Name      string   `json:"name" form:"name" binding:"required"`
+	User      string   `json:"user" form:"user" binding:"required"`
+	Passwd    string   `json:"password" form:"password" binding:"required"`
+	IpAddress string   `json:"ip" form:"ip" binding:"required"`
+	Role      NodeRole `json:"role" form:"role" binding:"required"`
 }
 
 type NodeInfo struct {

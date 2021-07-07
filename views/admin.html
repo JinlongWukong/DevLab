@@ -355,18 +355,18 @@ function CreateAccountTable(myAccountList) {
 function nodeAction(element) {
     var form = $(element);
     var url = form.attr('action');
-    var payload = form.serialize();
+    var action = form.serializeArray()[0].value;
+    var node = form.serializeArray()[1].value;
     var loginInfo = getLoginInfo();
     var token = loginInfo.token;
     $.blockUI({timeout:   8000});
     $.ajax({
         type: "POST",
-        url: url,
+        url: url + "/" + node + "/" + action,
         headers: {
             "Authorization": "Bearer "+ token +""
         },
         async: false,
-        data: payload, // serializes the form's elements.
         error: function(data) {
             console.log(data)
             alert(data.status); // show response
@@ -477,7 +477,6 @@ $(document).ready(function(){
             password: $("#inputPasswd").val(),
             ip: $("#inputAddress").val(),
             role: $('input[name="radioRole"]:checked').val(),
-            action: "add",
         };
         console.log(requestData)
         $.ajax({

@@ -60,7 +60,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 		}
 
 		newVm := vm.NewVirtualMachine(
-			vmRequest.Account+"-"+strconv.Itoa(i),
+			myAccount.Name+"-"+strconv.Itoa(i),
 			vmRequest.Flavor,
 			vmRequest.Type,
 			hostname,
@@ -232,6 +232,9 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 
 		//Clear dnat rules
 		selectNode := node.GetNodeByName(myVM.Node)
+		if selectNode == nil {
+			return fmt.Errorf("Error: vm %v hosted node %v not found", myVM.Name, myVM.Node)
+		}
 		keys := make([]int, 0, len(myVM.PortMap))
 		for k := range myVM.PortMap {
 			keys = append(keys, k)
@@ -315,6 +318,9 @@ func ExposePort(myAccount *account.Account, myVM *vm.VirtualMachine, port int, p
 	}
 
 	myNode := node.GetNodeByName(myVM.Node)
+	if myNode == nil {
+		return fmt.Errorf("Error: vm %v hosted node %v not found", myVM.Name, myVM.Node)
+	}
 	newPort := myNode.ReservePort(strings.Split(myVM.IpAddress, "/")[0] + ":" + strconv.Itoa(port))
 
 	defer db.NotifyToSave()
@@ -397,36 +403,36 @@ func AddNode(nodeRequest node.NodeRequest) error {
 }
 
 // Take specify action on Node(remove/reboot)
-func ActionNode(nodeRequest node.NodeRequest) error {
+func ActionNode(name string, action node.NodeAction) error {
 	changeTaskCount(1)
 	defer changeTaskCount(-1)
 	defer db.NotifyToSave()
 
-	myNode, exists := node.NodeDB.Get(nodeRequest.Name)
+	myNode, exists := node.NodeDB.Get(name)
 	if exists == false {
 		return fmt.Errorf("node not existed")
 	}
 
-	switch nodeRequest.Action {
+	switch action {
 	case node.NodeActionRemove:
 		if myNode.GetCpuUsed() > 0 {
-			return fmt.Errorf("Still have vm hosted on node %v, can't be removed", myNode.Name)
+			return fmt.Errorf("Still have vm hosted on node %v, can't be removed", name)
 		}
-		node.NodeDB.Del(nodeRequest.Name)
-		log.Printf("node %v removed", nodeRequest.Name)
+		node.NodeDB.Del(name)
+		log.Printf("node %v removed", name)
 	case node.NodeActionReboot:
 		if err := myNode.RebootNode(); err != nil {
-			log.Printf("Reboot node %v failed with error -> %v", nodeRequest.Name, err)
+			log.Printf("Reboot node %v failed with error -> %v", name, err)
 			return err
 		}
 	case node.NodeActionEnable:
 		myNode.SetState(node.NodeStateEnable)
-		log.Printf("Set node %v state to %v", nodeRequest.Name, node.NodeStateEnable)
+		log.Printf("Set node %v state to %v", name, node.NodeStateEnable)
 	case node.NodeActionDisable:
 		myNode.SetState(node.NodeStateDisable)
-		log.Printf("Set node %v state to %v", nodeRequest.Name, node.NodeStateDisable)
+		log.Printf("Set node %v state to %v", name, node.NodeStateDisable)
 	default:
-		return fmt.Errorf("action %v not supported", nodeRequest.Action)
+		return fmt.Errorf("action %v not supported", action)
 	}
 
 	return nil
@@ -442,7 +448,7 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 	//Get the last index as the index of new k8s
 	lastIndex := utils.GetLastIndex(myAccount.GetK8sNameList())
 
-	newK8s := k8s.NewK8s(k8sRequest.Account+"-k8s-"+strconv.Itoa(lastIndex+1), k8sRequest)
+	newK8s := k8s.NewK8s(myAccount.Name+"-k8s-"+strconv.Itoa(lastIndex+1), k8sRequest)
 	if newK8s != nil {
 		myAccount.AppendK8S(newK8s)
 	} else {
@@ -459,7 +465,6 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 		newK8s.SetStatus(k8s.K8sStatusBootingVm)
 
 		vmRequest := vm.VmRequest{
-			Account:  myAccount.Name,
 			Hostname: newK8s.Name,
 			Type:     "centos7",
 			Flavor:   "middle",
@@ -529,17 +534,13 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 }
 
 //Delete k8s cluster
-func DeleteK8S(request k8s.K8sRequestAction) error {
+func DeleteK8S(myaccount *account.Account, name string) error {
 
 	changeTaskCount(1)
 	defer changeTaskCount(-1)
 	defer db.NotifyToSave()
 
-	myaccount, exists := account.AccountDB.Get(request.Account)
-	if exists == false {
-		return fmt.Errorf("account not found")
-	}
-	myk8s, err := myaccount.GetK8sByName(request.Name)
+	myk8s, err := myaccount.GetK8sByName(name)
 	if err != nil {
 		return fmt.Errorf("k8s not found")
 	}
@@ -555,7 +556,7 @@ func DeleteK8S(request k8s.K8sRequestAction) error {
 		}
 	}
 
-	if err = myaccount.RemoveK8sByName(request.Name); err != nil {
+	if err = myaccount.RemoveK8sByName(name); err != nil {
 		log.Printf("Remove k8s failed with error: %v", err)
 		return err
 	}
@@ -574,7 +575,7 @@ func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareReq
 	//Get the last index as the index of new software
 	lastIndex := utils.GetLastIndex(myAccount.GetSoftwareNameList())
 
-	newSoftware := saas.NewSoftware(softwareRequest.Account+"-"+softwareRequest.Kind+"-"+strconv.Itoa(lastIndex+1), softwareRequest)
+	newSoftware := saas.NewSoftware(myAccount.Name+"-"+softwareRequest.Kind+"-"+strconv.Itoa(lastIndex+1), softwareRequest)
 	if newSoftware != nil {
 		myAccount.AppendSoftware(newSoftware)
 	} else {
@@ -652,12 +653,12 @@ func CreateSoftware(myAccount *account.Account, softwareRequest saas.SoftwareReq
 	return nil
 }
 
-func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.SoftwareRequestAction) error {
+func ActionSoftware(myAccount *account.Account, name string, action saas.SoftwareAction) error {
 	changeTaskCount(1)
 	defer changeTaskCount(-1)
 	defer db.NotifyToSave()
 
-	mySoftware, err := myAccount.GetSoftwareByName(softwareActionRequest.Name)
+	mySoftware, err := myAccount.GetSoftwareByName(name)
 	if err != nil {
 		log.Printf("Software action failed with error: %v", err)
 		return err
@@ -678,20 +679,20 @@ func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.Softw
 			"User":     selectNode.UserName,
 			"Name":     mySoftware.Name,
 			"Software": mySoftware.Kind,
-			"Action":   softwareActionRequest.Action,
+			"Action":   action,
 		})
 		url := deployer.GetDeployerBaseUrl() + "/container/action"
 
-		log.Printf("Remote http call to %v software %v", softwareActionRequest.Action, softwareActionRequest.Name)
+		log.Printf("Remote http call to %v software %v", action, name)
 		err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
 		if err != nil {
 			mySoftware.SetStatus(saas.SoftwareStatusError)
-			log.Printf("Remote http call to %v software %v failed with error: %v %v", softwareActionRequest.Action, softwareActionRequest.Name, err, string(reponse_data))
-			myAccount.SendNotification(fmt.Sprintf("%v your software %v failed with error: %v %v", softwareActionRequest.Action, mySoftware.Name, err, string(reponse_data)))
+			log.Printf("Remote http call to %v software %v failed with error: %v %v", action, name, err, string(reponse_data))
+			myAccount.SendNotification(fmt.Sprintf("%v your software %v failed with error: %v %v", action, mySoftware.Name, err, string(reponse_data)))
 			return err
 		}
 
-		switch softwareActionRequest.Action {
+		switch action {
 		case saas.SoftwareActionStart, saas.SoftwareActionRestart, saas.SoftwareActionGet:
 			readContainerStatus(mySoftware, reponse_data)
 		case saas.SoftwareActionStop:
@@ -713,11 +714,11 @@ func ActionSoftware(myAccount *account.Account, softwareActionRequest saas.Softw
 				return err
 			}
 		default:
-			return fmt.Errorf("Software action %v not supported", softwareActionRequest.Action)
+			return fmt.Errorf("Software action %v not supported", action)
 		}
 
 	}
-	log.Printf("%v software %v successfully", softwareActionRequest.Action, mySoftware.Name)
+	log.Printf("%v software %v successfully", action, mySoftware.Name)
 
 	return nil
 }

@@ -67,7 +67,12 @@ func (myvm *VirtualMachine) CreateVirtualMachine() error {
 	log.Printf("Creating vm %v on Host %v", myvm.Name, myvm.Node)
 	myvm.Status = VmStatusCreating
 
-	node := node.GetNodeByName(myvm.Node)
+	mynode := node.GetNodeByName(myvm.Node)
+	if mynode == nil {
+		err := fmt.Errorf("Error: Node %v not found", myvm.Node)
+		log.Println(err)
+		return err
+	}
 
 	payload, _ := json.Marshal(map[string]interface{}{
 		"vmName":     myvm.Name,
@@ -79,9 +84,9 @@ func (myvm *VirtualMachine) CreateVirtualMachine() error {
 		"vmType":     myvm.Type,
 		"vncPass":    myvm.Vnc.Pass,
 		"rootPass":   myvm.RootPass,
-		"hostIp":     node.IpAddress,
-		"hostPass":   node.Passwd,
-		"hostUser":   node.UserName,
+		"hostIp":     mynode.IpAddress,
+		"hostPass":   mynode.Passwd,
+		"hostUser":   mynode.UserName,
 	})
 
 	log.Println("Remote http call to create vm")

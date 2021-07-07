@@ -167,7 +167,7 @@ function CreateK8STableFromJSON(myK8sList) {
             var tabCell = tr.insertCell(-1);
             if (col[j] == "action"){
                 tabCell.innerHTML = `
-                <form id="actionForm" action="/k8s" onsubmit="event.preventDefault();return k8sAction(this)">
+                <form id="actionForm" action="/k8s" onsubmit="event.preventDefault();return k8sDelete(this)">
                    <button type="submit">Delete</button>
                   `+ '<input type="hidden" name="name"' + 'value=' + myK8sList[i]["name"] + ' >'
                 + '</form>';
@@ -183,20 +183,20 @@ function CreateK8STableFromJSON(myK8sList) {
     divContainer.appendChild(table);
 }
 
-function k8sAction(element) {
+function k8sDelete(element) {
     var form = $(element);
     var url = form.attr('action');
-    var loginInfo = getLoginInfo()
-    var account = loginInfo.account
-    var token = loginInfo.token
-    var payload = form.serialize(); // serializes the form's elements.
+    var loginInfo = getLoginInfo();
+    var token = loginInfo.token;
+    var requestMethod = 'DELETE';
+    var name = form.serializeArray()[0].value;
     $.blockUI({timeout:   8000});
     $.ajax({
-        type: "DELETE",
+        type: requestMethod,
         headers: {
-                "Authorization": "Bearer "+ token +""
+            "Authorization": "Bearer "+ token +""
         },
-        url: url + '?' + payload + "&account=" + account,
+        url: url + '/' + name,
         error: function(data) {
             console.log(data)
             alert(data.status); // show response
@@ -219,19 +219,18 @@ $(document).ready(function(){
         $.blockUI({timeout:   10000});
         event.preventDefault(); //prevent default action
         var post_url = $(this).attr("action"); //get form action url
-	    var request_method = $(this).attr("method"); //get form GET/POST method
+	    var requestMethod = $(this).attr("method"); //get form GET/POST method
 	    var form_data = $(this).serialize(); //Encode form elements for submiss
         var loginInfo = getLoginInfo();
-        var account = loginInfo.account;
         var token = loginInfo.token;
         $.ajax({
-            type: "POST",
+            type: requestMethod,
             url: post_url,
             headers: {
                 "Authorization": "Bearer "+ token +""
             },
             async: false,
-            data: form_data + "&account=" + account,
+            data: form_data,
             error: function(data) {
                 console.log(data)
                 alert(data.status); // show response
@@ -244,12 +243,11 @@ $(document).ready(function(){
 
     $("#k8sListGenerate").click(function(){ 
         var loginInfo = getLoginInfo()
-        var account = loginInfo.account
         var token = loginInfo.token 
         var baseurl = location.origin;
         $.ajax({
-            //url: "http://127.0.0.1:8088/k8s?account=" + account,
-            url: baseurl + "/k8s?account=" + account,
+            //url: "http://127.0.0.1:8088/k8s",
+            url: baseurl + "/k8s",
             headers: {
                 "Authorization": "Bearer "+ token +""
             },

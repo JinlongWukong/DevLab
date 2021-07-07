@@ -209,22 +209,21 @@ function CreateSaaSTableFromJSON(mySaaSList) {
 function SaaSAction(element) {
     var form = $(element);
     var url = form.attr('action');
-    var payload = form.serialize(); // serializes the form's elements.
+    var action = form.serializeArray()[0].value;
+    var name = form.serializeArray()[1].value;
     var loginInfo = getLoginInfo();
-    var account = loginInfo.account;
     var token = loginInfo.token;
     $.blockUI({timeout:   8000});
     $.ajax({
-            type: "POST",
-            url: url + "/action",
-            headers: {
-                "Authorization": "Bearer "+ token +""
-            },
-            data: payload + "&account=" + account,
-            error: function(data) {
-                console.log(data)
-                alert(data.status); // show response
-            }
+        type: "POST",
+        url: url + "/" + name + "/" + action,
+        headers: {
+            "Authorization": "Bearer "+ token
+        },
+        error: function(data) {
+            console.log(data)
+            alert(data.status); // show response
+        }
     }).always(function() {
         $.unblockUI();
         btnAutoClick();
@@ -242,40 +241,38 @@ $(document).ready(function(){
     $("#SaaSCreateForm").submit(function(event) {
         $.blockUI({timeout:   10000});
         event.preventDefault(); //prevent default action
-        var post_url = $(this).attr("action"); //get form action url
-	    var request_method = $(this).attr("method"); //get form GET/POST method
-	    var form_data = $(this).serialize(); //Encode form elements for submiss
+        var postUrl = $(this).attr("action"); //get form action url
+	    var requestMethod = $(this).attr("method"); //get form GET/POST method
+	    var formData = $(this).serialize(); //Encode form elements for submiss
         var loginInfo = getLoginInfo();
-        var account = loginInfo.account;
         var token = loginInfo.token;
         $.ajax({
-            type: "POST",
-            url: post_url,
+            type: requestMethod,
+            url: postUrl,
             headers: {
-                "Authorization": "Bearer "+ token +""
+                "Authorization": "Bearer "+ token
             },
             async: false,
-            data: form_data + "&account=" + account,
+            data: formData,
             error: function(data) {
                 console.log(data)
                 alert(data.status); // show response
             }
-            }).always(function() {
-                $.unblockUI();
-                btnAutoClick();
+        }).always(function() {
+            $.unblockUI();
+            btnAutoClick();
         });
     })
 
     $("#SaaSListGenerate").click(function(){ 
         var loginInfo = getLoginInfo()
-        var account = loginInfo.account
         var token = loginInfo.token 
         var baseurl = location.origin;
         $.ajax({
-            //url: "http://127.0.0.1:8088/saas?account=" + account,
-            url: baseurl + "/saas?account=" + account,
+            //url: "http://127.0.0.1:8088/saas",
+            url: baseurl + "/saas",
             headers: {
-                "Authorization": "Bearer "+ token +""
+                "Authorization": "Bearer "+ token
             },
             success: function(data){
                 console.log(data)
