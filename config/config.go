@@ -28,6 +28,9 @@ type ScheduleConfig struct {
 type WorkflowConfig struct {
 	VmStatusRetry    int
 	VmStatusInterval int
+	NoVncPort        int
+	NoVncProtocol    string
+	NoVncHost        string
 }
 
 type LifeCycleConfig struct {

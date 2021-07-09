@@ -28,6 +28,11 @@ var newNodeLock sync.Mutex
 // VM live status retry times and interval(unit seconds) setting, 2mins
 var vmStatusRetry, vmStatusInterval = 50, 6
 
+// NoVNC related setting
+var noVncHost, noVncProtocol = "", ""
+var noVncPort int
+var noVncUse bool //flag of use noVnc or not
+
 // initialize configuration
 func init() {
 	if config.Workflow.VmStatusRetry > 0 {
@@ -35,6 +40,14 @@ func init() {
 	}
 	if config.Workflow.VmStatusInterval > 0 {
 		vmStatusInterval = config.Workflow.VmStatusInterval
+	}
+	if config.Workflow.NoVncProtocol != "" &&
+		config.Workflow.NoVncHost != "" &&
+		config.Workflow.NoVncPort > 0 {
+		noVncProtocol = config.Workflow.NoVncProtocol
+		noVncHost = config.Workflow.NoVncHost
+		noVncPort = config.Workflow.NoVncPort
+		noVncUse = true
 	}
 }
 
@@ -133,6 +146,18 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 				retry := 1
 				for retry <= vmStatusRetry {
 					if err := myVm.GetVirtualMachineLiveStatus(); err == nil {
+						// Generate novnc url
+						if noVncUse && myVm.NoVnc == "" && myVm.Vnc.Port != "" {
+							if vncPort, err := GetVncPort(myVm.Vnc.Port); err == nil {
+								myVm.NoVnc = noVncProtocol + "://" + noVncHost + ":" + strconv.Itoa(noVncPort) +
+									"/vnc.html?password=" + myVm.Vnc.Pass +
+									"&path=vnc/" + selectNode.IpAddress + "/" + vncPort +
+									"&autoconnect=true&resize=scale&reconnect=true&show_dot=true"
+							} else {
+								log.Printf("parse vnc port error: %v %v", myVm.Vnc.Port, err.Error())
+							}
+						}
+						// Tell if ipaddress fetched or not
 						if myVm.Status != "" && myVm.IpAddress != "" {
 							log.Printf("Get VM -> %v info: status -> %v, address -> %v", myVm.Name, myVm.Status, myVm.IpAddress)
 							break
@@ -146,6 +171,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 					log.Println("VM get status timeout, exited")
 					return
 				}
+
 				myAccount.SendNotification(fmt.Sprintf("Your VM %v is running \n"+
 					"root passwd -> %v, vnc passwd -> %v \n"+
 					"vnc login -> %v%v", myVm.Name, myVm.RootPass, myVm.Vnc.Pass, selectNode.IpAddress, myVm.Vnc.Port))

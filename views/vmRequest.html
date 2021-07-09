@@ -183,6 +183,12 @@ function CreateVMTableFromJSON(myVmList) {
             var tabCell = tr.insertCell(-1);
             if (col[j] == "node") {
                 tabCell.innerHTML = myVmList[i][col[j]];
+            } else if (col[j] == "novnc") {
+                if (myVmList[i][col[j]]) {
+                    tabCell.innerHTML = "<a href=" + myVmList[i][col[j]] + ">link</a>"
+                } else {
+                    tabCell.innerHTML = ""
+                }
             } else if (col[j] == "portMap"){
                 var result = ""
                 for(var key in myVmList[i][col[j]]) {

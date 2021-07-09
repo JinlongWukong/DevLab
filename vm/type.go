@@ -46,6 +46,7 @@ type VirtualMachine struct {
 	IpAddress    string         `json:"address"`
 	Status       string         `json:"status"`
 	Vnc          VncInfo        `json:"vnc"`
+	NoVnc        string         `json:"novnc"`
 	Type         string         `json:"type"`
 	Node         string         `json:"node"`
 	Lifetime     time.Duration  `json:"lifeTime"`

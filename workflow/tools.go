@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"sync/atomic"
 
@@ -19,6 +20,26 @@ func GetTaskCount() int64 {
 
 func changeTaskCount(delta int64) {
 	atomic.AddInt64(&taskCount, delta)
+}
+
+func GetVncPort(vp string) (string, error) {
+	svp := strings.Split(vp, ":")
+	if len(svp) != 2 {
+		return "", fmt.Errorf("unknown vnc port format")
+	}
+
+	p, err := strconv.Atoi(svp[1])
+	if err != nil {
+		return "", fmt.Errorf("unknown vnc port format")
+	}
+
+	if p >= 0 && p < 10 {
+		return "59" + "0" + strconv.Itoa(p), nil
+	} else if p > 9 && p < 100 {
+		return "59" + strconv.Itoa(p), nil
+	} else {
+		return "", fmt.Errorf("unknown vnc port format")
+	}
 }
 
 func readContainerStatus(mySoftware *saas.Software, reponse_data []byte) error {
