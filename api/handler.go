@@ -673,6 +673,8 @@ func AccountRequestModifyHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	name := c.Param("name")
+	r.Name = name
 
 	if err := account.AccountDB.Modify(r); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

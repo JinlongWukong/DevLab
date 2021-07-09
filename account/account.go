@@ -3,137 +3,34 @@ package account
 import (
 	"fmt"
 	"log"
-	"sync"
 
 	"github.com/JinlongWukong/DevLab/auth"
 	"github.com/JinlongWukong/DevLab/config"
 	"github.com/JinlongWukong/DevLab/k8s"
 	"github.com/JinlongWukong/DevLab/notification"
 	"github.com/JinlongWukong/DevLab/saas"
-	"github.com/JinlongWukong/DevLab/utils"
 	"github.com/JinlongWukong/DevLab/vm"
 )
 
-var AccountDB = AccountMap{Map: make(map[string]*Account)}
-
-type AccountMap struct {
-	Map  map[string]*Account `json:"account"`
-	lock sync.RWMutex        `json:"-"`
-}
-
-type AccountMapItem struct {
-	Key   string
-	Value *Account
-}
-
-func (m *AccountMap) Add(accountRequest AccountRequest) error {
-
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
+// factory to make account
+func newAccount(accountRequest AccountRequest) (*Account, error) {
 	switch accountRequest.Role {
 	case RoleAdmin:
 	case RoleGuest:
 	default:
-		return fmt.Errorf("account role not valid")
+		return nil, fmt.Errorf("account role not valid")
 	}
 
-	if _, exists := m.Map[accountRequest.Name]; exists {
-		return fmt.Errorf("account already existed")
+	newAccount := &Account{
+		Name: accountRequest.Name,
+		Role: accountRequest.Role,
+	}
+	if config.Notification.Kind == "webex" {
+		newAccount.Contract = newAccount.Name + "@cisco.com"
 	} else {
-		newAccount := &Account{
-			Name: accountRequest.Name,
-			Role: accountRequest.Role,
-		}
-		if config.Notification.Kind == "webex" {
-			newAccount.Contract = newAccount.Name + "@cisco.com"
-		}
-		m.Map[accountRequest.Name] = newAccount
+		newAccount.Contract = accountRequest.Contract
 	}
-
-	return nil
-}
-
-func (m *AccountMap) Modify(accountRequest AccountRequest) error {
-
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
-	switch accountRequest.Role {
-	case RoleAdmin:
-	case RoleGuest:
-	default:
-		return fmt.Errorf("account role not valid")
-	}
-
-	if account, exists := m.Map[accountRequest.Name]; exists {
-		account.Role = accountRequest.Role
-		account.Contract = accountRequest.Contract
-	} else {
-		newAccount := &Account{
-			Name: accountRequest.Name,
-			Role: accountRequest.Role,
-		}
-		if config.Notification.Kind == "webex" {
-			newAccount.Contract = newAccount.Name + "@cisco.com"
-		}
-		m.Map[accountRequest.Name] = newAccount
-	}
-
-	return nil
-}
-
-func (m *AccountMap) InitializeAdmin() {
-
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
-	m.Map["admin"] = &Account{
-		Name:        "admin",
-		Role:        "admin",
-		OneTimePass: utils.RandomString(10),
-	}
-
-	msg := fmt.Sprintf("Admin one-time random password: %v", m.Map["admin"].OneTimePass)
-	log.Printf(msg)
-}
-
-func (m *AccountMap) Get(key string) (account *Account, exists bool) {
-
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	account, exists = m.Map[key]
-	return
-
-}
-
-func (m *AccountMap) Del(key string) {
-
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
-	delete(m.Map, key)
-}
-
-// Iter iterates over the items in a concurrent map
-// Each item is sent over a channel, so that
-// we can iterate over the map using the builtin range keyword
-func (m *AccountMap) Iter() <-chan AccountMapItem {
-	c := make(chan AccountMapItem)
-
-	f := func() {
-		m.lock.Lock()
-		defer m.lock.Unlock()
-
-		for k, v := range m.Map {
-			c <- AccountMapItem{k, v}
-		}
-		close(c)
-	}
-	go f()
-
-	return c
+	return newAccount, nil
 }
 
 //VM part
@@ -379,11 +276,11 @@ func (a *Account) IterSoftware() <-chan *saas.Software {
 	return c
 }
 
-//Send notification to account user
+//Send notification
 func (a *Account) SendNotification(msg string) {
-
-	notification.SendNotification(notification.Message{Target: a.Contract, Text: msg})
-
+	if a.Contract != "" {
+		notification.SendNotification(notification.Message{Target: a.Contract, Text: msg})
+	}
 }
 
 //Set one-time password

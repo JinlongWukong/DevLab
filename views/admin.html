@@ -175,13 +175,15 @@
                 <input type="text" id="accountRequestName" placeholder="name">
                 <br><br>
                 <br><br>
+                <label for="accountRequestContract">account contract: </label>
+                <input type="text" id="accountRequestContract" placeholder="chat id">
+                <br><br>
                 <br><br>
                 <label>account role: </label>
                 <input type="radio" id="radioRoleAdmin" name="accountRequestRole" value="admin">
                 <label class="radio" for="radioRoleAdmin">admin</label>
                 <input type="radio" id="radioRoleGuest" name="accountRequestRole" value="guest", checked="checked">
                 <label class="radio" for="radioRoleGuest">guest</label>
-                <br><br>
                 <br><br>
                 <br><br>
                 <input type="button" value="Confirm" id="confirmAccount">
@@ -506,14 +508,16 @@ $(document).ready(function(){
         var baseurl = location.origin;
         var loginInfo = getLoginInfo();
         var token = loginInfo.token;
+        var account = $("#accountRequestName").val();
         var requestData = {
             name: $("#accountRequestName").val(),
             role: $('input[name="accountRequestRole"]:checked').val(),
+            contract: $("#accountRequestContract").val(),
         };
         console.log(requestData)
         $.ajax({
             //url: "http://localhost:8088/account",
-            url: baseurl + "/account",
+            url: baseurl + "/account" + "/" + account,
             headers: {
                 "Authorization": "Bearer "+ token +""
             },
@@ -525,7 +529,7 @@ $(document).ready(function(){
             error: function(data){
                 alert(data.status + ':' + data.statusText,data.responseText);
             },
-            type: 'POST'
+            type: 'PATCH'
         });
         boxAccount.style.display = 'none';
         hiddenAccount.style.display = 'none';
