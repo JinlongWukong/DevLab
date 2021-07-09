@@ -11,7 +11,7 @@ The basic idea is to give a web portal for develper  which can support create VM
 - External Access(iptables dnat)
 - Auto vm Lifecycle Management
 - In-Memory Persistant
-- Webex Events Notification
+- Webex/Telegram Events Notification
 - K8s Cluster Management
 - SaaS Management
 - Account Management
