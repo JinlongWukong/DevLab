@@ -181,7 +181,10 @@ function CreateVMTableFromJSON(myVmList) {
 
         for (var j = 0; j < col.length; j++) {
             var tabCell = tr.insertCell(-1);
-            if (col[j] == "node") {
+            if (col[j] == "name") {
+                var url = location.origin + "/vm/" + myVmList[i][col[j]] + "/web-terminal";
+                tabCell.innerHTML = "<a href="+ url +">"+ myVmList[i][col[j]]+"</a>"
+            } else if (col[j] == "node") {
                 tabCell.innerHTML = myVmList[i][col[j]];
             } else if (col[j] == "novnc") {
                 if (myVmList[i][col[j]]) {

@@ -53,6 +53,8 @@ func setupRouter() *gin.Engine {
 	r.POST("/vm", AuthorizeToken(), VmRequestCreateHandler)
 	r.POST("/vm/:name/:action", AuthorizeToken(), VmRequestActionHandler)
 	r.POST("/vm/:name/expose-port", AuthorizeToken(), VmRequestPortExposeHandler)
+	r.GET("/vm/:name/ws", VmRequestWebConsole)
+	r.GET("/vm/:name/web-terminal", WebTerminalHandler)
 
 	//k8s related api
 	r.GET("/k8s-request", K8sRequestIndexHandler)
@@ -72,5 +74,8 @@ func setupRouter() *gin.Engine {
 	r.POST("/one-time-password", oneTimePassGenHandler)
 	r.POST("/login", accountLoginHandler)
 
+	//web ssh terminal
+	//r.GET("/ws/:host/:port/:user/:password", WebConsole)
+	//r.GET("/web-terminal/:host/:port/:user/:password", WebTerminalHandler)
 	return r
 }
