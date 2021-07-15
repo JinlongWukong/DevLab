@@ -549,6 +549,39 @@ func SoftwareRequestGetAllHandler(c *gin.Context) {
 
 }
 
+// Container inter-connect bet websoket and docker api
+func ContainerRequestWebConsole(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	tokenString := c.Query("token")
+	err, ac := auth.ValidateToken(tokenString)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	containerName := c.Param("name")
+
+	log.Printf("Receive saas web console request: %v,%v", ac, containerName)
+
+	if ac, exists := account.AccountDB.Get(ac); exists == true {
+		if mySoftware, err := ac.GetSoftwareByName(containerName); err == nil {
+			host := node.GetNodeByName(mySoftware.Node)
+			if host == nil {
+				return
+			}
+			containerTerminal := terminal.NewContainerTerminal(host.IpAddress, mySoftware.Name, 2375)
+			if err := containerTerminal.Create(); err != nil {
+				return
+			}
+			containerTerminal.Start(conn)
+		}
+	}
+}
+
 // Get software info
 // Return:
 //   200: success with software info

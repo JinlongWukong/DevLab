@@ -20,3 +20,10 @@ type SSHTerminal struct {
 	Client    *ssh.Client
 	channel   ssh.Channel
 }
+
+type ContainerTerminal struct {
+	Name      string `json:"name"`
+	Id        string `json:"id"`
+	IpAddress string `json:"ipaddress"`
+	Port      uint16 `json:"port"`
+}

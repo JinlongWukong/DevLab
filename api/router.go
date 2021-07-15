@@ -69,6 +69,8 @@ func setupRouter() *gin.Engine {
 	r.GET("/saas/:name", AuthorizeToken(), SoftwareRequestGetByNameHandler)
 	r.POST("/saas", AuthorizeToken(), SoftwareRequestCreateHandler)
 	r.POST("/saas/:name/:action", AuthorizeToken(), SoftwareRequestActionHandler)
+	r.GET("/container/:name/ws", ContainerRequestWebConsole)
+	r.GET("/container/:name/web-terminal", WebTerminalHandler)
 
 	//auth api
 	r.POST("/one-time-password", oneTimePassGenHandler)
