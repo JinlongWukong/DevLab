@@ -175,11 +175,44 @@ func (st *SSHTerminal) NewInteractiveCmdTerminal(ws *websocket.Conn, cmd string)
 	}
 
 	if err := session.Run(cmd); err != nil {
-		log.Printf("remote run docker exec cmd failed: %s", err)
+		log.Printf("remote exec interactive cmd %v failed: %s", cmd, err)
 		return
 	}
 
-	log.Println("remote docker exec exited normally")
+	log.Printf("remote exec interactive cmd %v exited normally", cmd)
+}
+
+// Run remote cmd terminal
+// ssh user@ip  <cmd>
+func (st *SSHTerminal) NewCmdTerminal(ws *websocket.Conn, cmd string) error {
+	defer ws.Close()
+	session, err := st.Client.NewSession()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	defer session.Close()
+	st.Session = session
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	targetStdout, _ := session.StdoutPipe()
+
+	// ssh stdout => websocket
+	go io.Copy(&wapperWS{ws}, targetStdout)
+
+	if err := session.Run(cmd); err != nil {
+		log.Printf("remote exec cmd %v failed: %s", cmd, err)
+		return err
+	}
+	// sleep a while for stdout to ws
+	time.Sleep(1 * time.Second)
+	log.Printf("remote exec cmd %v exited normally", cmd)
+	return nil
 }
 
 // websocket <=> ssh channel, as the next step of NewShellTerminal

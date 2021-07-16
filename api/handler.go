@@ -587,7 +587,6 @@ func ContainerRequestWebConsole(c *gin.Context) {
 				return
 			}
 			cmd := "docker exec -it " + mySoftware.Name + " sh" + "\n"
-			//cmd := "docker exec -it jinlliu-redis-1 sh" + "\n"
 			webTerminal.NewInteractiveCmdTerminal(conn, cmd)
 		}
 	}
