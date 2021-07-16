@@ -579,6 +579,7 @@ $(document).ready(function(){
             success: function(data) {
                 console.log(data)
                 window.localStorage.setItem("access_token", data.access_token)
+                window.localStorage.setItem("account", $("#loginAccount").val())
                 document.getElementById('loginDiv').style.display = 'none'
                 document.getElementById("signBtn").innerText = "Sign out"
                 document.getElementById("accountName").innerText = $("#loginAccount").val()
@@ -591,6 +592,7 @@ $(document).ready(function(){
             document.getElementById('loginDiv').style.display='block'
         } else {
             window.localStorage.removeItem("access_token")
+            window.localStorage.removeItem("account")
             document.getElementById("accountName").innerText = ""
             document.getElementById("signBtn").innerText = "Sign in"
         }
