@@ -508,9 +508,11 @@ func SoftwareRequestActionHandler(c *gin.Context) {
 	if exists == true {
 		var action_err error
 		switch saas.SoftwareAction(action) {
-		case saas.SoftwareActionGet, saas.SoftwareActionStart, saas.SoftwareActionDelete,
+		case saas.SoftwareActionGet, saas.SoftwareActionStart,
 			saas.SoftwareActionStop, saas.SoftwareActionRestart:
 			action_err = workflow.ActionSoftware(myAccount, name, saas.SoftwareAction(action))
+		case saas.SoftwareActionDelete:
+			action_err = workflow.DeleteSoftware(myAccount, name)
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "action not support",

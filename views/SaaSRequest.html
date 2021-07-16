@@ -225,7 +225,7 @@ function SaaSAction(element) {
         },
         error: function(data) {
             console.log(data)
-            alert(data.status); // show response
+            alert(data.status + ':' + data.statusText,data.responseText);
         }
     }).always(function() {
         $.unblockUI();

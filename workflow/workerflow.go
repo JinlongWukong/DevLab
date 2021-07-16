@@ -725,26 +725,72 @@ func ActionSoftware(myAccount *account.Account, name string, action saas.Softwar
 			mySoftware.Address = ""
 			mySoftware.PortMapping = nil
 			mySoftware.SetStatus(saas.SoftwareStatusStopped)
-		case saas.SoftwareActionDelete:
-			mySoftware.SetStatus(saas.SoftwareStatusDeleted)
-			//Recycle node resouces
-			if mySoftware.GetStatus() != saas.SoftwareStatusInit {
-				log.Println("Recycle node resources")
-				selectNode.ChangeCpuUsed(-int32(mySoftware.CPU))
-				selectNode.ChangeMemUsed(-int32(mySoftware.Memory))
-				selectNode.ChangeDiskUsed(0)
-			}
-
-			if err = myAccount.RemoveSoftwareByName(mySoftware.Name); err != nil {
-				log.Printf("Delete software %v failed with error: %v", mySoftware.Name, err)
-				return err
-			}
 		default:
 			return fmt.Errorf("Software action %v not supported", action)
 		}
 
 	}
-	log.Printf("%v software %v successfully", action, mySoftware.Name)
 
+	log.Printf("%v software %v successfully", action, mySoftware.Name)
+	return nil
+}
+
+func DeleteSoftware(myAccount *account.Account, name string) error {
+	changeTaskCount(1)
+	defer changeTaskCount(-1)
+	defer db.NotifyToSave()
+
+	mySoftware, err := myAccount.GetSoftwareByName(name)
+	if err != nil {
+		log.Printf("Software action failed with error: %v", err)
+		return err
+	}
+
+	mySoftware.Lock()
+	defer mySoftware.Unlock()
+
+	if mySoftware.GetStatus() == saas.SoftwareStatusDeleting {
+		return nil
+	} else {
+		mySoftware.SetStatus(saas.SoftwareStatusDeleting)
+	}
+
+	action := saas.SoftwareActionDelete
+	if mySoftware.Backend == "container" {
+		//Recycle node resouces
+		selectNode := node.GetNodeByName(mySoftware.Node)
+		if selectNode != nil {
+			payload, _ := json.Marshal(map[string]interface{}{
+				"Ip":       selectNode.IpAddress,
+				"Pass":     selectNode.Passwd,
+				"User":     selectNode.UserName,
+				"Name":     mySoftware.Name,
+				"Software": mySoftware.Kind,
+				"Action":   action,
+			})
+			url := deployer.GetDeployerBaseUrl() + "/container/action"
+
+			log.Printf("Remote http call to %v software %v", action, name)
+			err, reponse_data := utils.HttpSendJsonData(url, "POST", payload)
+			if err != nil {
+				mySoftware.SetStatus(saas.SoftwareStatusError)
+				log.Printf("Remote http call to %v software %v failed with error: %v %v", action, name, err, string(reponse_data))
+				myAccount.SendNotification(fmt.Sprintf("%v your software %v failed with error: %v %v", action, mySoftware.Name, err, string(reponse_data)))
+				return err
+			}
+
+			log.Println("Recycle node resources")
+			selectNode.ChangeCpuUsed(-int32(mySoftware.CPU))
+			selectNode.ChangeMemUsed(-int32(mySoftware.Memory))
+			selectNode.ChangeDiskUsed(0)
+		}
+
+		if err = myAccount.RemoveSoftwareByName(mySoftware.Name); err != nil {
+			log.Printf("Delete software %v failed with error: %v", mySoftware.Name, err)
+			return err
+		}
+	}
+
+	log.Printf("Delete software %v successfully", mySoftware.Name)
 	return nil
 }

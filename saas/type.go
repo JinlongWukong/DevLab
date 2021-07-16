@@ -14,7 +14,7 @@ const (
 	SoftwareStatusInstallFailed SoftwareStatus = "installFailed"
 	SoftwareStatusRunning       SoftwareStatus = "running"
 	SoftwareStatusStopped       SoftwareStatus = "stopped"
-	SoftwareStatusDeleted       SoftwareStatus = "deleted"
+	SoftwareStatusDeleting      SoftwareStatus = "deleting"
 	SoftwareStatusNotFound      SoftwareStatus = "notFound"
 	SoftwareStatusError         SoftwareStatus = "error"
 	SoftwareStatusUnknown       SoftwareStatus = "unknown"
