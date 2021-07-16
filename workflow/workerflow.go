@@ -247,6 +247,11 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 			}
 		}
 
+		if myVM.Status == vm.VmStatusDeleting ||
+			myVM.Status == vm.VmStatusDeleted {
+			log.Printf("vm already in deleting/deleted status")
+			return nil
+		}
 		myVM.Status = vm.VmStatusDeleting
 
 		//Delete VM from node
