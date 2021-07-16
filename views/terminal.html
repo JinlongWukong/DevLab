@@ -1,0 +1,70 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/xterm/3.14.5/xterm.min.css"/>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"/>
+    <script src="/scripts/auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xterm/3.14.5/xterm.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            color: #111;
+            margin: 20px;
+        }
+
+        #terminal-container {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal-container">
+    </div>
+<script>
+    cols=parseInt(document.body.clientWidth /10)
+    rows=parseInt(document.body.clientHeight /20)
+    var term = new Terminal({
+        "cursorBlink":true,
+        "rows":rows,
+        "cols":cols,
+    })
+    var socket
+    var loginInfo = getLoginInfo();
+    var token = loginInfo.token;
+
+    function ws_connect(){
+        terminal = document.getElementById('terminal-container');
+        console.log(location.href);
+        split_path = location.href.split('/')
+        name = split_path[split_path.length - 2]
+        type = split_path[split_path.length - 3]
+        hostname=location.hostname;
+        port=location.port;
+        url = 'ws://'+hostname+':'+port+'/'+type+'/'+name+'/ws'+'?token='+token
+        console.log(url);
+        socket = new WebSocket(url);
+        $("#terminal-container").html("")
+        term.open(terminal);
+        console.log(term)
+
+        term.on('data', function (data) {
+            socket.send(data);
+            console.log("send data: ",data)
+        });
+
+        socket.onmessage = function (e) {
+            term.write(e.data);
+            console.log("receive data: ",e.data)
+        }
+
+        socket.onclose = function (e) {
+            term.write("session is close");
+        }
+    }
+    function ws_close(){
+        socket.close()
+    }
+    window.onload = ws_connect
+</script>
+</body>
+</html>

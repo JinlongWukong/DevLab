@@ -5,9 +5,12 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 
 	"github.com/JinlongWukong/DevLab/account"
 	"github.com/JinlongWukong/DevLab/auth"
@@ -15,6 +18,7 @@ import (
 	"github.com/JinlongWukong/DevLab/k8s"
 	"github.com/JinlongWukong/DevLab/node"
 	"github.com/JinlongWukong/DevLab/saas"
+	"github.com/JinlongWukong/DevLab/terminal"
 	"github.com/JinlongWukong/DevLab/vm"
 	"github.com/JinlongWukong/DevLab/workflow"
 )
@@ -214,6 +218,44 @@ func VmRequestPortExposeHandler(c *gin.Context) {
 
 	c.JSON(http.StatusNoContent, nil)
 
+}
+
+// VM inter-connect bet websoket and ssh channel
+func VmRequestWebConsole(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	tokenString := c.Query("token")
+	err, ac := auth.ValidateToken(tokenString)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	vmName := c.Param("name")
+
+	log.Printf("Receive VM web console request: %v,%v", ac, vmName)
+
+	if ac, exists := account.AccountDB.Get(ac); exists == true {
+		if myVm, err := ac.GetVmByName(vmName); err == nil {
+			port, _ := strconv.Atoi(strings.Split(myVm.PortMap[22], ":")[0])
+			host := node.GetNodeByName(myVm.Node)
+			if host == nil {
+				return
+			}
+			webTerminal := terminal.NewSSHTerminal("root", myVm.RootPass, host.IpAddress, uint16(port))
+			err = webTerminal.Connect()
+			if err != nil {
+				conn.WriteMessage(1, []byte(err.Error()))
+				conn.Close()
+				return
+			}
+			webTerminal.NewShellTerminal()
+			webTerminal.Ws2ssh(conn)
+		}
+	}
 }
 
 // Get all nodes information
@@ -507,6 +549,49 @@ func SoftwareRequestGetAllHandler(c *gin.Context) {
 
 }
 
+// Container inter-connect bet websoket and docker api
+func ContainerRequestWebConsole(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	tokenString := c.Query("token")
+	err, ac := auth.ValidateToken(tokenString)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	containerName := c.Param("name")
+
+	log.Printf("Receive saas web console request: %v,%v", ac, containerName)
+
+	if ac, exists := account.AccountDB.Get(ac); exists == true {
+		if mySoftware, err := ac.GetSoftwareByName(containerName); err == nil {
+			host := node.GetNodeByName(mySoftware.Node)
+			if host == nil {
+				return
+			}
+			/* insecure way, degraded
+			containerTerminal := terminal.NewContainerTerminal(host.IpAddress, mySoftware.Name, 2375)
+			if err := containerTerminal.Create(); err != nil {
+				return
+			}
+			containerTerminal.Start(conn)*/
+			webTerminal := terminal.NewSSHTerminal("root", host.Passwd, host.IpAddress, 22)
+			err = webTerminal.Connect()
+			if err != nil {
+				conn.WriteMessage(1, []byte(err.Error()))
+				conn.Close()
+				return
+			}
+			cmd := "docker exec -it " + mySoftware.Name + " sh" + "\n"
+			webTerminal.NewInteractiveCmdTerminal(conn, cmd)
+		}
+	}
+}
+
 // Get software info
 // Return:
 //   200: success with software info
@@ -682,4 +767,17 @@ func AccountRequestModifyHandler(c *gin.Context) {
 		db.NotifyToSave()
 		c.JSON(http.StatusNoContent, nil)
 	}
+}
+
+//upgrade http to websocket
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+func WebTerminalHandler(c *gin.Context) {
+	c.HTML(200, "terminal.html", nil)
 }
