@@ -236,62 +236,43 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 		}
 		action_err = myVM.RebootVirtualMachine()
 	case "delete":
-		//Remove vm from account directly since VM is init status, no further action needed
-		if myVM.Status == vm.VmStatusInit {
-			if err := myAccount.RemoveVmByName(myVM.Name); err != nil {
-				log.Println(err)
-				return err
-			} else {
-				myVM.Status = vm.VmStatusDeleted
-				return nil
-			}
-		}
-
-		if myVM.Status == vm.VmStatusDeleting ||
-			myVM.Status == vm.VmStatusDeleted {
-			log.Printf("vm already in deleting/deleted status")
-			return nil
-		}
 		myVM.Status = vm.VmStatusDeleting
-
-		//Delete VM from node
-		action_err = myVM.DeleteVirtualMachine()
-		if action_err != nil {
-			log.Printf("Delete vm %v failed", myVM.Name)
-			return action_err
-		}
-
-		//Clear dnat rules
 		selectNode := node.GetNodeByName(myVM.Node)
-		if selectNode == nil {
-			return fmt.Errorf("Error: vm %v hosted node %v not found", myVM.Name, myVM.Node)
-		}
-		keys := make([]int, 0, len(myVM.PortMap))
-		for k := range myVM.PortMap {
-			keys = append(keys, k)
-		}
-		if len(keys) > 0 {
-			err := myVM.ActionDnatRule(keys, "absent")
-			if err != nil {
-				log.Printf("Clear dnat for vm %v on host %v failed with error %v", myVM.Name, selectNode.Name, err)
-				return err
-			} else {
-				log.Printf("Clear dnat for vm %v on host %v success", myVM.Name, selectNode.Name)
-				for _, info := range myVM.PortMap {
-					t := strings.Split(info, ":")
-					p, _ := strconv.Atoi(t[0])
-					selectNode.ReleasePort(p)
-				}
-				myVM.PortMap = make(map[int]string)
+		if selectNode != nil {
+			//Delete VM from node
+			action_err = myVM.DeleteVirtualMachine()
+			if action_err != nil {
+				log.Printf("Delete vm %v failed", myVM.Name)
+				return action_err
 			}
-		}
 
-		//Recycle resouces to node
-		if myVM.Status != vm.VmStatusInit {
+			//Clear dnat rules
+			keys := make([]int, 0, len(myVM.PortMap))
+			for k := range myVM.PortMap {
+				keys = append(keys, k)
+			}
+			if len(keys) > 0 {
+				err := myVM.ActionDnatRule(keys, "absent")
+				if err != nil {
+					log.Printf("Clear dnat for vm %v on host %v failed with error %v", myVM.Name, selectNode.Name, err)
+					return err
+				} else {
+					log.Printf("Clear dnat for vm %v on host %v success", myVM.Name, selectNode.Name)
+					for _, info := range myVM.PortMap {
+						t := strings.Split(info, ":")
+						p, _ := strconv.Atoi(t[0])
+						selectNode.ReleasePort(p)
+					}
+					myVM.PortMap = make(map[int]string)
+				}
+			}
+
+			//Recycle resouces to node
 			log.Println("Recycle node resources")
 			selectNode.ChangeCpuUsed(-myVM.CPU)
 			selectNode.ChangeMemUsed(-myVM.Memory)
 			selectNode.ChangeDiskUsed(-myVM.Disk * 1024)
+			myVM.Node = ""
 		}
 
 		//Remove from account
@@ -309,7 +290,7 @@ func ActionVM(myAccount *account.Account, myVM *vm.VirtualMachine, action string
 	switch action {
 	case "start", "shutdown", "reboot":
 		go func() {
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * 10)
 			if err := myVM.GetVirtualMachineLiveStatus(); err != nil {
 				log.Printf("sync up vm -> %v status after action -> %v, failed -> %v", myVM.Name, action, err)
 			}
@@ -754,11 +735,7 @@ func DeleteSoftware(myAccount *account.Account, name string) error {
 	mySoftware.Lock()
 	defer mySoftware.Unlock()
 
-	if mySoftware.GetStatus() == saas.SoftwareStatusDeleting {
-		return nil
-	} else {
-		mySoftware.SetStatus(saas.SoftwareStatusDeleting)
-	}
+	mySoftware.SetStatus(saas.SoftwareStatusDeleting)
 
 	action := saas.SoftwareActionDelete
 	if mySoftware.Backend == "container" {
@@ -788,6 +765,7 @@ func DeleteSoftware(myAccount *account.Account, name string) error {
 			selectNode.ChangeCpuUsed(-int32(mySoftware.CPU))
 			selectNode.ChangeMemUsed(-int32(mySoftware.Memory))
 			selectNode.ChangeDiskUsed(0)
+			mySoftware.Node = ""
 		}
 
 		if err = myAccount.RemoveSoftwareByName(mySoftware.Name); err != nil {
