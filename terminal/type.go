@@ -1,6 +1,8 @@
 package terminal
 
-import "golang.org/x/crypto/ssh"
+import (
+	"golang.org/x/crypto/ssh"
+)
 
 type ptyRequestParams struct {
 	Term     string

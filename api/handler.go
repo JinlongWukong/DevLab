@@ -252,7 +252,7 @@ func VmRequestWebConsole(c *gin.Context) {
 				conn.Close()
 				return
 			}
-			webTerminal.NewTerminal()
+			webTerminal.NewShellTerminal()
 			webTerminal.Ws2ssh(conn)
 		}
 	}
@@ -573,11 +573,22 @@ func ContainerRequestWebConsole(c *gin.Context) {
 			if host == nil {
 				return
 			}
+			/* insecure way, degraded
 			containerTerminal := terminal.NewContainerTerminal(host.IpAddress, mySoftware.Name, 2375)
 			if err := containerTerminal.Create(); err != nil {
 				return
 			}
-			containerTerminal.Start(conn)
+			containerTerminal.Start(conn)*/
+			webTerminal := terminal.NewSSHTerminal("root", host.Passwd, host.IpAddress, 22)
+			err = webTerminal.Connect()
+			if err != nil {
+				conn.WriteMessage(1, []byte(err.Error()))
+				conn.Close()
+				return
+			}
+			cmd := "docker exec -it " + mySoftware.Name + " sh" + "\n"
+			//cmd := "docker exec -it jinlliu-redis-1 sh" + "\n"
+			webTerminal.NewInteractiveCmdTerminal(conn, cmd)
 		}
 	}
 }
