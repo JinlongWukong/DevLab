@@ -16,6 +16,7 @@ The basic idea is to give a web portal for develper  which can support create VM
 - SaaS Management
 - Account Management
 - Token Authentication
+- Web Terminal(ssh, novnc)
 
 ## Installation
 - controller 
