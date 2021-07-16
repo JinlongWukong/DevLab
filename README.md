@@ -33,10 +33,16 @@ docker run -d --net host --env HTTPS_PROXY=xxxxx --env NO_PROXY="xxxx" --env BOT
 ```
 - deployer
 
-
 How to install deployer? refer to [Deployer repo](https://github.com/JinlongWukong/DevLab-ansible)
+
+- novnc
+
+This is optional component
+```
+docker run -d --net host geek1011/easy-novnc  -H -P
+```
 
 ## How to use
 - Edit config.ini 
 - Run docker container
-- Open web brower -> http://DevLab ip:8088/
+- Open web brower -> http://ip:8088/
