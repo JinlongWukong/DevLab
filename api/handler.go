@@ -760,8 +760,7 @@ func AccountRequestModifyHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	name := c.Param("name")
-	r.Name = name
+	log.Printf("New account creation request: %v, %v, %v", r.Name, r.Role, r.Contract)
 
 	if err := account.AccountDB.Modify(r); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

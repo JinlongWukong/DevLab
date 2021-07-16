@@ -53,7 +53,7 @@ func (m *AccountMap) Modify(accountRequest AccountRequest) error {
 		account.Role = accountRequest.Role
 		account.Contract = accountRequest.Contract
 	} else {
-		if ac, err := newAccount(accountRequest); err != nil {
+		if ac, err := newAccount(accountRequest); err == nil {
 			m.Map[accountRequest.Name] = ac
 		} else {
 			return err
