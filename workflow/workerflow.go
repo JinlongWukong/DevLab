@@ -476,10 +476,14 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 		//task1: VM instantiation
 		newK8s.SetStatus(k8s.K8sStatusBootingVm)
 
+		var flavor = "middle"
+		if newK8s.NumOfWorker > 5 {
+			flavor = "large"
+		}
 		vmRequest := vm.VmRequest{
 			Hostname: newK8s.Name,
 			Type:     "centos7",
-			Flavor:   "middle",
+			Flavor:   flavor,
 			Number:   1,
 			Duration: int(newK8s.Lifetime),
 		}
