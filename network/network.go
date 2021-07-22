@@ -57,7 +57,7 @@ func (n NetworkController) Control(ctx context.Context, wg *sync.WaitGroup) {
 			for v := range node.NodeDB.Iter() {
 				//if node status not installed or failed, skip
 				nodeStatus := v.Value.GetStatus()
-				if nodeStatus == node.NodeStatusInit || nodeStatus == node.NodeStatusInstallFailed {
+				if nodeStatus == node.NodeStatusInit || nodeStatus == node.NodeStatusInstallFailed || nodeStatus == node.NodeStatusInstalling {
 					continue
 				}
 				allNodes = append(allNodes, v.Value)
