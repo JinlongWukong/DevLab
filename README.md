@@ -17,6 +17,7 @@ The basic idea is to give a web portal for develper  which can support create VM
 - Account Management
 - Token Authentication
 - Web Terminal(ssh, novnc)
+- Node scheduler algorithm(random, weight)
 
 ## Installation
 - controller 
