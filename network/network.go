@@ -57,9 +57,14 @@ func (n NetworkController) Control(ctx context.Context, wg *sync.WaitGroup) {
 			for v := range node.NodeDB.Iter() {
 				//if node status not installed or failed, skip
 				nodeStatus := v.Value.GetStatus()
-				if nodeStatus == node.NodeStatusInit || nodeStatus == node.NodeStatusInstallFailed || nodeStatus == node.NodeStatusInstalling {
+				if nodeStatus == node.NodeStatusInit ||
+					nodeStatus == node.NodeStatusInstallFailed ||
+					nodeStatus == node.NodeStatusInstalling ||
+					nodeStatus == node.NodeStatusInstalled {
+					log.Printf("subnet checking... node %v skipped", v.Value.Name)
 					continue
 				}
+				//log.Printf("node selected %v", v.Value.Name)
 				allNodes = append(allNodes, v.Value)
 			}
 
