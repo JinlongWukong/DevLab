@@ -30,7 +30,7 @@ docker build -t controller --build-arg https_proxy=xxxxx .
 #Download example config.ini from github
 vim config.ini
 mkdir .db/
-docker run -d --net host --env HTTPS_PROXY=xxxxx --env NO_PROXY="xxxx" --env BOT_TOKEN=xxxxx -v "$(pwd)"/.db/:/app/.db -v "$(pwd)"/config.ini:/app/config.ini controller
+docker run -d --name devlab_controller --net host --env HTTPS_PROXY=xxxxx --env NO_PROXY="xxxx" --env BOT_TOKEN=xxxxx -v "$(pwd)"/.db/:/app/.db -v "$(pwd)"/config.ini:/app/config.ini controller
 ```
 - deployer
 
