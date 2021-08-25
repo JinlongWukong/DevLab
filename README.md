@@ -1,6 +1,6 @@
 ﻿# DevLab
 ## Overview
-The basic idea is to give a web portal for develper  which can support create VM, k8s, some middle softwares in an very fast and simple way
+This is a IPSaaS platform for develpers, Its basic idea is to give a web portal to develper which can support create VM, k8s, common middleware in a faster and simpler way
 
 ## Architecture Diagram
 ![architecture diagram](./views/image/DevLab.png)
