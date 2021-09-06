@@ -259,7 +259,7 @@ function vmAction(element) {
     $.blockUI({timeout:   8000});
     $.ajax({
         type: "POST",
-        url: url + "/" + name + "/" + action,
+        url: url + "/" + name + "/" + "port/expose",
         headers: {
             "Authorization": "Bearer "+ token
         },

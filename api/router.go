@@ -52,7 +52,7 @@ func setupRouter() *gin.Engine {
 	r.GET("/vm/:name", AuthorizeToken(), VmRequestGetByNameHandler)
 	r.POST("/vm", AuthorizeToken(), VmRequestCreateHandler)
 	r.POST("/vm/:name/:action", AuthorizeToken(), VmRequestActionHandler)
-	r.POST("/vm/:name/expose-port", AuthorizeToken(), VmRequestPortExposeHandler)
+	r.POST("/vm/:name/port/expose", AuthorizeToken(), VmRequestPortExposeHandler)
 	r.GET("/vm/:name/ws", VmRequestWebConsole)
 	r.GET("/vm/:name/web-terminal", WebTerminalHandler)
 
