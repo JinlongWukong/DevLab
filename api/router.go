@@ -12,8 +12,10 @@ func setupRouter() *gin.Engine {
 
 	//static files
 	r.Static("/css", "views/css")
+	r.Static("/fonts", "views/fonts")
 	r.Static("/img", "views/image")
 	r.Static("/scripts", "views/scripts")
+	r.Delims("{{{", "}}}")
 	r.LoadHTMLGlob("views/*.html")
 
 	//readness/liveness check point
