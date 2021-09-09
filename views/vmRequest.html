@@ -184,6 +184,9 @@
                 selected: [],
 		        selectAll: false
             },
+            mounted: function() {
+                this.getAllVm()
+            },
             methods: {
                 getAllVm() {
                     var loginInfo = getLoginInfo()
