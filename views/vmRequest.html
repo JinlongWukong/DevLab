@@ -233,13 +233,14 @@ function CreateVMTableFromJSON(myVmList) {
 
 function vmAction(element) {
     var form = $(element);
-    var url = form.attr('action');
     var loginInfo = getLoginInfo();
     var token = loginInfo.token;
     var action = form.serializeArray()[0].value;
     var name = form.serializeArray()[1].value;
+    var url = form.attr('action') + "/" + name + "/"
     var payload = ''
     if (form.find(".selection").val() == "expose-port") {
+        url = url + "port/expose"
         var portInput = prompt("Please enter the port to be exposed, format(22 or 22:tcp or 22:udp)");
         if (portInput) {
             var res = portInput.split(":")
@@ -255,11 +256,13 @@ function vmAction(element) {
         } else {
             return
         }
+    } else {
+        url = url + action
     }
     $.blockUI({timeout:   8000});
     $.ajax({
         type: "POST",
-        url: url + "/" + name + "/" + "port/expose",
+        url: url,
         headers: {
             "Authorization": "Bearer "+ token
         },
