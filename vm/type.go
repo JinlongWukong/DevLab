@@ -64,7 +64,7 @@ type VmRequest struct {
 	CPU      int32  `form:"cpu" json:"cpu"`
 	Memory   int32  `form:"mem" json:"memory"`
 	Disk     int32  `form:"disk" json:"disk"`
-	Number   int32  `form:"numbers" json:"number" binding:"required,min=1,max=5"`
+	Number   int32  `form:"numbers" json:"numbers" binding:"required,min=1,max=5"`
 	Duration int    `form:"duration" json:"duration" binding:"required"`
 }
 

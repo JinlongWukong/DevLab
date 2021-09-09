@@ -7,6 +7,7 @@
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+    <script src="http://malsup.github.io/jquery.blockUI.js"></script>
     <script src="/scripts/bootstrap.min.js"></script>
     <script src="/scripts/auth.js"></script>
     <script src="/scripts/vue.min.js"></script>
@@ -19,24 +20,99 @@
                 <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
               </button>
             <!--a href="#" v-on:click="getAllVm"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a-->
-            <button type="button" class="btn btn-primary">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#vmModal">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
             </button>
             <!--a href="#"><span class="glyphicon glyphicon-plus"></span></a-->
-            <button type="button" class="btn btn-danger">
+            <button type="button" class="btn btn-danger" @click="vmDelete">
                 <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
             </button>
             <!--a href="#"><span class="glyphicon glyphicon-trash"></span></a-->
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="vmModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Virtual Machine Input Memu</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="hostname" class="col-sm-2 control-label">Hostname</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="hostname" v-model="hostname" type="text" placeholder="Enter your vm hostname here...">
+                            </div>
+                            <br>
+                            <br>
+                            <label for="rootPass" class="col-sm-2 control-label">Password</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="rootPass" v-model="rootPass" type="text" placeholder="Enter your root passwd here...">
+                            </div>
+                            <br>
+                            <br>
+                            <label for="osType" class="col-sm-2 control-label">OS type</label>
+                            <div class="col-sm-10">
+                              <select id="osType" class="form-control" v-model="type">
+                                <option>Centos7</option>
+                                <option>Ubunt18</option>
+                              </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="osSize" class="col-sm-2 control-label">OS Size</label>
+                            <div class="col-sm-10">
+                              <select id="osSize" class="form-control" v-model="flavor">
+                                <option>small</option>
+                                <option>middle</option>
+                                <option>large</option>
+                              </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="osNumber" class="col-sm-2 control-label">Number</label>
+                            <div class="col-sm-10">
+                                <select id="osNumber" class="form-control" v-model.number="numbers">
+                                  <option>1</option>
+                                  <option>2</option>
+                                  <option>3</option>
+                                </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="osLifeTime" class="col-sm-2 control-label">LifeTime</label>
+                            <div class="col-sm-10">
+                                <select id="osLifeTime" class="form-control" v-model.number="duration">
+                                  <option value=1>one day</option>
+                                  <option value=7>one week</option>
+                                  <option value=14>two weeks</option>
+                                  <option value=30>one month</option>
+                                  <option value=180>three months</option>
+                                  <option value=365>forever</option>
+                                </select>
+                            </div>
+                            <br>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary btn-md" data-dismiss="modal" v-on:click="vmCreate">Submit</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
         </div>
         <table class="table table-hover table-striped">
             <thead>
               <tr>
                 <th>
-					<label class="form-checkbox">
+                    <label class="form-checkbox">
                     <input type="checkbox" v-model="selectAll" @click="select">
                     <i class="form-icon"></i>
                     </label>
-				</th>
+                </th>
                 <th>Name</th>
                 <th>Hostname</th>
                 <th>Cpu</th>
@@ -56,11 +132,11 @@
             <tbody>
               <tr v-for="vm in vmList" :key="vm.name">
                   <td>
-					<label class="form-checkbox">
-    				  <input type="checkbox" :value="vm.name" v-model="selected">
-					  <vm class="form-icon"></vm>
-  					</label>
-				  </td>
+                    <label class="form-checkbox">
+                      <input type="checkbox" :value="vm.orignName" v-model="selected">
+                      <vm class="form-icon"></vm>
+                    </label>
+                  </td>
                   <td v-html="vm.name"></td>
                   <td>{{vm.hostname}}</td>
                   <td>{{vm.cpu}}</td>
@@ -76,15 +152,16 @@
                   <td v-html="vm.portMap"></td>
                   <td>
                     <div class="btn-group">
-                        <button type="button" class="btn btn-success" @click="vmAction(vm.name, 'start')">start</button>
+                        <button type="button" class="btn btn-success" @click="vmAction(vm.orignName, 'start')">start</button>
                         <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                           <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu" role="menu">
-                          <li><a href="#">shutdown</a></li>
-                          <li><a href="#">reboot</a></li>
-                          <li><a href="#">extend</a></li>
-                          <li><a href="#">expose-port</a></li>
+                          <li><a href="#" @click="vmAction(vm.orignName, 'shutdown')">shutdown</a></li>
+                          <li><a href="#" @click="vmAction(vm.orignName, 'reboot')">reboot</a></li>
+                          <li><a href="#" @click="vmAction(vm.orignName, 'delete')">delete</a></li>
+                          <li><a href="#" @click="vmAction(vm.orignName, 'extend')">extend</a></li>
+                          <li><a href="#" @click="vmAction(vm.orignName, 'expose-port')">expose-port</a></li>
                         </ul>
                       </div>
                   </td>
@@ -97,6 +174,12 @@
             el: "#vmApp",
             data: {
                 msg: "xxx",
+                hostname: "",
+                rootPass: "",
+                flavor: "small",
+                type: "Centos7",
+                numbers: 1,
+                duration: 1,
                 vmList: [],
                 selected: [],
 		        selectAll: false
@@ -126,6 +209,7 @@
                     console.log("start convert vm list")
                     vmList.forEach(vm => {
                       //vm web terminal
+                      vm.orignName = vm.name
                       var url = location.origin + "/vm/" + vm.name + "/web-terminal"
                       vm.name = "<a href="+ url +">" + vm.name + "</a>"
                       //novnc
@@ -152,24 +236,90 @@
                     var loginInfo = getLoginInfo();
                     var token = loginInfo.token;
                     var baseurl = location.origin;
-                    console.log(baseurl)
-                    console.log(name)
-                    console.log(action)
-                    axios.post(baseurl + "/vm/" + name + "/" + action)
+                    var url = baseurl + "/vm/" + name + "/"
+                    var payload = {}
+                    if (action == "expose-port") {
+                        url = url + "port/expose"
+                        var portInput = prompt("Please enter the port to be exposed, format(22 or 22:tcp or 22:udp)");
+                        if (portInput) {
+                            var res = portInput.split(":")
+                            if (res.length == 1) {
+                                payload = 'port=' + res[0] + '&protocol=' + 'tcp'
+                            } else if (res.length == 2) {
+                                payload = 'port=' + res[0] + '&protocol=' + res[1]
+                            } else {
+                                alert("invalid port format")
+                                return
+                            }
+                            console.log(payload)
+                        } else {
+                            return
+                        }
+                    } else {
+                        url = url + action
+                    }
+                    $.blockUI({timeout:   8000})
+                    axios.post(url,
+                            payload,
+                            {
+                                headers: {
+                                    "Authorization": "Bearer "+ token
+                                },
+                            })
                         .then(function (response) {
-                            console.log(response);
+                            console.log(response)
+                            $.unblockUI()
                             that.$refs.getAllVmInfo.click()
                         })
                         .catch(function (error) {
                             console.log(error);
+                            $.unblockUI()
+                            alert(error.status); // show response
+                        });
+                },
+                vmDelete() {
+                    for (const item of this.selected) {
+                        this.vmAction(item, "delete")
+                    }
+                },
+                vmCreate() {
+                    var that = this
+                    var loginInfo = getLoginInfo();
+                    var token = loginInfo.token;
+                    var baseurl = location.origin;
+                    var url = baseurl + "/vm"
+                    var payload = {
+                        "hostname": this.hostname,
+                        "rootPass": this.rootPass,
+                        "type": this.type,
+                        "flavor": this.flavor,
+                        "numbers": this.numbers,
+                        "duration": this.duration,
+                    }
+                    $.blockUI({timeout:   8000})
+                    axios.post(url,
+                            payload,
+                            {
+                                headers: {
+                                    "Authorization": "Bearer "+ token
+                                },
+                            })
+                        .then(function (response) {
+                            console.log(response)
+                            $.unblockUI()
+                            that.$refs.getAllVmInfo.click()
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                            $.unblockUI()
                             alert(error.status); // show response
                         });
                 },
                 select() {
 			        this.selected = [];
 			        if (!this.selectAll) {
-			    	    for (let i in this.items) {
-				    	    this.selected.push(this.items[i].name);
+			    	    for (let i in this.vmList) {
+				    	    this.selected.push(this.vmList[i].orignName);
 				        }
 			        }
 		        }
