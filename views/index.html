@@ -51,6 +51,11 @@
     </div>
 
     <div id="app">
+        <navibar @updateloginas="updateLoginasHander" v-bind:loginas="loginas"></navibar>
+        <login @updateloginas="updateLoginasHander"></login>
+    </div>
+
+    <template id='navibar'>
         <nav class="navbar navbar-default navbar-fixed-top navbar-light" style="background-color: #8cd1e6;" role="navigation">
             <div class="container-fluid">
               <div class="navbar-header">
@@ -71,58 +76,72 @@
                   <li><a href="https://github.com/JinlongWukong/DevLab#readme">Help</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                  <li><p id="accountLoggedID" class="navbar-text">{{ accountLogged }}</p></li>
+                  <li><p id="accountLoggedID" class="navbar-text">{{ loginas }}</p></li>
                   <li><a href="#" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
                   <li><a href="#" v-on:click="signOut"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
                 </ul>
               </div><!-- /.navbar-collapse -->
             </div>
         </nav>
+    </template>
 
+    <template id='login'>
         <!-- Modal -->
         <div class="modal fade" id="myModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered" role="document">
-            <!-- Modal content-->
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Welcome to DevLab</h4>
-              </div>
-              <div class="modal-body">
-                  <form>
-                      <div class="form-group">
-                        <div class="input-group">
-                          <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
-                          <input type="text" class="form-control form-control-md" v-model="accountName" placeholder="AccountName"/>
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Welcome to DevLab</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                            <input type="text" class="form-control form-control-md" v-model="accountName" placeholder="AccountName"/>
+                          </div>
                         </div>
-                      </div>
-                      <div class="form-group">
-                        <div class="input-group">
-                          <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
-                          <input type="password" class="form-control form-control-md" v-model="accountPass" placeholder="Password"/>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                            <input type="password" class="form-control form-control-md" v-model="accountPass" placeholder="Password"/>
+                          </div>
                         </div>
-                      </div>
-                      <button type="submit" class="btn btn-primary btn-md btn-block" v-on:click="login">Sign In</button>
-                      <button type="button" class="btn btn-info btn-md btn-block" v-on:click="generatePassword">Generate One-time Password</button>
-                  </form>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal" ref="closeModal">Close</button>
+                        <button type="submit" class="btn btn-primary btn-md btn-block" v-on:click="login">Sign In</button>
+                        <button type="button" class="btn btn-info btn-md btn-block" v-on:click="generatePassword">Generate One-time Password</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal" ref="closeModal">Close</button>
+                </div>
               </div>
             </div>
-          </div>
         </div>
-    </div>
+    </template>
 
     <script>
-        var vm = new Vue({
-            el: '#app',
-            data: {
-                msg: "",
-                accountName: "",
-                accountPass: "",
-                accountLogged: "Not login yet",
+        Vue.component('navibar', {
+            props: ['loginas'],
+            template: '#navibar',
+            methods: {
+                signOut() {
+                    window.localStorage.removeItem("access_token")
+                    window.localStorage.removeItem("account")
+                    this.$emit('updateloginas', "Not login yet")
+                },
+            }
+        })
+
+        Vue.component('login', {
+            data: function () {
+                return {
+                    accountName: "",
+                    accountPass: "",
+                }
             },
+            template: '#login',
             methods: {
                 generatePassword() {
                     var baseurl = location.origin;
@@ -144,22 +163,29 @@
                             password: this.accountPass
                         })
                         .then(function (response) {
-                            console.log(response);
                             console.log(that.accountName)
                             window.localStorage.setItem("access_token", response.data.access_token)
                             window.localStorage.setItem("account", that.accountName)
-                            that.accountLogged = "Login as " + that.accountName
+                            that.$emit('updateloginas', "Login as " + that.accountName)
                             that.$refs.closeModal.click()
                         })
                         .catch(function (error) {
                             console.log(error);
                             alert(error.status); // show response
                         });
-                },
-                signOut() {
-                    window.localStorage.removeItem("access_token")
-                    window.localStorage.removeItem("account")
-                    this.accountLogged = "Not login yet"
+                }
+            }
+        })
+
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                loginas: "Not login yet",
+            },
+            methods: {
+                updateLoginasHander(variable) {
+                    console.log(variable)
+                    this.loginas = variable
                 }
             }
         })
