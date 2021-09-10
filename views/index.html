@@ -51,7 +51,7 @@
     </div>
 
     <div id="app">
-        <navibar @updateloginas="updateLoginasHander" v-bind:loginas="loginas"></navibar>
+        <navibar @updateloginas="updateLoginasHander" v-bind:loginas="loginas" ref="navibar"></navibar>
         <login @updateloginas="updateLoginasHander"></login>
     </div>
 
@@ -77,8 +77,8 @@
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                   <li><p id="accountLoggedID" class="navbar-text">{{ loginas }}</p></li>
-                  <li><a href="#" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
-                  <li><a href="#" v-on:click="signOut"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                  <li><a href="#" ref="openLogin" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                  <li><a href="#" v-on:click="logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
                 </ul>
               </div><!-- /.navbar-collapse -->
             </div>
@@ -109,7 +109,7 @@
                             <input type="password" class="form-control form-control-md" v-model="accountPass" placeholder="Password"/>
                           </div>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-md btn-block" v-on:click="login">Sign In</button>
+                        <button type="submit" class="btn btn-primary btn-md btn-block" v-on:click="login">Login</button>
                         <button type="button" class="btn btn-info btn-md btn-block" v-on:click="generatePassword">Generate One-time Password</button>
                     </form>
                 </div>
@@ -126,7 +126,10 @@
             props: ['loginas'],
             template: '#navibar',
             methods: {
-                signOut() {
+                login() {
+                    this.$refs.openLogin.click()
+                },
+                logout() {
                     window.localStorage.removeItem("access_token")
                     window.localStorage.removeItem("account")
                     this.$emit('updateloginas', "Not login yet")
@@ -182,9 +185,18 @@
             data: {
                 loginas: "Not login yet",
             },
+            mounted: function() {
+                var account = window.localStorage.getItem("account");
+                var token = window.localStorage.getItem("access_token");
+                if (!account || !token) {
+                    this.$refs.navibar.login()
+                } else {
+                    this.loginas = "Login as " + account
+                }            
+            },
             methods: {
                 updateLoginasHander(variable) {
-                    console.log(variable)
+                    console.log("received login as " + variable)
                     this.loginas = variable
                 }
             }
