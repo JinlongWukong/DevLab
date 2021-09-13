@@ -236,7 +236,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="vm in vmList" :key="vm.name">
+              <tr v-for="vm in vmList" :key="vm.orignName">
                   <td>
                     <label class="form-checkbox">
                       <input type="checkbox" :value="vm.orignName" v-model="selected">
@@ -471,7 +471,7 @@
                         .then(function (response) {
                             console.log(response)
                             $.unblockUI()
-                            that.$refs.getAllVmInfo.click()
+                            that.getAllVm()
                         })
                         .catch(function (error) {
                             console.log(error);
@@ -518,7 +518,7 @@
                         .then(function (response) {
                             console.log(response)
                             $.unblockUI()
-                            that.$refs.getAllVmInfo.click()
+                            that.getAllVm()
                         })
                         .catch(function (error) {
                             console.log(error);

@@ -380,7 +380,7 @@
                         .then(function (response) {
                             console.log(response)
                             $.unblockUI()
-                            that.$refs.getAllK8sInfo.click()
+                            that.getAllk8s()
                         })
                         .catch(function (error) {
                             console.log(error)
@@ -420,7 +420,7 @@
                         .then(function (response) {
                             console.log(response)
                             $.unblockUI()
-                            that.$refs.getAllK8sInfo.click()
+                            that.getAllk8s()
                         })
                         .catch(function (error) {
                             console.log(error)
