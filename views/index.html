@@ -2,32 +2,199 @@
 <html>
 <head>
     <title>DevLab</title>
-    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <style>
+        body {
+            background-color: white 
+        }
+        .center {
+            display: block;
+            margin-top: 12%;
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+        }
+        .modal {
+            text-align: center;
+            padding: 0!important;
+        }
 
-    .center {
-        display: block;
-        margin-top: 8%;
-        margin-left: auto;
-        margin-right: auto;
-        width: 50%;
-    }
+        .modal:before {
+            content: '';
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+            margin-right: -4px;
+        }
 
+        .modal-dialog {
+            display: inline-block;
+            text-align: left;
+            vertical-align: middle;
+        }
     </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+    <script src="/scripts/bootstrap.min.js"></script>
+    <script src="/scripts/vue.min.js"></script>
 </head>
 <body>
+    <div>
+        <img src="img/DevLab.png" alt="artitecture" class="center">
+    </div>
 
-<div class="home-page">
+    <div id="app">
+        <navibar @updateloginas="updateLoginasHander" v-bind:loginas="loginas" ref="navibar"></navibar>
+        <login @updateloginas="updateLoginasHander"></login>
+    </div>
 
-    <nav>
-        <a href="/">Home</a>
-        <a href="/vm-request">Virtual Machine</a>
-        <a href="/k8s-request">Kubernetes</a>
-        <a href="/saas-request">SaaS</a>
-        <a href="/admin">Administration</a>
-        <a href="https://github.com/JinlongWukong/DevLab#readme">Help</a>
-    </nav>
+    <template id='navibar'>
+        <nav class="navbar navbar-inverse navbar-fixed-top" style="background-color: #282A35; color: #f1f1f1; font-family: sans-serif; font-size: 17px;" role="navigation">
+            <div class="container-fluid">
+              <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" style="color: tomato; font-size: 20px;" href="#">DevLab</a>
+              </div>
+              <div class="collapse navbar-collapse" id="myNavbar">
+                <ul class="nav navbar-nav">
+                  <li class="nav-item active"><a href="/">Home</a></li>
+                  <li><a href="/vm-request">Virtual Machine</a></li>
+                  <li><a href="/k8s-request">Kubernetes</a></li>
+                  <li><a href="/saas-request">SaaS</a></li>
+                  <li><a href="/admin">Administration</a></li>
+                  <li><a href="https://github.com/JinlongWukong/DevLab#readme">Help</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                  <li><p id="accountLoggedID" class="navbar-text">{{ loginas }}</p></li>
+                  <li><a href="#" ref="openLogin" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                  <li><a href="#" v-on:click="logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                </ul>
+              </div><!-- /.navbar-collapse -->
+            </div>
+        </nav>
+    </template>
 
-    <img src="img/DevLab.png" alt="artitecture" class="center">
-</div>
+    <template id='login'>
+        <!-- Modal -->
+        <div class="modal fade" id="myModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Welcome to DevLab</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                            <input type="text" class="form-control form-control-md" v-model="accountName" placeholder="AccountName"/>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                            <input type="password" class="form-control form-control-md" v-model="accountPass" placeholder="Password"/>
+                          </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-md btn-block" v-on:click="login">Login</button>
+                        <button type="button" class="btn btn-info btn-md btn-block" v-on:click="generatePassword">Generate One-time Password</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal" ref="closeModal">Close</button>
+                </div>
+              </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        Vue.component('navibar', {
+            props: ['loginas'],
+            template: '#navibar',
+            methods: {
+                login() {
+                    this.$refs.openLogin.click()
+                },
+                logout() {
+                    window.localStorage.removeItem("access_token")
+                    window.localStorage.removeItem("account")
+                    this.$emit('updateloginas', "Not login yet")
+                },
+            }
+        })
+
+        Vue.component('login', {
+            data: function () {
+                return {
+                    accountName: "",
+                    accountPass: "",
+                }
+            },
+            template: '#login',
+            methods: {
+                generatePassword() {
+                    var baseurl = location.origin;
+                    console.log(this.accountName)
+                    axios.post(baseurl + "/one-time-password?account=" + this.accountName)
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                            alert(error.status); // show response
+                        });
+                },
+                login() {
+                    var baseurl = location.origin;
+                    var that = this
+                    axios.post(baseurl + "/login", {
+                            account: this.accountName,
+                            password: this.accountPass
+                        })
+                        .then(function (response) {
+                            console.log(that.accountName)
+                            window.localStorage.setItem("access_token", response.data.access_token)
+                            window.localStorage.setItem("account", that.accountName)
+                            that.$emit('updateloginas', "Login as " + that.accountName)
+                            that.$refs.closeModal.click()
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                            alert(error.status); // show response
+                        });
+                }
+            }
+        })
+
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                loginas: "Not login yet",
+            },
+            mounted: function() {
+                var account = window.localStorage.getItem("account");
+                var token = window.localStorage.getItem("access_token");
+                if (!account || !token) {
+                    this.$refs.navibar.login()
+                } else {
+                    this.loginas = "Login as " + account
+                }            
+            },
+            methods: {
+                updateLoginasHander(variable) {
+                    console.log("received login as " + variable)
+                    this.loginas = variable
+                }
+            }
+        })
+    </script>
 </body>

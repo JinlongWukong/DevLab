@@ -1,340 +1,511 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>SaaS Operation</title>
-    <link rel="stylesheet" type="text/css" href="css/common.css">
-    <style>
-    label {
-        width: 12%;
-        display: inline-block;
-    }
-
-    input[type=text], select {
-        width: 10%;
-        margin-top: 6px;
-        padding: 4px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        resize: vertical;
-    }
+    <head>
+        <title>SaaS Operation</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+        <style>
+            body {
+                background-color: white 
+            }
+            .center {
+                display: block;
+                margin-top: 12%;
+                margin-left: auto;
+                margin-right: auto;
+                width: 50%;
+            }
+            .modal {
+                text-align: center;
+                padding: 0!important;
+            }
     
-    input[type=submit] {
-        background-color: #4CAF50;
-        color: white;
-        padding: 10px 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
+            .modal:before {
+                content: '';
+                display: inline-block;
+                height: 100%;
+                vertical-align: middle;
+                margin-right: -4px;
+            }
     
-    input[type=submit]:hover {
-        background-color: #45a049;
-    }
-    </style>
-</head>
-
+            .modal-dialog {
+                display: inline-block;
+                text-align: left;
+                vertical-align: middle;
+            }
+        </style>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+        <script src="http://malsup.github.io/jquery.blockUI.js"></script>
+        <script src="/scripts/bootstrap.min.js"></script>
+        <script src="/scripts/auth.js"></script>
+        <script src="/scripts/vue.min.js"></script>
+    </head>
 <body>
-    <nav>
-        <a href="/">Home</a>
-        <a href="/vm-request">Virtual Machine</a>
-        <a href="/k8s-request">Kubernetes</a>
-        <a href="/saas-request">SaaS</a>
-        <a href="/admin">Administration</a>
-        <a href="https://github.com/JinlongWukong/DevLab#readme">Help</a>
-        <a> <button id="signBtn" style="width: auto;float: right; margin-left: 20px;">Sign in</button></a>
-        <a> <p id="accountName" style="width: auto;float: right; margin-top: 0px; color: red;"></p> </a>
-    </nav>
-    
-    <div class="SaaSForm">
-    <form id="SaaSCreateForm" action="/saas" method="POST">
-
-        <br>
-        <label for="kind">Select software: </label>
-        <select name="kind">
-            <option value="jenkins">Jenkins</option>
-            <option value="mysql">Mysql</option>
-            <option value="postgres">Postgres</option>
-            <option value="mongodb">Mongodb</option>
-            <option value="influxdb">Influxdb</option>
-            <option value="redis">Redis</option>
-            <option value="prometheus">Prometheus</option>
-            <option value="grafana">Grafana</option>
-        </select> <br>
-
-        <label for="version">Specify version: </label>
-        <input type="text" id="version" name="version" value="latest" required> <br>
-    
-        <label for="cpu">Select cpu numbers: </label>
-        <select name="cpu">
-            <option value="1">1</option>
-            <option selected value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="0">9</option>
-            <option value="10">10</option>
-        </select> <br>
-    
-        <label for="memory">Select memory size: </label>
-        <select name="memory">
-            <option value="512">500m</option>
-            <option value="1024">1g</option>
-            <option selected value="2048">2g</option>
-            <option value="3072">3g</option>
-            <option value="4096">4g</option>
-            <option value="6144">6g</option>
-            <option value="8192">8g</option>
-            <option value="16384">16g</option>
-        </select> <br>
-
-        <br>
-        <input type="submit"/>
-        <br>
-    </form>
+    <div id="app">
+        <navibar @updateloginas="updateLoginasHander" v-bind:loginas="loginas" ref="navibar"></navibar>
+        <login @updateloginas="updateLoginasHander"></login>
     </div>
 
-    <br>
-    <input type="button" class="button" id = "SaaSListGenerate" value="SaaS table" />
-    <div>
-        <div id="tableDiv" style="margin-top: 20px">
-            <p>Click button to list all your software here </p>
+    <template id='navibar'>
+        <nav class="navbar navbar-inverse navbar-fixed-top" style="background-color: #282A35; color: #f1f1f1; font-family: sans-serif; font-size: 17px;" role="navigation">
+            <div class="container-fluid">
+              <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" style="color: tomato; font-size: 20px;" href="#">DevLab</a>
+              </div>
+              <div class="collapse navbar-collapse" id="myNavbar">
+                <ul class="nav navbar-nav">
+                  <li><a href="/">Home</a></li>
+                  <li><a href="/vm-request">Virtual Machine</a></li>
+                  <li><a href="/k8s-request">Kubernetes</a></li>
+                  <li class="nav-item active"><a href="/saas-request">SaaS</a></li>
+                  <li><a href="/admin">Administration</a></li>
+                  <li><a href="https://github.com/JinlongWukong/DevLab#readme">Help</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                  <li><p id="accountLoggedID" class="navbar-text">{{ loginas }}</p></li>
+                  <li><a href="#" ref="openLogin" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                  <li><a href="#" v-on:click="logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                </ul>
+              </div><!-- /.navbar-collapse -->
+            </div>
+        </nav>
+    </template>
+
+    <template id='login'>
+        <!-- Modal -->
+        <div class="modal fade" id="myModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Welcome to DevLab</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                            <input type="text" class="form-control form-control-md" v-model="accountName" placeholder="AccountName"/>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                            <input type="password" class="form-control form-control-md" v-model="accountPass" placeholder="Password"/>
+                          </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-md btn-block" v-on:click="login">Login</button>
+                        <button type="button" class="btn btn-info btn-md btn-block" v-on:click="generatePassword">Generate One-time Password</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal" ref="closeModal">Close</button>
+                </div>
+              </div>
+            </div>
         </div>
-    </div>
+    </template>
 
-    <div id="loginDiv" class="modal">
-        <form id="loginForm" class="modal-content animate">
-          <div class="container">
-            <label for="account"><b>Account</b></label>
-            <input id="loginAccount" type="text" placeholder="Enter account" name="account" required>
-      
-            <label for="password"><b>Password</b></label>
-            <input id="loginPass" type="password" placeholder="Enter Password" name="password" required>
-              
-            <button type="submit">Login</button>
-            <button class="generate-password" type="button">Generate one-time password</button>
-          </div>
-      
-          <div class="container" style="background-color:#f1f1f1">
-            <button type="button" onclick="document.getElementById('loginDiv').style.display='none'" class="cancelbtn">Cancel</button>
-          </div>
-        </form>
+    <br><br><br><br>
+    <div id="saasApp">
+        <div class="page-header text-info" style="margin-left: 10px;">
+            <h4>SaaS Table</h4>
+        </div>
+        <!--div class="well">SaaS Table</div-->
+        <div class="btn-group pull-right" role="group" aria-label="...">
+            <button type="button" class="btn btn-info" style="width: 60px" ref="getAllSaaSInfo" data-toggle="tooltip" title="Refresh all software" v-on:click="getAllSaaS">
+                <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+              </button>
+            <!--a href="#" v-on:click="getAllSaaS"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a-->
+            <button type="button" class="btn btn-primary" style="width: 60px" data-toggle="modal" data-target="#SaaSModal" data-toggle="tooltip" title="Create new software">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+            </button>
+            <!--a href="#"><span class="glyphicon glyphicon-plus"></span></a-->
+            <button type="button" class="btn btn-danger" style="width: 60px" data-toggle="tooltip" title="Delete selected software" @click="saasDelete">
+                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+            </button>
+            <!--a href="#"><span class="glyphicon glyphicon-trash"></span></a-->
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="SaaSModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">SaaS Input Memu</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="kind" class="col-sm-4 control-label">Kind</label>
+                            <div class="col-sm-8">
+                              <select id="kind" class="form-control" v-model="kind">
+                                <option>jenkins</option>
+                                <option>mysql</option>
+                                <option>postgres</option>
+                                <option>mongodb</option>
+                                <option>influxdb</option>
+                                <option>redis</option>
+                                <option>prometheus</option>
+                                <option>grafana</option>
+                              </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="version" class="col-sm-4 control-label">Version</label>
+                            <div class="col-sm-8">
+                                <input class="form-control" id="version" v-model="version" type="text" placeholder="latest">
+                            </div>
+                            <br>
+                            <br>
+                            <label for="cpuNum" class="col-sm-4 control-label">CPU number</label>
+                            <div class="col-sm-8">
+                              <select id="cpuNum" class="form-control" v-model.number="cpuNum">
+                                <option>1</option>
+                                <option>2</option>
+                                <option>3</option>
+                                <option>4</option>
+                                <option>5</option>
+                                <option>6</option>
+                                <option>7</option>
+                                <option>8</option>
+                                <option>9</option>
+                                <option>10</option>
+                              </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="memSize" class="col-sm-4 control-label">Memory size</label>
+                            <div class="col-sm-8">
+                                <select id="memSize" class="form-control" v-model.number="memSize">
+                                    <option value="512">500m</option>
+                                    <option value="1024">1g</option>
+                                    <option value="2048">2g</option>
+                                    <option value="3072">3g</option>
+                                    <option value="4096">4g</option>
+                                    <option value="6144">6g</option>
+                                    <option value="8192">8g</option>
+                                    <option value="16384">16g</option>
+                                </select>
+                            </div>
+                            <br>
+                            <br>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary btn-md" data-dismiss="modal" v-on:click="saasCreate">Submit</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        <table class="table table-hover table-striped">
+            <thead>
+              <tr>
+                <th>
+                    <label class="form-checkbox">
+                    <input type="checkbox" v-model="selectAll" @click="select">
+                    <i class="form-icon"></i>
+                    </label>
+                </th>
+                <th>Name</th>
+                <th>Kind</th>
+                <th>Backend</th>
+                <th>Version</th>
+                <th>Address</th>
+                <th>Node</th>
+                <th>CPU</th>
+                <th>Memory</th>
+                <th>Status</th>
+                <th>PortMapping</th>
+                <th>Additional</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="saas in saasList" :key="saas.name">
+                  <td>
+                    <label class="form-checkbox">
+                      <input type="checkbox" :value="saas.orignName" v-model="selected">
+                      <vm class="form-icon"></vm>
+                    </label>
+                  </td>
+                  <td v-html="saas.name"></td>
+                  <td>{{saas.kind}}</td>
+                  <td>{{saas.backend}}</td>
+                  <td>{{saas.version}}</td>
+                  <td>{{saas.address}}</td>
+                  <td>{{saas.node}}</td>
+                  <td>{{saas.cpu}}</td>
+                  <td>{{saas.memory}}</td>
+                  <td>{{saas.status}}</td>
+                  <td v-html="saas.port_mapping"></td>
+                  <td v-html="saas.additional_infor"></td>
+                  <td>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-success" @click="saasAction(saas.orignName, 'get')">refresh</button>
+                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                          <li><a href="#" @click="saasAction(saas.orignName, 'start')">start</a></li>
+                          <li><a href="#" @click="saasAction(saas.orignName, 'stop')">stop</a></li>
+                          <li><a href="#" @click="saasAction(saas.orignName, 'restart')">restart</a></li>
+                          <li><a href="#" @click="saasAction(saas.orignName, 'delete')">delete</a></li>
+                        </ul>
+                      </div>
+                  </td>
+              </tr>
+            </tbody>
+        </table>
     </div>
+    <script>
+        Vue.component('navibar', {
+            props: ['loginas'],
+            template: '#navibar',
+            methods: {
+                login() {
+                    this.$refs.openLogin.click()
+                },
+                logout() {
+                    window.localStorage.removeItem("access_token")
+                    window.localStorage.removeItem("account")
+                    this.$emit('updateloginas', "Not login yet")
+                },
+            }
+        })
+
+        Vue.component('login', {
+            data: function () {
+                return {
+                    accountName: "",
+                    accountPass: "",
+                }
+            },
+            template: '#login',
+            methods: {
+                generatePassword() {
+                    var baseurl = location.origin;
+                    console.log(this.accountName)
+                    axios.post(baseurl + "/one-time-password?account=" + this.accountName)
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            console.log(error.response);
+                            alert(error.response.status); // show response
+                        });
+                },
+                login() {
+                    var baseurl = location.origin;
+                    var that = this
+                    axios.post(baseurl + "/login", {
+                            account: this.accountName,
+                            password: this.accountPass
+                        })
+                        .then(function (response) {
+                            console.log(that.accountName)
+                            window.localStorage.setItem("access_token", response.data.access_token)
+                            window.localStorage.setItem("account", that.accountName)
+                            that.$emit('updateloginas', "Login as " + that.accountName)
+                            that.$refs.closeModal.click()
+                        })
+                        .catch(function (error) {
+                            console.log(error.response);
+                            alert(error.response.status); // show response
+                        });
+                }
+            }
+        })
+
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                loginas: "Not login yet",
+            },
+            mounted: function() {
+                var account = window.localStorage.getItem("account");
+                var token = window.localStorage.getItem("access_token");
+                if (!account || !token) {
+                    this.$refs.navibar.login()
+                } else {
+                    this.loginas = "Login as " + account
+                }            
+            },
+            methods: {
+                updateLoginasHander(variable) {
+                    console.log("received login as " + variable)
+                    this.loginas = variable
+                }
+            }
+        })
+        var saasApp = new Vue({
+            el: "#saasApp",
+            data: {
+                kind: "jenkins",
+                version: "latest",
+                cpuNum: 2,
+                memSize: 2048,
+                saasList: [],
+                selected: [],
+		        selectAll: false
+            },
+            mounted: function() {
+                this.getAllSaaS()
+            },
+            methods: {
+                getAllSaaS() {
+                    try {
+                        var loginInfo = getLoginInfo()
+                    } catch (e) {
+                        console.log(e)
+                        return
+                    }
+                    var token = loginInfo.token 
+                    var baseurl = location.origin;
+                    var that = this
+                    axios.get(baseurl + "/saas", {
+                        headers: {
+                            "Authorization": "Bearer "+ token
+                        },
+                    })
+                    .then(function (response) {
+                        console.log(response.data)
+                        that.convertSaaSList(response.data)
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+                        if (error.response.status == 401) {
+                            vm.$refs.navibar.login()
+                        }
+                        alert(error.response.status); // show response
+                    });
+                },
+                convertSaaSList(saasList) {
+                    var that = this
+                    console.log("start convert saas list")
+                    saasList.forEach(saas => {
+                      //saas web terminal
+                      saas.orignName = saas.name
+                      var url = location.origin + "/container/" + saas.name + "/web-terminal"
+                      saas.name = "<a href="+ url +">" + saas.orignName + "</a>"
+                      //portmapping
+                      var result = ""
+                      for(var key in saas.port_mapping) {
+                        var value = saas.port_mapping[key];
+                        result = result + key + "->" + value + "<br>"
+                      }
+                      saas.port_mapping = result
+                      //additional information
+                      var additional_result = ""
+                      for(var key in saas.additional_infor) {
+                        var value = saas.additional_infor[key];
+                        additional_result = additional_result + key + "->" + value + "<br>"
+                      }
+                      saas.additional_infor = additional_result
+                    })
+                    console.log(saasList)
+                    that.saasList = saasList
+                },
+                saasAction(name, action) {
+                    var that = this
+                    try {
+                        var loginInfo = getLoginInfo()
+                    } catch (e) {
+                        console.log(e)
+                        //notify user to login
+                        vm.$refs.navibar.login()
+                    }
+                    var token = loginInfo.token;
+                    var baseurl = location.origin;
+                    var url = baseurl + "/saas/" + name + "/" + action
+                    $.blockUI({timeout:   8000})
+                    axios.post(url,
+                            {},
+                            {
+                                headers: {
+                                    "Authorization": "Bearer "+ token
+                                },
+                            })
+                        .then(function (response) {
+                            console.log(response)
+                            $.unblockUI()
+                            that.$refs.getAllSaaSInfo.click()
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                            $.unblockUI()
+                            if (error.response.status == 401) {
+                                vm.$refs.navibar.login()
+                            }
+                            alert(error.response.status); // show response
+                        });
+                },
+                saasDelete() {
+                    for (const item of this.selected) {
+                        this.saasAction(item, "delete")
+                    }
+                },
+                saasCreate() {
+                    var that = this
+                    try {
+                        var loginInfo = getLoginInfo()
+                    } catch (e) {
+                        console.log(e)
+                        //notify user to login
+                        vm.$refs.navibar.login()
+                    }
+                    var token = loginInfo.token;
+                    var baseurl = location.origin;
+                    var url = baseurl + "/saas"
+                    var payload = {
+                        "kind": this.kind,
+                        "version": this.version,
+                        "cpu": this.cpuNum,
+                        "memory": this.memSize,
+                    }
+                    $.blockUI({timeout:   8000})
+                    axios.post(url,
+                            payload,
+                            {
+                                headers: {
+                                    "Authorization": "Bearer "+ token
+                                },
+                            })
+                        .then(function (response) {
+                            console.log(response)
+                            $.unblockUI()
+                            that.$refs.getAllSaaSInfo.click()
+                        })
+                        .catch(function (error) {
+                            console.log(error)
+                            $.unblockUI()
+                            if (error.response.status == 401) {
+                                vm.$refs.navibar.login()
+                            }
+                            alert(error.response.status); // show response
+                        });
+                },
+                select() {
+			        this.selected = [];
+			        if (!this.selectAll) {
+			    	    for (let i in this.saasList) {
+				    	    this.selected.push(this.saasList[i].orignName);
+				        }
+			        }
+		        }
+            }
+        })
+    </script>
 </body>
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<script src="http://malsup.github.io/jquery.blockUI.js"></script>
-<script src="/scripts/auth.js"></script>
-<script>
-
-function CreateSaaSTableFromJSON(mySaaSList) {
-    //var mySaaSList = [{"Name":"jinlliu-1","CPU":2,"Mem":2048,"Disk":30,"Address":"192.168.122.50/24","Status":"running","Type":"centos7","Host":{"Name":"","CPU":0,"Memory":0,"IpAddress":"127.0.0.1","Status":"","UserName":"root","Passwd":"Cisco123!"},"LifeTime":86400000000000}]
-
-    // EXTRACT VALUE FOR HTML HEADER. 
-    var col = [];
-    for (var i = 0; i < mySaaSList.length; i++) {
-        for (var key in mySaaSList[i]) {
-            if (col.indexOf(key) === -1) {
-                col.push(key);
-            }
-        }
-    }
-
-    // ADD NEW COL, DEFINE ACTION
-    if (mySaaSList.length > 0) {
-        col.push("action")
-    }
-
-    // CREATE DYNAMIC TABLE.
-    var table = document.createElement("table");
-
-    // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
-
-    var tr = table.insertRow(-1);                   // TABLE ROW.
-
-    for (var i = 0; i < col.length; i++) {
-        var th = document.createElement("th");      // TABLE HEADER.
-        th.innerHTML = col[i];
-        tr.appendChild(th);
-    }
-
-    // ADD JSON DATA TO THE TABLE AS ROWS.
-    for (var i = 0; i < mySaaSList.length; i++) {
-
-        tr = table.insertRow(-1);
-
-        for (var j = 0; j < col.length; j++) {
-            var tabCell = tr.insertCell(-1);
-            if (col[j] == "name") {
-                var url = location.origin + "/container/" + mySaaSList[i][col[j]] + "/web-terminal";
-                tabCell.innerHTML = "<a href="+ url +">"+ mySaaSList[i][col[j]]+"</a>"
-            } else if (col[j] == "port_mapping"){
-                var result = ""
-                for(var key in mySaaSList[i][col[j]]) {
-                    var value = mySaaSList[i][col[j]][key];
-                    result = result + key + "->" + value + "<br>"
-                }
-                tabCell.innerHTML = result
-            } else if (col[j] == "additional_infor"){
-                var result = ""
-                for(var key in mySaaSList[i][col[j]]) {
-                    var value = mySaaSList[i][col[j]][key];
-                    result = result + key + "->" + value + "<br>"
-                }
-                tabCell.innerHTML = result              
-            } else if (col[j] == "action"){
-                tabCell.innerHTML = `
-                <form id="actionForm" action="/saas" onsubmit="event.preventDefault();return SaaSAction(this)">
-                   <select class="selection" name="action" style="width: 60%">
-                       <option value="get">refresh</option> 
-                       <option value="start">start</option>
-                       <option value="stop">stop</option>
-                       <option value="restart">restart</option>
-                       <option value="delete">delete</option>
-                   </select>
-                   <button type="submit">Confirm</button>
-                  `+ '<input type="hidden" name="name"' + 'value=' + mySaaSList[i]["name"] + ' >'
-                + '</form>';
-            } else {
-                tabCell.innerHTML = mySaaSList[i][col[j]];
-            }
-        }
-    }
-
-    // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
-    var divContainer = document.getElementById("tableDiv");
-    divContainer.innerHTML = "";
-    divContainer.appendChild(table);
-}
-
-function SaaSAction(element) {
-    var form = $(element);
-    var url = form.attr('action');
-    var action = form.serializeArray()[0].value;
-    var name = form.serializeArray()[1].value;
-    var loginInfo = getLoginInfo();
-    var token = loginInfo.token;
-    $.blockUI({timeout:   8000});
-    $.ajax({
-        type: "POST",
-        url: url + "/" + name + "/" + action,
-        headers: {
-            "Authorization": "Bearer "+ token
-        },
-        error: function(data) {
-            console.log(data)
-            alert(data.status + ':' + data.statusText,data.responseText);
-        }
-    }).always(function() {
-        $.unblockUI();
-        btnAutoClick();
-    });
-}
-
-function btnAutoClick() {
-    var SaaSList = document.getElementById("SaaSListGenerate");
-    SaaSList.click();
-}
-
-$(document).ready(function(){
-    window.onload = loadAuth;
-
-    $("#SaaSCreateForm").submit(function(event) {
-        $.blockUI({timeout:   10000});
-        event.preventDefault(); //prevent default action
-        var postUrl = $(this).attr("action"); //get form action url
-	    var requestMethod = $(this).attr("method"); //get form GET/POST method
-	    var formData = $(this).serialize(); //Encode form elements for submiss
-        var loginInfo = getLoginInfo();
-        var token = loginInfo.token;
-        $.ajax({
-            type: requestMethod,
-            url: postUrl,
-            headers: {
-                "Authorization": "Bearer "+ token
-            },
-            async: false,
-            data: formData,
-            error: function(data) {
-                console.log(data)
-                alert(data.status); // show response
-            }
-        }).always(function() {
-            $.unblockUI();
-            btnAutoClick();
-        });
-    })
-
-    $("#SaaSListGenerate").click(function(){ 
-        var loginInfo = getLoginInfo()
-        var token = loginInfo.token 
-        var baseurl = location.origin;
-        $.ajax({
-            //url: "http://127.0.0.1:8088/saas",
-            url: baseurl + "/saas",
-            headers: {
-                "Authorization": "Bearer "+ token
-            },
-            success: function(data){
-                console.log(data)
-                CreateSaaSTableFromJSON(data)
-            },
-            error: function(data){
-                alert(data.status + ':' + data.statusText,data.responseText);
-            },
-            type: 'GET'
-        });
-    });
-
-    $("#loginDiv .generate-password").click(function(){
-        var baseurl = location.origin;
-        var username = $('#loginDiv input[name="account"]').val()
-        $.ajax({
-            type: "POST",
-            url: baseurl + "/one-time-password?account=" + username,
-            error: function(data) {
-                console.log(data)
-                alert(data.status); // show response
-            }
-        })
-    })
-    $('#loginForm').submit(function(event) {
-        event.preventDefault(); // prevent PageReLoad
-        var baseurl = location.origin
-	    var form_data = $(this).serialize(); //Encode form elements for submiss
-        console.log(form_data)
-        $.ajax({
-            type: "POST",
-            url: baseurl + "/login",
-            data: form_data,
-            error: function(data) {
-                console.log(data)
-                alert(data.status); // show response
-            },
-            success: function(data) {
-                console.log(data)
-                window.localStorage.setItem("access_token", data.access_token)
-                window.localStorage.setItem("account", $("#loginAccount").val())
-                document.getElementById('loginDiv').style.display = 'none'
-                document.getElementById("signBtn").innerText = "Sign out"
-                document.getElementById("accountName").innerText = $("#loginAccount").val()
-            }
-        })
-    })
-    $('#signBtn').click(function() {
-        var text = document.getElementById("signBtn").innerText
-        if(text == "Sign in") {
-           document.getElementById('loginDiv').style.display='block'
-        } else {
-           window.localStorage.removeItem("access_token")
-           window.localStorage.removeItem("account")
-           document.getElementById("accountName").innerText = ""
-           document.getElementById("signBtn").innerText = "Sign in"
-        }
-    })
-});
-
-</script>
 </html>

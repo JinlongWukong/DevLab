@@ -2,383 +2,543 @@
 <html>
 <head>
     <title>VM Operation</title>
-    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <style>
-* {
-  box-sizing: border-box;
-}
+        body {
+            background-color: white 
+        }
+        .center {
+            display: block;
+            margin-top: 12%;
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+        }
+        .modal {
+            text-align: center;
+            padding: 0!important;
+        }
 
-label {
-  width: 12%;
-  display: inline-block;
-}
+        .modal:before {
+            content: '';
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+            margin-right: -4px;
+        }
 
-label[for="one-day"], label[for="one-week"], label[for="two-week"], label[for="forever"] {
-  width: 5%;
-}
-
-input[type=text], input[type=password], select {
-  width: 10%;
-  margin-top: 6px;
-  padding: 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  resize: vertical;
-}
-
-input[type=radio]{
-  width: 1%;
-  margin-top: 6px;
-  padding: 4px;
-  border: 1px solid #ccc;
-  border-radius: 1px;
-  resize: vertical;
-}
-
-input[type=submit] {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-input[type=submit]:hover {
-  background-color: #45a049;
-}
+        .modal-dialog {
+            display: inline-block;
+            text-align: left;
+            vertical-align: middle;
+        }
     </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+    <script src="http://malsup.github.io/jquery.blockUI.js"></script>
+    <script src="/scripts/bootstrap.min.js"></script>
+    <script src="/scripts/auth.js"></script>
+    <script src="/scripts/vue.min.js"></script>
 </head>
 
 <body>
-    <nav>
-        <a href="/">Home</a>
-        <a href="/vm-request">Virtual Machine</a>
-        <a href="/k8s-request">Kubernetes</a>
-        <a href="/saas-request">SaaS</a>
-        <a href="/admin">Administration</a>
-        <a href="https://github.com/JinlongWukong/DevLab#readme">Help</a>
-        <a> <button id="signBtn" style="width: auto;float: right; margin-left: 20px;">Sign in</button></a>
-        <a> <p id="accountName" style="width: auto;float: right; margin-top: 0px; color: red;"></p> </a>
-    </nav>
-    
-    <div class="vmForm">
-    <form id="vmCreateForm" action="/vm" method="POST">
-
-        <br>    
-        <label for="hostname">Hostname: </label>
-        <input type="text" id="hostname" name="hostname" placeholder="optional"> <br>
-
-        <label for="rootPass">root passwd: </label>
-        <input type="password" id="rootPass" name="rootPass" placeholder="optional"> <br>
-
-        <label for="type">Select OS type: </label>
-        <select name="type">
-            <option value="centos7">Centos7</option>
-            <option value="ubuntu18">Ubuntu18</option>
-        </select>
-        <br>
-    
-        <label for="flavor">Select VM Size: </label>
-        <select name="flavor">
-            <option value="small">small</option>
-            <option value="middle">middle</option>
-            <option value="large">large</option>
-        </select>
-        <br>
-    
-        <label for="numbers">Select numbers of VM: </label>
-        <select name="numbers">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-        </select>
-    
-        <br>
-        <label for="duration">Specify vm lifecycle: </label>
-        <select name="duration">
-            <option value="1">one day</option>
-            <option value="7">one week</option>
-            <option value="14">two weeks</option>
-            <option value="30">one month</option>
-            <option value="180">three months</option>
-            <option value="365">forever</option>
-        </select>
-        <br><br>
-        <input type="submit"/>
-        <br>
-    </form>
+    <div id="app">
+        <navibar @updateloginas="updateLoginasHander" v-bind:loginas="loginas" ref="navibar"></navibar>
+        <login @updateloginas="updateLoginasHander"></login>
     </div>
 
-    <br>
-    <input type="button" class="button" id = "vmListGenerate" value="VM Info" />
-    <div>
-        <div id="tableDiv" style="margin-top: 20px">
-            <p>Click button to list all your Virtual Machine here </p>
+    <template id='navibar'>
+        <nav class="navbar navbar-inverse navbar-fixed-top" style="background-color: #282A35; color: #f1f1f1; font-family: sans-serif; font-size: 17px;" role="navigation">
+            <div class="container-fluid">
+              <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" style="color: tomato; font-size: 20px;" href="#">DevLab</a>
+              </div>
+              <div class="collapse navbar-collapse" id="myNavbar">
+                <ul class="nav navbar-nav">
+                  <li><a href="/">Home</a></li>
+                  <li class="nav-item active"><a href="/vm-request">Virtual Machine</a></li>
+                  <li><a href="/k8s-request">Kubernetes</a></li>
+                  <li><a href="/saas-request">SaaS</a></li>
+                  <li><a href="/admin">Administration</a></li>
+                  <li><a href="https://github.com/JinlongWukong/DevLab#readme">Help</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                  <li><p id="accountLoggedID" class="navbar-text">{{ loginas }}</p></li>
+                  <li><a href="#" ref="openLogin" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                  <li><a href="#" v-on:click="logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                </ul>
+              </div><!-- /.navbar-collapse -->
+            </div>
+        </nav>
+    </template>
+
+    <template id='login'>
+        <!-- Modal -->
+        <div class="modal fade" id="myModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Welcome to DevLab</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                            <input type="text" class="form-control form-control-md" v-model="accountName" placeholder="AccountName"/>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                            <input type="password" class="form-control form-control-md" v-model="accountPass" placeholder="Password"/>
+                          </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-md btn-block" v-on:click="login">Login</button>
+                        <button type="button" class="btn btn-info btn-md btn-block" v-on:click="generatePassword">Generate One-time Password</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal" ref="closeModal">Close</button>
+                </div>
+              </div>
+            </div>
         </div>
+    </template>
+
+    <br><br><br><br>
+    <div id="vmApp">
+        <div class="page-header text-info" style="margin-left: 10px;">
+            <h4>Virtual Machine Table</h4>
+        </div>
+        <!--div class="well">Virtual Machine Table</div-->
+        <div class="btn-group pull-right" role="group" aria-label="...">
+            <button type="button" class="btn btn-info" style="width: 60px" ref="getAllVmInfo" data-toggle="tooltip" title="Refresh all VM" v-on:click="getAllVm">
+                <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+              </button>
+            <!--a href="#" v-on:click="getAllVm"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a-->
+            <button type="button" class="btn btn-primary" style="width: 60px" data-toggle="modal" data-target="#vmModal" data-toggle="tooltip" title="Create mew VM">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+            </button>
+            <!--a href="#"><span class="glyphicon glyphicon-plus"></span></a-->
+            <button type="button" class="btn btn-danger" style="width: 60px" data-toggle="tooltip" title="Delete selected VM" @click="vmDelete">
+                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+            </button>
+            <!--a href="#"><span class="glyphicon glyphicon-trash"></span></a-->
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="vmModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Virtual Machine Input Memu</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="hostname" class="col-sm-2 control-label">Hostname</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="hostname" v-model="hostname" type="text" placeholder="Enter your vm hostname here...">
+                            </div>
+                            <br>
+                            <br>
+                            <label for="rootPass" class="col-sm-2 control-label">Password</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="rootPass" v-model="rootPass" type="text" placeholder="Enter your root passwd here...">
+                            </div>
+                            <br>
+                            <br>
+                            <label for="osType" class="col-sm-2 control-label">OS type</label>
+                            <div class="col-sm-10">
+                              <select id="osType" class="form-control" v-model="type">
+                                <option value="centos7">Centos7</option>
+                                <option value="ubuntu18">Ubunt18</option>
+                              </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="osSize" class="col-sm-2 control-label">OS Size</label>
+                            <div class="col-sm-10">
+                              <select id="osSize" class="form-control" v-model="flavor">
+                                <option>small</option>
+                                <option>middle</option>
+                                <option>large</option>
+                              </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="osNumber" class="col-sm-2 control-label">Number</label>
+                            <div class="col-sm-10">
+                                <select id="osNumber" class="form-control" v-model.number="numbers">
+                                  <option>1</option>
+                                  <option>2</option>
+                                  <option>3</option>
+                                </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="osLifeTime" class="col-sm-2 control-label">LifeTime</label>
+                            <div class="col-sm-10">
+                                <select id="osLifeTime" class="form-control" v-model.number="duration">
+                                  <option value=1>one day</option>
+                                  <option value=7>one week</option>
+                                  <option value=14>two weeks</option>
+                                  <option value=30>one month</option>
+                                  <option value=180>three months</option>
+                                  <option value=365>forever</option>
+                                </select>
+                            </div>
+                            <br>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary btn-md" data-dismiss="modal" v-on:click="vmCreate">Submit</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        <table class="table table-hover table-striped">
+            <thead>
+              <tr>
+                <th>
+                    <label class="form-checkbox">
+                    <input type="checkbox" v-model="selectAll" @click="select">
+                    <i class="form-icon"></i>
+                    </label>
+                </th>
+                <th>Name</th>
+                <th>Hostname</th>
+                <th>Cpu</th>
+                <th>Mem</th>
+                <th>Disk</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th>Vnc</th>
+                <th>NoVnc</th>
+                <th>Type</th>
+                <th>Node</th>
+                <th>LifeTime</th>
+                <th>PortMapping</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="vm in vmList" :key="vm.orignName">
+                  <td>
+                    <label class="form-checkbox">
+                      <input type="checkbox" :value="vm.orignName" v-model="selected">
+                      <vm class="form-icon"></vm>
+                    </label>
+                  </td>
+                  <td v-html="vm.name"></td>
+                  <td>{{vm.hostname}}</td>
+                  <td>{{vm.cpu}}</td>
+                  <td>{{vm.mem}}</td>
+                  <td>{{vm.disk}}</td>
+                  <td>{{vm.address}}</td>
+                  <td>{{vm.status}}</td>
+                  <td>{{vm.vnc}}</td>
+                  <td v-html="vm.novnc"></td>
+                  <td>{{vm.type}}</td>
+                  <td>{{vm.node}}</td>
+                  <td>{{vm.lifeTime}}</td>
+                  <td v-html="vm.portMap"></td>
+                  <td>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-success" @click="vmAction(vm.orignName, 'start')">start</button>
+                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                          <li><a href="#" @click="vmAction(vm.orignName, 'shutdown')">shutdown</a></li>
+                          <li><a href="#" @click="vmAction(vm.orignName, 'reboot')">reboot</a></li>
+                          <li><a href="#" @click="vmAction(vm.orignName, 'delete')">delete</a></li>
+                          <li><a href="#" @click="vmAction(vm.orignName, 'extend')">extend</a></li>
+                          <li><a href="#" @click="vmAction(vm.orignName, 'expose-port')">expose-port</a></li>
+                        </ul>
+                      </div>
+                  </td>
+              </tr>
+            </tbody>
+        </table>        
     </div>
-    
-    <div id="loginDiv" class="modal">
-        <form id="loginForm" class="modal-content animate">
-          <div class="container">
-            <label for="account"><b>Account</b></label>
-            <input id="loginAccount" type="text" placeholder="Enter account" name="account" required>
-      
-            <label for="password"><b>Password</b></label>
-            <input id="loginPass" type="password" placeholder="Enter Password" name="password" required>
-              
-            <button type="submit">Login</button>
-            <button class="generate-password" type="button">Generate one-time password</button>
-          </div>
-      
-          <div class="container" style="background-color:#f1f1f1">
-            <button type="button" onclick="document.getElementById('loginDiv').style.display='none'" class="cancelbtn">Cancel</button>
-          </div>
-        </form>
-    </div>
-</body>
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<script src="http://malsup.github.io/jquery.blockUI.js"></script>
-<script src="/scripts/auth.js"></script>
-<script>
-
-function CreateVMTableFromJSON(myVmList) {
-    //var myVmList = [{"Name":"jinlliu-1","CPU":2,"Mem":2048,"Disk":30,"Address":"192.168.122.50/24","Status":"running","Type":"centos7","Host":{"Name":"","CPU":0,"Memory":0,"IpAddress":"127.0.0.1","Status":"","UserName":"root","Passwd":"Cisco123!"},"LifeTime":86400000000000}]
-
-    // EXTRACT VALUE FOR HTML HEADER. 
-    var col = [];
-    for (var i = 0; i < myVmList.length; i++) {
-        for (var key in myVmList[i]) {
-            if (col.indexOf(key) === -1) {
-                col.push(key);
+    <script>
+        Vue.component('navibar', {
+            props: ['loginas'],
+            template: '#navibar',
+            methods: {
+                login() {
+                    this.$refs.openLogin.click()
+                },
+                logout() {
+                    window.localStorage.removeItem("access_token")
+                    window.localStorage.removeItem("account")
+                    this.$emit('updateloginas', "Not login yet")
+                },
             }
-        }
-    }
+        })
 
-    // ADD NEW COL, DEFINE ACTION
-    if (myVmList.length > 0) {
-        col.push("action")
-    }
+        Vue.component('login', {
+            data: function () {
+                return {
+                    accountName: "",
+                    accountPass: "",
+                }
+            },
+            template: '#login',
+            methods: {
+                generatePassword() {
+                    var baseurl = location.origin;
+                    console.log(this.accountName)
+                    axios.post(baseurl + "/one-time-password?account=" + this.accountName)
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            console.log(error.response);
+                            alert(error.response.status); // show response
+                        });
+                },
+                login() {
+                    var baseurl = location.origin;
+                    var that = this
+                    axios.post(baseurl + "/login", {
+                            account: this.accountName,
+                            password: this.accountPass
+                        })
+                        .then(function (response) {
+                            console.log(that.accountName)
+                            window.localStorage.setItem("access_token", response.data.access_token)
+                            window.localStorage.setItem("account", that.accountName)
+                            that.$emit('updateloginas', "Login as " + that.accountName)
+                            that.$refs.closeModal.click()
+                        })
+                        .catch(function (error) {
+                            console.log(error.response);
+                            alert(error.response.status); // show response
+                        });
+                }
+            }
+        })
 
-    // CREATE DYNAMIC TABLE.
-    var table = document.createElement("table");
-
-    // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
-
-    var tr = table.insertRow(-1);                   // TABLE ROW.
-
-    for (var i = 0; i < col.length; i++) {
-        var th = document.createElement("th");      // TABLE HEADER.
-        th.innerHTML = col[i];
-        tr.appendChild(th);
-    }
-
-    // ADD JSON DATA TO THE TABLE AS ROWS.
-    for (var i = 0; i < myVmList.length; i++) {
-
-        tr = table.insertRow(-1);
-
-        for (var j = 0; j < col.length; j++) {
-            var tabCell = tr.insertCell(-1);
-            if (col[j] == "name") {
-                var url = location.origin + "/vm/" + myVmList[i][col[j]] + "/web-terminal";
-                tabCell.innerHTML = "<a href="+ url +">"+ myVmList[i][col[j]]+"</a>"
-            } else if (col[j] == "node") {
-                tabCell.innerHTML = myVmList[i][col[j]];
-            } else if (col[j] == "novnc") {
-                if (myVmList[i][col[j]]) {
-                    tabCell.innerHTML = "<a href=" + myVmList[i][col[j]] + ">link</a>"
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                loginas: "Not login yet",
+            },
+            mounted: function() {
+                var account = window.localStorage.getItem("account");
+                var token = window.localStorage.getItem("access_token");
+                if (!account || !token) {
+                    this.$refs.navibar.login()
                 } else {
-                    tabCell.innerHTML = ""
+                    this.loginas = "Login as " + account
+                }            
+            },
+            methods: {
+                updateLoginasHander(variable) {
+                    console.log("received login as " + variable)
+                    this.loginas = variable
                 }
-            } else if (col[j] == "portMap"){
-                var result = ""
-                for(var key in myVmList[i][col[j]]) {
-                    var value = myVmList[i][col[j]][key];
-                    result = result + key + "->" + value + "<br>"
-                }
-                tabCell.innerHTML = result
-            } else if (col[j] == "vnc"){
-                tabCell.innerHTML = myVmList[i][col[j]]["port"];
-            } else if (col[j] == "lifeTime"){
-                tabCell.innerHTML = myVmList[i][col[j]]/3600000000000 + "h";
-            } else if (col[j] == "rootPass"){
-                tabCell.innerHTML = "******"
-            } else if (col[j] == "action"){
-                tabCell.innerHTML = `
-                <form id="actionForm" action="/vm" onsubmit="event.preventDefault();return vmAction(this)">
-                   <select class="selection" name="action" style="width: 60%">
-                       <option value="start">start</option>
-                       <option value="shutdown">shutdown</option>
-                       <option value="reboot">reboot</option>
-                       <option value="delete">delete</option>
-                       <option value="extend">extend</option>
-                       <option value="expose-port">expose-port</option>
-                   </select>
-                   <button type="submit">Confirm</button>
-                  `+ '<input type="hidden" name="name"' + 'value=' + myVmList[i]["name"] + ' >'
-                + '</form>';
-            } else {
-                tabCell.innerHTML = myVmList[i][col[j]];
-            }
-        }
-    }
-
-    // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
-    var divContainer = document.getElementById("tableDiv");
-    divContainer.innerHTML = "";
-    divContainer.appendChild(table);
-}
-
-function vmAction(element) {
-    var form = $(element);
-    var loginInfo = getLoginInfo();
-    var token = loginInfo.token;
-    var action = form.serializeArray()[0].value;
-    var name = form.serializeArray()[1].value;
-    var url = form.attr('action') + "/" + name + "/"
-    var payload = ''
-    if (form.find(".selection").val() == "expose-port") {
-        url = url + "port/expose"
-        var portInput = prompt("Please enter the port to be exposed, format(22 or 22:tcp or 22:udp)");
-        if (portInput) {
-            var res = portInput.split(":")
-            if (res.length == 1) {
-                payload = 'port=' + res[0] + '&protocol=' + 'tcp'
-            } else if (res.length == 2) {
-                payload = 'port=' + res[0] + '&protocol=' + res[1]
-            } else {
-                alert("invalid port format")
-                return
-            }
-            console.log(payload)
-        } else {
-            return
-        }
-    } else {
-        url = url + action
-    }
-    $.blockUI({timeout:   8000});
-    $.ajax({
-        type: "POST",
-        url: url,
-        headers: {
-            "Authorization": "Bearer "+ token
-        },
-        data: payload,
-        error: function(data) {
-            console.log(data)
-            alert(data.status + ':' + data.statusText,data.responseText);
-        }
-    }).always(function() {
-        $.unblockUI();
-        btnAutoClick();
-    });
-}
-
-function btnAutoClick() {
-    var vmList = document.getElementById("vmListGenerate");
-    vmList.click();
-}
-
-$(document).ready(function(){
-    window.onload = loadAuth;
-
-    $("#vmCreateForm").submit(function(event) {
-        $.blockUI({timeout:   10000});
-        event.preventDefault(); //prevent default action
-        var postUrl = $(this).attr("action"); //get form action url
-	    var requestMethod = $(this).attr("method"); //get form GET/POST method
-	    var formData = $(this).serialize(); //Encode form elements for submiss
-        var loginInfo = getLoginInfo();
-        var token = loginInfo.token;
-        $.ajax({
-            type: requestMethod,
-            url: postUrl,
-            headers: {
-                "Authorization": "Bearer "+ token
-            },
-            async: false,
-            data: formData,
-            error: function(data) {
-                console.log(data)
-                alert(data.status + ':' + data.statusText,data.responseText);
-            }
-        }).always(function() {
-            $.unblockUI();
-            btnAutoClick();
-        });
-    })
-
-    $("#vmListGenerate").click(function(){ 
-        var loginInfo = getLoginInfo()
-        var token = loginInfo.token 
-        var baseurl = location.origin;
-        $.ajax({
-            //url: "http://127.0.0.1:8088/vm",
-            url: baseurl + "/vm",
-            headers: {
-                "Authorization": "Bearer "+ token
-            },
-            success: function(data){
-                console.log(data)
-                CreateVMTableFromJSON(data)
-            },
-            error: function(data){
-                alert(data.status + ':' + data.statusText,data.responseText);
-            },
-            type: 'GET'
-        });
-    });
-
-    $("#loginDiv .generate-password").click(function(){
-        var baseurl = location.origin;
-        var username = $('#loginDiv input[name="account"]').val()
-        $.ajax({
-            type: "POST",
-            url: baseurl + "/one-time-password?account=" + username,
-            error: function(data) {
-                console.log(data)
-                alert(data.status); // show response
             }
         })
-    })
-    $('#loginForm').submit(function(event) {
-        event.preventDefault(); // prevent PageReLoad
-        var baseurl = location.origin
-	    var form_data = $(this).serialize(); //Encode form elements for submiss
-        console.log(form_data)
-        $.ajax({
-            type: "POST",
-            url: baseurl + "/login",
-            data: form_data,
-            error: function(data) {
-                console.log(data)
-                alert(data.status); // show response
+        var vmApp = new Vue({
+            el: "#vmApp",
+            data: {
+                msg: "xxx",
+                hostname: "",
+                rootPass: "",
+                flavor: "small",
+                type: "centos7",
+                numbers: 1,
+                duration: 1,
+                vmList: [],
+                selected: [],
+		        selectAll: false
             },
-            success: function(data) {
-                console.log(data)
-                window.localStorage.setItem("access_token", data.access_token)
-                window.localStorage.setItem("account", $("#loginAccount").val())
-                document.getElementById('loginDiv').style.display = 'none'
-                document.getElementById("signBtn").innerText = "Sign out"
-                document.getElementById("accountName").innerText = $("#loginAccount").val()
+            mounted: function() {
+                this.getAllVm()
+            },
+            methods: {
+                getAllVm() {
+                    try {
+                        var loginInfo = getLoginInfo()
+                    } catch (e) {
+                        console.log(e)
+                        return
+                    }
+                    var token = loginInfo.token 
+                    var baseurl = location.origin;
+                    var that = this
+                    axios.get(baseurl + "/vm", {
+                        headers: {
+                            "Authorization": "Bearer "+ token
+                        },
+                    })
+                    .then(function (response) {
+                        console.log(response.data)
+                        that.convertVmList(response.data)
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                        if (error.response.status == 401) {
+                            vm.$refs.navibar.login()
+                        }
+                        alert(error.response.status); // show response
+                    });
+                },
+                convertVmList(vmList) {
+                    var that = this
+                    console.log("start convert vm list")
+                    vmList.forEach(vm => {
+                      //vm web terminal
+                      vm.orignName = vm.name
+                      var url = location.origin + "/vm/" + vm.name + "/web-terminal"
+                      vm.name = "<a href="+ url +">" + vm.name + "</a>"
+                      //novnc
+                      if (vm.novnc) {
+                        vm.novnc = "<a href=" + vm.novnc + ">link</a>"
+                      }
+                      //portmapping
+                      var result = ""
+                      for(var key in vm.portMap) {
+                        var value = vm.portMap[key];
+                        result = result + key + "->" + value + "<br>"
+                      }
+                      vm.portMap = result
+                      //vnc
+                      vm.vnc = vm.vnc["port"]
+                      //lifetime
+                      vm.lifeTime = vm.lifeTime/3600000000000 + "h"
+                    })
+                    console.log(vmList)
+                    that.vmList = vmList
+                },
+                vmAction(name, action) {
+                    var that = this
+                    try {
+                        var loginInfo = getLoginInfo()
+                    } catch (e) {
+                        console.log(e)
+                        //notify user to login
+                        vm.$refs.navibar.login()
+                    }
+                    var token = loginInfo.token;
+                    var baseurl = location.origin;
+                    var url = baseurl + "/vm/" + name + "/"
+                    var payload = {}
+                    if (action == "expose-port") {
+                        url = url + "port/expose"
+                        var portInput = prompt("Please enter the port to be exposed, format(22 or 22:tcp or 22:udp)");
+                        if (portInput) {
+                            var res = portInput.split(":")
+                            if (res.length == 1) {
+                                payload = 'port=' + res[0] + '&protocol=' + 'tcp'
+                            } else if (res.length == 2) {
+                                payload = 'port=' + res[0] + '&protocol=' + res[1]
+                            } else {
+                                alert("invalid port format")
+                                return
+                            }
+                            console.log(payload)
+                        } else {
+                            return
+                        }
+                    } else {
+                        url = url + action
+                    }
+                    $.blockUI({timeout:   8000})
+                    axios.post(url,
+                            payload,
+                            {
+                                headers: {
+                                    "Authorization": "Bearer "+ token
+                                },
+                            })
+                        .then(function (response) {
+                            console.log(response)
+                            $.unblockUI()
+                            that.getAllVm()
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                            $.unblockUI()
+                            if (error.response.status == 401) {
+                                vm.$refs.navibar.login()
+                            }
+                            alert(error.response.status); // show response
+                        });
+                },
+                vmDelete() {
+                    for (const item of this.selected) {
+                        this.vmAction(item, "delete")
+                    }
+                },
+                vmCreate() {
+                    var that = this
+                    try {
+                        var loginInfo = getLoginInfo()
+                    } catch (e) {
+                        console.log(e)
+                        //notify user to login
+                        vm.$refs.navibar.login()
+                    }
+                    var token = loginInfo.token;
+                    var baseurl = location.origin;
+                    var url = baseurl + "/vm"
+                    var payload = {
+                        "hostname": this.hostname,
+                        "rootPass": this.rootPass,
+                        "type": this.type,
+                        "flavor": this.flavor,
+                        "numbers": this.numbers,
+                        "duration": this.duration,
+                    }
+                    $.blockUI({timeout:   8000})
+                    axios.post(url,
+                            payload,
+                            {
+                                headers: {
+                                    "Authorization": "Bearer "+ token
+                                },
+                            })
+                        .then(function (response) {
+                            console.log(response)
+                            $.unblockUI()
+                            that.getAllVm()
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                            $.unblockUI()
+                            if (error.response.status == 401) {
+                                vm.$refs.navibar.login()
+                            }
+                            alert(error.response.status); // show response
+                        });
+                },
+                select() {
+			        this.selected = [];
+			        if (!this.selectAll) {
+			    	    for (let i in this.vmList) {
+				    	    this.selected.push(this.vmList[i].orignName);
+				        }
+			        }
+		        }
             }
         })
-    })
-    $('#signBtn').click(function() {
-        var text = document.getElementById("signBtn").innerText
-        if(text == "Sign in") {
-           document.getElementById('loginDiv').style.display='block'
-        } else {
-           window.localStorage.removeItem("access_token")
-           window.localStorage.removeItem("account")
-           document.getElementById("accountName").innerText = ""
-           document.getElementById("signBtn").innerText = "Sign in"
-        }
-    })
-});
-
-</script>
+    </script>
+</body>
 </html>
