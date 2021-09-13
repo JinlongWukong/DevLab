@@ -497,10 +497,9 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 		//binding vm and k8s
 		newK8s.HostVm = hostVm.Name
 		//make sure vm is active before k8s installation
-		var ipv4Addr net.IP
 		retry := 1
 		for retry <= vmStatusRetry {
-			ipv4Addr, _, err = net.ParseCIDR(hostVm.IpAddress)
+			_, _, err = net.ParseCIDR(hostVm.IpAddress)
 			if err == nil {
 				break
 			}
@@ -517,8 +516,14 @@ func CreateK8S(myAccount *account.Account, k8sRequest k8s.K8sRequest) error {
 		//task2: K8S installation
 		newK8s.SetStatus(k8s.K8sStatusInstalling)
 
+		hostNode := node.GetNodeByName(hostVm.Node)
+		if hostNode == nil {
+			log.Printf("Error: vm %v hosted node %v not found", hostVm.Name, hostVm.Node)
+			return
+		}
 		payload, _ := json.Marshal(map[string]interface{}{
-			"Ip":         ipv4Addr.String(),
+			"Ip":         hostNode.IpAddress,
+			"Port":       strings.Split(hostVm.PortMap[22], ":")[0],
 			"Pass":       hostVm.RootPass,
 			"User":       "root",
 			"Controller": newK8s.NumOfContronller,
