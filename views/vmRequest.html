@@ -162,8 +162,8 @@
                             <label for="osType" class="col-sm-2 control-label">OS type</label>
                             <div class="col-sm-10">
                               <select id="osType" class="form-control" v-model="type">
-                                <option>Centos7</option>
-                                <option>Ubunt18</option>
+                                <option value="centos7">Centos7</option>
+                                <option value="ubuntu18">Ubunt18</option>
                               </select>
                             </div>
                             <br>
@@ -362,7 +362,7 @@
                 hostname: "",
                 rootPass: "",
                 flavor: "small",
-                type: "Centos7",
+                type: "centos7",
                 numbers: 1,
                 duration: 1,
                 vmList: [],
