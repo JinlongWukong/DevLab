@@ -393,7 +393,7 @@
                         that.convertVmList(response.data)
                     })
                     .catch(function (error) {
-                        console.log(error.response);
+                        console.log(error);
                         if (error.response.status == 401) {
                             vm.$refs.navibar.login()
                         }
@@ -474,7 +474,7 @@
                             that.$refs.getAllVmInfo.click()
                         })
                         .catch(function (error) {
-                            console.log(error.response);
+                            console.log(error);
                             $.unblockUI()
                             if (error.response.status == 401) {
                                 vm.$refs.navibar.login()
@@ -521,7 +521,7 @@
                             that.$refs.getAllVmInfo.click()
                         })
                         .catch(function (error) {
-                            console.log(error.response);
+                            console.log(error);
                             $.unblockUI()
                             if (error.response.status == 401) {
                                 vm.$refs.navibar.login()
