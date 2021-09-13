@@ -2,316 +2,446 @@
 <html>
 <head>
     <title>K8S Operation</title>
-    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <style>
-    label {
-        width: 12%;
-        display: inline-block;
-    }
+        body {
+            background-color: white 
+        }
+        .center {
+            display: block;
+            margin-top: 12%;
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+        }
+        .modal {
+            text-align: center;
+            padding: 0!important;
+        }
 
-    label[for="one-day"], label[for="one-week"], label[for="two-week"], label[for="forever"] {
-        width: 5%;
-    }
-    
-    input[type=text], input[type=password], select {
-        width: 10%;
-        margin-top: 6px;
-        padding: 4px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        resize: vertical;
-    }
-    
-    input[type=radio]{
-        width: 1%;
-        margin-top: 6px;
-        padding: 4px;
-        border: 1px solid #ccc;
-        border-radius: 1px;
-        resize: vertical;
-    }
-    
-    input[type=submit] {
-        background-color: #4CAF50;
-        color: white;
-        padding: 10px 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    
-    input[type=submit]:hover {
-        background-color: #45a049;
-    }
+        .modal:before {
+            content: '';
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+            margin-right: -4px;
+        }
+
+        .modal-dialog {
+            display: inline-block;
+            text-align: left;
+            vertical-align: middle;
+        }
     </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+    <script src="http://malsup.github.io/jquery.blockUI.js"></script>
+    <script src="/scripts/bootstrap.min.js"></script>
+    <script src="/scripts/auth.js"></script>
+    <script src="/scripts/vue.min.js"></script>
 </head>
 
 <body>
-    <nav>
-        <a href="/">Home</a>
-        <a href="/vm-request">Virtual Machine</a>
-        <a href="/k8s-request">Kubernetes</a>
-        <a href="/saas-request">SaaS</a>
-        <a href="/admin">Administration</a>
-        <a href="https://github.com/JinlongWukong/DevLab#readme">Help</a>
-        <a> <button id="signBtn" style="width: auto;float: right; margin-left: 20px;">Sign in</button></a>
-        <a> <p id="accountName" style="width: auto;float: right; margin-top: 0px; color: red;"></p> </a>
-    </nav>
-    
-    <div class="k8sForm">
-    <form id="k8sCreateForm" action="/k8s" method="POST">
-        <br>
-        <label for="version">Select k8s version: </label>
-        <select name="version">
-            <option value="v1.21.1">v1.21.1</option>
-            <option value="v1.20.7">v1.20.7</option>
-            <option value="v1.19.11">v1.19.11</option>
-        </select>
-        <br>
-    
-        <label for="controller">Select controller numbers: </label>
-        <select name="numOfContronller">
-            <option value="1">1</option>
-        </select>
-        <br>
-    
-        <label for="worker">Select worker numbers: </label>
-        <select name="numOfWorker">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option selected value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-        </select>
-        <br>
-
-        <br>
-        <input type="submit"/>
-        <br>
-    </form>
+    <div id="app">
+        <navibar @updateloginas="updateLoginasHander" v-bind:loginas="loginas" ref="navibar"></navibar>
+        <login @updateloginas="updateLoginasHander"></login>
     </div>
 
-    <br>
-    <input type="button" class="button" id = "k8sListGenerate" value="K8S Info" />
-    <div>
-        <div id="tableDiv" style="margin-top: 20px">
-            <p>Click button to list all your k8s cluster here </p>
+    <template id='navibar'>
+        <nav class="navbar navbar-inverse navbar-fixed-top" style="background-color: #282A35; color: #f1f1f1; font-family: sans-serif; font-size: 17px;" role="navigation">
+            <div class="container-fluid">
+              <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" style="color: tomato; font-size: 20px;" href="#">DevLab</a>
+              </div>
+              <div class="collapse navbar-collapse" id="myNavbar">
+                <ul class="nav navbar-nav">
+                  <li><a href="/">Home</a></li>
+                  <li><a href="/vm-request">Virtual Machine</a></li>
+                  <li class="nav-item active"><a href="/k8s-request">Kubernetes</a></li>
+                  <li><a href="/saas-request">SaaS</a></li>
+                  <li><a href="/admin">Administration</a></li>
+                  <li><a href="https://github.com/JinlongWukong/DevLab#readme">Help</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                  <li><p id="accountLoggedID" class="navbar-text">{{ loginas }}</p></li>
+                  <li><a href="#" ref="openLogin" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                  <li><a href="#" v-on:click="logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                </ul>
+              </div><!-- /.navbar-collapse -->
+            </div>
+        </nav>
+    </template>
+
+    <template id='login'>
+        <!-- Modal -->
+        <div class="modal fade" id="myModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Welcome to DevLab</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                            <input type="text" class="form-control form-control-md" v-model="accountName" placeholder="AccountName"/>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                            <input type="password" class="form-control form-control-md" v-model="accountPass" placeholder="Password"/>
+                          </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-md btn-block" v-on:click="login">Login</button>
+                        <button type="button" class="btn btn-info btn-md btn-block" v-on:click="generatePassword">Generate One-time Password</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal" ref="closeModal">Close</button>
+                </div>
+              </div>
+            </div>
         </div>
+    </template>
+
+    <br><br><br><br>
+    <div id="k8sApp">
+        <div class="page-header text-info" style="margin-left: 10px;">
+            <h4>Kubernetes Table</h4>
+        </div>
+        <!--div class="well">Kubernetes Table</div-->
+        <div class="btn-group pull-right" role="group" aria-label="...">
+            <button type="button" class="btn btn-info" style="width: 60px" ref="getAllK8sInfo" data-toggle="tooltip" title="Refresh all k8s cluster" v-on:click="getAllk8s">
+                <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+              </button>
+            <!--a href="#" v-on:click="getAllk8s"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a-->
+            <button type="button" class="btn btn-primary" style="width: 60px" data-toggle="modal" data-target="#k8sModal" data-toggle="tooltip" title="Create new k8s cluster">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+            </button>
+            <!--a href="#"><span class="glyphicon glyphicon-plus"></span></a-->
+            <button type="button" class="btn btn-danger" style="width: 60px" data-toggle="tooltip" title="Delete selected k8s cluster" @click="k8sDelete">
+                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+            </button>
+            <!--a href="#"><span class="glyphicon glyphicon-trash"></span></a-->
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="k8sModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">K8S Input Memu</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="version" class="col-sm-4 control-label">Version</label>
+                            <div class="col-sm-8">
+                              <select id="version" class="form-control" v-model="version">
+                                <option>v1.21.1</option>
+                                <option>v1.20.7</option>
+                                <option>v1.19.11</option>
+                              </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="controllerNum" class="col-sm-4 control-label">Master number</label>
+                            <div class="col-sm-8">
+                              <select id="controllerNum" class="form-control" v-model="controllerNum">
+                                <option>1</option>
+                              </select>
+                            </div>
+                            <br>
+                            <br>
+                            <label for="workerNum" class="col-sm-4 control-label">Worker number</label>
+                            <div class="col-sm-8">
+                                <select id="workerNum" class="form-control" v-model.number="workerNum">
+                                  <option>1</option>
+                                  <option>2</option>
+                                  <option>3</option>
+                                  <option>4</option>
+                                  <option>5</option>
+                                </select>
+                            </div>
+                            <br>
+                            <br>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary btn-md" data-dismiss="modal" v-on:click="k8sCreate">Submit</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        <table class="table table-hover table-striped">
+            <thead>
+              <tr>
+                <th>
+                    <label class="form-checkbox">
+                    <input type="checkbox" v-model="selectAll" @click="select">
+                    <i class="form-icon"></i>
+                    </label>
+                </th>
+                <th>Name</th>
+                <th>Version</th>
+                <th>NumOfContronller</th>
+                <th>NumOfWorker</th>
+                <th>LifeTime</th>
+                <th>Status</th>
+                <th>HostVm</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="k8s in k8sList" :key="k8s.name">
+                  <td>
+                    <label class="form-checkbox">
+                      <input type="checkbox" :value="k8s.orignName" v-model="selected">
+                      <vm class="form-icon"></vm>
+                    </label>
+                  </td>
+                  <td v-html="k8s.name"></td>
+                  <td>{{k8s.version}}</td>
+                  <td>{{k8s.numOfContronller}}</td>
+                  <td>{{k8s.numOfWorker}}</td>
+                  <td>{{k8s.lifeTime}}</td>
+                  <td>{{k8s.status}}</td>
+                  <td>{{k8s.hostVm}}</td>
+              </tr>
+            </tbody>
+        </table>
     </div>
+    <script>
+        Vue.component('navibar', {
+            props: ['loginas'],
+            template: '#navibar',
+            methods: {
+                login() {
+                    this.$refs.openLogin.click()
+                },
+                logout() {
+                    window.localStorage.removeItem("access_token")
+                    window.localStorage.removeItem("account")
+                    this.$emit('updateloginas', "Not login yet")
+                },
+            }
+        })
 
-    <div id="loginDiv" class="modal">
-        <form id="loginForm" class="modal-content animate">
-          <div class="container">
-            <label for="account"><b>Account</b></label>
-            <input id="loginAccount" type="text" placeholder="Enter account" name="account" required>
-      
-            <label for="password"><b>Password</b></label>
-            <input id="loginPass" type="password" placeholder="Enter Password" name="password" required>
-              
-            <button type="submit">Login</button>
-            <button class="generate-password" type="button">Generate one-time password</button>
-          </div>
-      
-          <div class="container" style="background-color:#f1f1f1">
-            <button type="button" onclick="document.getElementById('loginDiv').style.display='none'" class="cancelbtn">Cancel</button>
-          </div>
-        </form>
-    </div>    
+        Vue.component('login', {
+            data: function () {
+                return {
+                    accountName: "",
+                    accountPass: "",
+                }
+            },
+            template: '#login',
+            methods: {
+                generatePassword() {
+                    var baseurl = location.origin;
+                    console.log(this.accountName)
+                    axios.post(baseurl + "/one-time-password?account=" + this.accountName)
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            console.log(error.response);
+                            alert(error.response.status); // show response
+                        });
+                },
+                login() {
+                    var baseurl = location.origin;
+                    var that = this
+                    axios.post(baseurl + "/login", {
+                            account: this.accountName,
+                            password: this.accountPass
+                        })
+                        .then(function (response) {
+                            console.log(that.accountName)
+                            window.localStorage.setItem("access_token", response.data.access_token)
+                            window.localStorage.setItem("account", that.accountName)
+                            that.$emit('updateloginas', "Login as " + that.accountName)
+                            that.$refs.closeModal.click()
+                        })
+                        .catch(function (error) {
+                            console.log(error.response);
+                            alert(error.response.status); // show response
+                        });
+                }
+            }
+        })
+
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                loginas: "Not login yet",
+            },
+            mounted: function() {
+                var account = window.localStorage.getItem("account");
+                var token = window.localStorage.getItem("access_token");
+                if (!account || !token) {
+                    this.$refs.navibar.login()
+                } else {
+                    this.loginas = "Login as " + account
+                }            
+            },
+            methods: {
+                updateLoginasHander(variable) {
+                    console.log("received login as " + variable)
+                    this.loginas = variable
+                }
+            }
+        })
+        var k8sApp = new Vue({
+            el: "#k8sApp",
+            data: {
+                version: "v1.21.1",
+                controllerNum: 1,
+                workerNum: 3,
+                k8sList: [],
+                selected: [],
+		        selectAll: false
+            },
+            mounted: function() {
+                this.getAllk8s()
+            },
+            methods: {
+                getAllk8s() {
+                    try {
+                        var loginInfo = getLoginInfo()
+                    } catch (e) {
+                        console.log(e)
+                        return
+                    }
+                    var token = loginInfo.token 
+                    var baseurl = location.origin;
+                    var that = this
+                    axios.get(baseurl + "/k8s", {
+                        headers: {
+                            "Authorization": "Bearer "+ token
+                        },
+                    })
+                    .then(function (response) {
+                        console.log(response.data)
+                        that.convertK8sList(response.data)
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+                        if (error.response.status == 401) {
+                            vm.$refs.navibar.login()
+                        }
+                        alert(error.response.status); // show response
+                    });
+                },
+                convertK8sList(k8sList) {
+                    var that = this
+                    console.log("start convert k8s list")
+                    k8sList.forEach(k8s => {
+                      //vm web terminal
+                      k8s.orignName = k8s.name
+                      var url = location.origin + "/vm/" + k8s.hostVm + "/web-terminal"
+                      k8s.name = "<a href="+ url +">" + k8s.orignName + "</a>"
+                    })
+                    console.log(k8sList)
+                    that.k8sList = k8sList
+                },
+                k8sDelete() {
+                    var that = this
+                    try {
+                        var loginInfo = getLoginInfo()
+                    } catch (e) {
+                        console.log(e)
+                        //notify user to login
+                        vm.$refs.navibar.login()
+                    }
+                    var token = loginInfo.token;
+                    var baseurl = location.origin;
+                    for (const item of this.selected) {
+                        url = baseurl + "/k8s/" + item
+                        $.blockUI({timeout:   8000})
+                        axios.delete(url,
+                            {
+                                headers: {
+                                    "Authorization": "Bearer "+ token
+                                },
+                            })
+                        .then(function (response) {
+                            console.log(response)
+                            console.log("xxxx")
+                            $.unblockUI()
+                            that.$refs.getAllK8sInfo.click()
+                        })
+                        .catch(function (error) {
+                            console.log(error)
+                            $.unblockUI()
+                            if (error.response.status == 401) {
+                                vm.$refs.navibar.login()
+                            }
+                            alert(error.response.status); // show response
+                        });
+                    }
+                },
+                k8sCreate() {
+                    var that = this
+                    try {
+                        var loginInfo = getLoginInfo()
+                    } catch (e) {
+                        console.log(e)
+                        //notify user to login
+                        vm.$refs.navibar.login()
+                    }
+                    var token = loginInfo.token;
+                    var baseurl = location.origin;
+                    var url = baseurl + "/k8s"
+                    var payload = {
+                        "version": this.version,
+                        "numOfContronller": this.controllerNum,
+                        "numOfWorker": this.workerNum,
+                    }
+                    $.blockUI({timeout:   8000})
+                    axios.post(url,
+                            payload,
+                            {
+                                headers: {
+                                    "Authorization": "Bearer "+ token
+                                },
+                            })
+                        .then(function (response) {
+                            console.log(response)
+                            $.unblockUI()
+                            that.$refs.getAllK8sInfo.click()
+                        })
+                        .catch(function (error) {
+                            console.log(error)
+                            $.unblockUI()
+                            if (error.response.status == 401) {
+                                vm.$refs.navibar.login()
+                            }
+                            alert(error.response.status); // show response
+                        });
+                },
+                select() {
+			        this.selected = [];
+			        if (!this.selectAll) {
+			    	    for (let i in this.k8sList) {
+				    	    this.selected.push(this.k8sList[i].orignName);
+				        }
+			        }
+		        }
+            }
+        })
+    </script>
 </body>
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<script src="http://malsup.github.io/jquery.blockUI.js"></script>
-<script src="/scripts/auth.js"></script>
-<script>
-
-function CreateK8STableFromJSON(myK8sList) {
-    //var myK8sList = [ { name: jinlliu-k8s-1, version: v1.21.1, numOfContronller: 1, numOfWorker: 3, lifeTime: 365, status: running, hostVm: jinlliu-2 } ]
-
-    // EXTRACT VALUE FOR HTML HEADER. 
-    var col = [];
-    for (var i = 0; i < myK8sList.length; i++) {
-        for (var key in myK8sList[i]) {
-            if (col.indexOf(key) === -1) {
-                col.push(key);
-            }
-        }
-    }
-
-    // ADD NEW COL, DEFINE ACTION
-    if (myK8sList.length > 0) {
-        col.push("action")
-    }
-
-    // CREATE DYNAMIC TABLE.
-    var table = document.createElement("table");
-
-    // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
-
-    var tr = table.insertRow(-1);                   // TABLE ROW.
-
-    for (var i = 0; i < col.length; i++) {
-        var th = document.createElement("th");      // TABLE HEADER.
-        th.innerHTML = col[i];
-        tr.appendChild(th);
-    }
-
-    // ADD JSON DATA TO THE TABLE AS ROWS.
-    for (var i = 0; i < myK8sList.length; i++) {
-
-        tr = table.insertRow(-1);
-
-        for (var j = 0; j < col.length; j++) {
-            var tabCell = tr.insertCell(-1);
-            if (col[j] == "hostVm") {
-                var url = location.origin + "/vm/" + myK8sList[i][col[j]] + "/web-terminal";
-                tabCell.innerHTML = "<a href="+ url +">"+ myK8sList[i][col[j]]+"</a>"
-            } else if (col[j] == "action"){
-                tabCell.innerHTML = `
-                <form id="actionForm" action="/k8s" onsubmit="event.preventDefault();return k8sDelete(this)">
-                   <button type="submit">Delete</button>
-                  `+ '<input type="hidden" name="name"' + 'value=' + myK8sList[i]["name"] + ' >'
-                + '</form>';
-            } else {
-                tabCell.innerHTML = myK8sList[i][col[j]];
-            }
-        }
-    }
-
-    // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
-    var divContainer = document.getElementById("tableDiv");
-    divContainer.innerHTML = "";
-    divContainer.appendChild(table);
-}
-
-function k8sDelete(element) {
-    var form = $(element);
-    var url = form.attr('action');
-    var loginInfo = getLoginInfo();
-    var token = loginInfo.token;
-    var requestMethod = 'DELETE';
-    var name = form.serializeArray()[0].value;
-    $.blockUI({timeout:   8000});
-    $.ajax({
-        type: requestMethod,
-        headers: {
-            "Authorization": "Bearer "+ token +""
-        },
-        url: url + '/' + name,
-        error: function(data) {
-            console.log(data)
-            alert(data.status); // show response
-        }
-    }).always(function() {
-        $.unblockUI();
-        btnAutoClick();
-    });
-}
-
-function btnAutoClick() {
-    var k8sList = document.getElementById("k8sListGenerate");
-    k8sList.click();
-}
-
-$(document).ready(function(){
-    window.onload = loadAuth;
-
-    $("#k8sCreateForm").submit(function(event) {
-        $.blockUI({timeout:   10000});
-        event.preventDefault(); //prevent default action
-        var post_url = $(this).attr("action"); //get form action url
-	    var requestMethod = $(this).attr("method"); //get form GET/POST method
-	    var form_data = $(this).serialize(); //Encode form elements for submiss
-        var loginInfo = getLoginInfo();
-        var token = loginInfo.token;
-        $.ajax({
-            type: requestMethod,
-            url: post_url,
-            headers: {
-                "Authorization": "Bearer "+ token +""
-            },
-            async: false,
-            data: form_data,
-            error: function(data) {
-                console.log(data)
-                alert(data.status); // show response
-            }
-        }).always(function() {
-            $.unblockUI();
-            btnAutoClick();
-        });
-    })
-
-    $("#k8sListGenerate").click(function(){ 
-        var loginInfo = getLoginInfo()
-        var token = loginInfo.token 
-        var baseurl = location.origin;
-        $.ajax({
-            //url: "http://127.0.0.1:8088/k8s",
-            url: baseurl + "/k8s",
-            headers: {
-                "Authorization": "Bearer "+ token +""
-            },
-            success: function(data){
-                console.log(data)
-                CreateK8STableFromJSON(data)
-            },
-            error: function(data){
-                alert(data.status + ':' + data.statusText,data.responseText);
-            },
-            type: 'GET'
-        });
-    });
-
-    $("#loginDiv .generate-password").click(function(){
-        var baseurl = location.origin;
-        var username = $('#loginDiv input[name="account"]').val()
-        $.ajax({
-            type: "POST",
-            url: baseurl + "/one-time-password?account=" + username,
-            error: function(data) {
-                console.log(data)
-                alert(data.status); // show response
-            }
-        })
-    })
-    $('#loginForm').submit(function(event) {
-        event.preventDefault(); // prevent PageReLoad
-        var baseurl = location.origin
-	    var form_data = $(this).serialize(); //Encode form elements for submiss
-        console.log(form_data)
-        $.ajax({
-            type: "POST",
-            url: baseurl + "/login",
-            data: form_data,
-            error: function(data) {
-                console.log(data)
-                alert(data.status); // show response
-            },
-            success: function(data) {
-                console.log(data)
-                window.localStorage.setItem("access_token", data.access_token)
-                window.localStorage.setItem("account", $("#loginAccount").val())
-                document.getElementById('loginDiv').style.display = 'none'
-                document.getElementById("signBtn").innerText = "Sign out"
-                document.getElementById("accountName").innerText = $("#loginAccount").val()
-            }
-        })
-    })
-    $('#signBtn').click(function() {
-        var text = document.getElementById("signBtn").innerText
-        if(text == "Sign in") {
-           document.getElementById('loginDiv').style.display='block'
-        } else {
-           window.localStorage.removeItem("access_token")
-           window.localStorage.removeItem("account")
-           document.getElementById("accountName").innerText = ""
-           document.getElementById("signBtn").innerText = "Sign in"
-        }
-    })
-});
-
-</script>
 </html>
