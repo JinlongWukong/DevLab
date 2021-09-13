@@ -28,7 +28,7 @@ func (m *AccountMap) Add(accountRequest AccountRequest) error {
 	if _, exists := m.Map[accountRequest.Name]; exists {
 		return fmt.Errorf("account already existed")
 	} else {
-		if ac, err := newAccount(accountRequest); err != nil {
+		if ac, err := newAccount(accountRequest); err == nil {
 			m.Map[accountRequest.Name] = ac
 		} else {
 			return err
