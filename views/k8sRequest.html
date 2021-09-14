@@ -206,7 +206,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="k8s in k8sList" :key="k8s.name" :class="k8s.color">
+              <tr v-for="k8s in k8sList" :key="k8s.orignName" :class="k8s.color">
                   <td>
                     <label class="form-checkbox">
                       <input type="checkbox" :value="k8s.orignName" v-model="selected">

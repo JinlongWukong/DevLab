@@ -233,7 +233,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="saas in saasList" :key="saas.name" v-bind:class="saas.color">
+              <tr v-for="saas in saasList" :key="saas.orignName" v-bind:class="saas.color">
                   <td>
                     <label class="form-checkbox">
                       <input type="checkbox" :value="saas.orignName" v-model="selected">
