@@ -215,7 +215,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="node in nodeList" :key="node.name">
+              <tr v-for="node in nodeList" :key="node.name" :class="node.color">
                   <td>
                     <label class="form-checkbox">
                       <input type="checkbox" :value="node.name" v-model="selected">
@@ -430,6 +430,7 @@
                 nodeRole: "compute",
                 nodeList: [],
                 selected: [],
+                nodeStatus: "info",
 		        selectAll: false
             },
             mounted: function() {
@@ -474,6 +475,21 @@
                         result = result + key + "->" + value + "<br>"
                       }
                       node.portMap = result
+                      //add color
+                      switch(node.status) {
+                        case 'overload':
+                          node.color = "warning"
+                          break
+                        case 'unhealth':
+                          node.color = "danger"
+                          break
+                        case 'failed':
+                          node.color = "danger"
+                          break
+                        case 'ready':
+                        default:
+                          node.color = "default"
+                      }
                     })
                     console.log(nodeList)
                     that.nodeList = nodeList

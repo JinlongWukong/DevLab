@@ -206,7 +206,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="k8s in k8sList" :key="k8s.name">
+              <tr v-for="k8s in k8sList" :key="k8s.name" :class="k8s.color">
                   <td>
                     <label class="form-checkbox">
                       <input type="checkbox" :value="k8s.orignName" v-model="selected">
@@ -353,6 +353,19 @@
                       k8s.orignName = k8s.name
                       var url = location.origin + "/vm/" + k8s.hostVm + "/web-terminal"
                       k8s.name = "<a href="+ url +">" + k8s.orignName + "</a>"
+                      //add color
+                      switch(k8s.status) {
+                        case 'deleting':
+                          k8s.color = "warning"
+                          break
+                        case 'bootvmFailed':
+                        case 'installFailed':
+                          k8s.color = "danger"
+                          break
+                        case 'running':
+                        default:
+                          k8s.color = "default"
+                      }
                     })
                     console.log(k8sList)
                     that.k8sList = k8sList

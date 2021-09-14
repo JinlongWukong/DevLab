@@ -126,7 +126,7 @@
                 <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
               </button>
             <!--a href="#" v-on:click="getAllVm"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a-->
-            <button type="button" class="btn btn-primary" style="width: 60px" data-toggle="modal" data-target="#vmModal" data-toggle="tooltip" title="Create mew VM">
+            <button type="button" class="btn btn-primary" style="width: 60px" data-toggle="modal" data-target="#vmModal" data-toggle="tooltip" title="Create new VM">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
             </button>
             <!--a href="#"><span class="glyphicon glyphicon-plus"></span></a-->
@@ -236,7 +236,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="vm in vmList" :key="vm.orignName">
+              <tr v-for="vm in vmList" :key="vm.orignName" :class="vm.color">
                   <td>
                     <label class="form-checkbox">
                       <input type="checkbox" :value="vm.orignName" v-model="selected">
@@ -423,6 +423,21 @@
                       vm.vnc = vm.vnc["port"]
                       //lifetime
                       vm.lifeTime = vm.lifeTime/3600000000000 + "h"
+                      //add color
+                      switch(vm.status) {
+                        case 'deleting':
+                        case 'deleted':
+                          vm.color = "warning"
+                          break
+                        case 'init':
+                        case 'scheduled':
+                        case 'creating':
+                        case 'running':
+                          vm.color = "default"
+                          break
+                        default:
+                          vm.color = "danger"
+                      }
                     })
                     console.log(vmList)
                     that.vmList = vmList

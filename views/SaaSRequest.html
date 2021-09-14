@@ -233,7 +233,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="saas in saasList" :key="saas.name">
+              <tr v-for="saas in saasList" :key="saas.name" v-bind:class="saas.color">
                   <td>
                     <label class="form-checkbox">
                       <input type="checkbox" :value="saas.orignName" v-model="selected">
@@ -413,6 +413,23 @@
                         additional_result = additional_result + key + "->" + value + "<br>"
                       }
                       saas.additional_infor = additional_result
+                      //add color
+                      switch(saas.status) {
+                        case 'stopped':
+                        case 'unknown':
+                        case 'deleting':
+                          saas.color = "warning"
+                          break
+                        case 'bootvmFailed':
+                        case 'installFailed':
+                        case 'error':
+                        case 'notFound':
+                          saas.color = "danger"
+                          break
+                        case 'running':
+                        default:
+                          saas.color = "default"
+                      }
                     })
                     console.log(saasList)
                     that.saasList = saasList
