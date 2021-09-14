@@ -14,6 +14,7 @@ COPY --from=builder /go/src/devlab/config.ini .
 COPY --from=builder /go/src/devlab/views/*.html ./views/
 COPY --from=builder /go/src/devlab/views/image/ ./views/image/
 COPY --from=builder /go/src/devlab/views/css/ ./views/css/
+COPY --from=builder /go/src/devlab/views/fonts/ ./views/fonts/
 COPY --from=builder /go/src/devlab/views/scripts/ ./views/scripts/
 RUN mkdir .db/
 EXPOSE 8088
