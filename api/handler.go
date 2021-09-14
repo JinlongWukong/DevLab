@@ -32,6 +32,14 @@ func AdminHandler(c *gin.Context) {
 	c.HTML(200, "admin.html", nil)
 }
 
+func AdminNodeHandler(c *gin.Context) {
+	c.HTML(200, "adminNode.html", nil)
+}
+
+func AdminAccountHandler(c *gin.Context) {
+	c.HTML(200, "adminAccount.html", nil)
+}
+
 // Todo Page
 func ToDoHandler(c *gin.Context) {
 	c.JSON(200, "not implemented yet")

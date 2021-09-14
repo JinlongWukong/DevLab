@@ -1,46 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>K8S Operation</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
-    <style>
-        body {
-            background-color: white 
-        }
-        .center {
-            display: block;
-            margin-top: 12%;
-            margin-left: auto;
-            margin-right: auto;
-            width: 50%;
-        }
-        .modal {
-            text-align: center;
-            padding: 0!important;
-        }
-
-        .modal:before {
-            content: '';
-            display: inline-block;
-            height: 100%;
-            vertical-align: middle;
-            margin-right: -4px;
-        }
-
-        .modal-dialog {
-            display: inline-block;
-            text-align: left;
-            vertical-align: middle;
-        }
-    </style>
-    <script src="/scripts/jquery.min.js"></script>
-    <script src="/scripts/axios.min.js"></script>
-    <script src="/scripts/jquery.blockUI.js"></script>
-    <script src="/scripts/bootstrap.min.js"></script>
-    <script src="/scripts/auth.js"></script>
-    <script src="/scripts/vue.min.js"></script>
+    <head>
+        <title>Administration</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+        <style>
+            body {
+                background-color: white 
+            }
+            .center {
+                display: block;
+                margin-top: 12%;
+                margin-left: auto;
+                margin-right: auto;
+                width: 50%;
+            }
+            .modal {
+                text-align: center;
+                padding: 0!important;
+            }
+    
+            .modal:before {
+                content: '';
+                display: inline-block;
+                height: 100%;
+                vertical-align: middle;
+                margin-right: -4px;
+            }
+    
+            .modal-dialog {
+                display: inline-block;
+                text-align: left;
+                vertical-align: middle;
+            }
+        </style>
+        <script src="/scripts/jquery.min.js"></script>
+        <script src="/scripts/axios.min.js"></script>
+        <script src="/scripts/jquery.blockUI.js"></script>
+        <script src="/scripts/bootstrap.min.js"></script>
+        <script src="/scripts/auth.js"></script>
+        <script src="/scripts/vue.min.js"></script>
+    </head>
 </head>
 
 <body>
@@ -64,9 +66,10 @@
                 <ul class="nav navbar-nav">
                   <li><a href="/">Home</a></li>
                   <li><a href="/vm-request">Virtual Machine</a></li>
-                  <li class="nav-item active"><a href="/k8s-request">Kubernetes</a></li>
+                  <li><a href="/k8s-request">Kubernetes</a></li>
                   <li><a href="/saas-request">SaaS</a></li>
-                  <li class="dropdown">
+                  <li class="nav-item active dropdown">
+                    <!--a href="/admin">Administration</a-->
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">Administration<span class="caret"></span></a>
                     <ul class="dropdown-menu">
                         <li><a href="/admin-node">Node Management</a></li>
@@ -121,79 +124,78 @@
         </div>
     </template>
 
-    <br><br><br><br>
-    <div id="k8sApp">
+    <br><br><br>
+    <div id="nodeApp">
         <div class="page-header text-info" style="margin-left: 10px;">
-            <h4>Kubernetes Table</h4>
+            <h4>Node Table</h4>
         </div>
-        <!--div class="well">Kubernetes Table</div-->
+        <!--div class="well">Node Table</div-->
         <div class="btn-group pull-right" role="group" aria-label="...">
-            <button type="button" class="btn btn-info" style="width: 60px" ref="getAllK8sInfo" data-toggle="tooltip" title="Refresh all k8s cluster" v-on:click="getAllk8s">
+            <button type="button" class="btn btn-info" style="width: 60px" ref="getAllNodeInfo" data-toggle="tooltip" title="Refresh all nodes" v-on:click="getAllNode">
                 <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
               </button>
-            <!--a href="#" v-on:click="getAllk8s"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a-->
-            <button type="button" class="btn btn-primary" style="width: 60px" data-toggle="modal" data-target="#k8sModal" data-toggle="tooltip" title="Create new k8s cluster">
+            <!--a href="#" v-on:click="getAllNode"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a-->
+            <button type="button" class="btn btn-primary" style="width: 60px" data-toggle="modal" data-target="#NodeModal" data-toggle="tooltip" title="Create new node">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
             </button>
             <!--a href="#"><span class="glyphicon glyphicon-plus"></span></a-->
-            <button type="button" class="btn btn-danger" style="width: 60px" data-toggle="tooltip" title="Delete selected k8s cluster" @click="k8sDelete">
+            <button type="button" class="btn btn-danger" style="width: 60px" data-toggle="tooltip" title="Delete selected node" @click="nodeDelete">
                 <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
             </button>
             <!--a href="#"><span class="glyphicon glyphicon-trash"></span></a-->
         </div>
         <!-- Modal -->
-        <div class="modal fade" id="k8sModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal fade" id="NodeModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
               <!-- Modal content-->
               <div class="modal-content">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal">&times;</button>
-                  <h4 class="modal-title">K8S Input Memu</h4>
+                  <h4 class="modal-title">Node Input Memu</h4>
                 </div>
                 <div class="modal-body">
                     <form>
                         <div class="form-group">
-                            <label for="version" class="col-sm-4 control-label">Version</label>
-                            <div class="col-sm-8">
-                              <select id="version" class="form-control" v-model="version">
-                                <option>v1.21.1</option>
-                                <option>v1.20.7</option>
-                                <option>v1.19.11</option>
-                              </select>
+                            <label for="NodeName" class="col-sm-3 control-label">Node name</label>
+                            <div class="col-sm-9">
+                                <input class="form-control" id="NodeName" v-model="nodeName" type="text" placeholder="Enter your node name here...">
                             </div>
                             <br>
                             <br>
-                            <label for="controllerNum" class="col-sm-4 control-label">Master number</label>
-                            <div class="col-sm-8">
-                              <select id="controllerNum" class="form-control" v-model="controllerNum">
-                                <option>1</option>
-                              </select>
+                            <label for="userName" class="col-sm-3 control-label">User name</label>
+                            <div class="col-sm-9">
+                                <input class="form-control" id="userName" v-model="userName" type="text" placeholder="root">
                             </div>
                             <br>
                             <br>
-                            <label for="workerNum" class="col-sm-4 control-label">Worker number</label>
-                            <div class="col-sm-8">
-                                <select id="workerNum" class="form-control" v-model.number="workerNum">
-                                  <option>1</option>
-                                  <option>2</option>
-                                  <option>3</option>
-                                  <option>4</option>
-                                  <option>5</option>
-                                </select>
+                            <label for="Passord" class="col-sm-3 control-label">Password</label>
+                            <div class="col-sm-9">
+                                <input class="form-control" id="Passord" v-model="password" type="text" placeholder="Enter your node password here...">
                             </div>
                             <br>
                             <br>
+                            <label for="Address" class="col-sm-3 control-label">Address</label>
+                            <div class="col-sm-9">
+                                <input class="form-control" id="Address" v-model="address" type="text" placeholder="Enter your node address here...">
+                            </div>
+                            <br>
+                            <br>
+                            <label for="Role" class="col-sm-3 control-label">Role</label>
+                            <div class="col-sm-9">
+                                <label class="radio-inline"><input type="radio" value="compute" v-model="nodeRole" name="optradio" checked>Compute</label>
+                                <label class="radio-inline"><input type="radio" value="container" v-model="nodeRole" name="optradio">Container</label>
+                            </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                  <button type="submit" class="btn btn-primary btn-md" data-dismiss="modal" v-on:click="k8sCreate">Submit</button>
+                  <button type="submit" class="btn btn-primary btn-md" data-dismiss="modal" v-on:click="nodeCreate">Submit</button>
                   <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
               </div>
             </div>
         </div>
-        <table class="table table-hover table-striped">
+        <table class="table table-hover table-striped table-bordered">
             <thead>
               <tr>
                 <th>
@@ -203,33 +205,61 @@
                     </label>
                 </th>
                 <th>Name</th>
-                <th>Version</th>
-                <th>NumOfContronller</th>
-                <th>NumOfWorker</th>
-                <th>LifeTime</th>
+                <th>Address</th>
+                <th>Role</th>
+                <th>OS Type</th>
+                <th>Subnet</th>
+                <th>CPU</th>
+                <th>Memory</th>
+                <th>Disk</th>
+                <th>CPU Used</th>
+                <th>Memory Used</th>
+                <th>Disk Used</th>
+                <th>PortMapping</th>
                 <th>Status</th>
-                <th>HostVm</th>
+                <th>State</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="k8s in k8sList" :key="k8s.orignName" :class="k8s.color">
+              <tr v-for="node in nodeList" :key="node.name" :class="node.color">
                   <td>
                     <label class="form-checkbox">
-                      <input type="checkbox" :value="k8s.orignName" v-model="selected">
+                      <input type="checkbox" :value="node.name" v-model="selected">
                       <vm class="form-icon"></vm>
                     </label>
                   </td>
-                  <td v-html="k8s.name"></td>
-                  <td>{{k8s.version}}</td>
-                  <td>{{k8s.numOfContronller}}</td>
-                  <td>{{k8s.numOfWorker}}</td>
-                  <td>{{k8s.lifeTime}}</td>
-                  <td>{{k8s.status}}</td>
-                  <td>{{k8s.hostVm}}</td>
+                  <td>{{node.name}}</td>
+                  <td>{{node.address}}</td>
+                  <td>{{node.role}}</td>
+                  <td>{{node.os}}</td>
+                  <td>{{node.subnet}}</td>
+                  <td>{{node.cpu}}</td>
+                  <td>{{node.memory}}</td>
+                  <td>{{node.disk}}</td>
+                  <td>{{node.cpuUsed}}</td>
+                  <td>{{node.memUsed}}</td>
+                  <td>{{node.diskUsed}}</td>
+                  <td v-html="node.portMap"></td>
+                  <td>{{node.status}}</td>
+                  <td>{{node.state}}</td>
+                  <td>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-success" @click="nodeAction(node.name, 'enable')">enable</button>
+                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                          <li><a href="#" @click="nodeAction(node.name, 'disable')">disable</a></li>
+                          <li><a href="#" @click="nodeAction(node.name, 'remove')">remove</a></li>
+                        </ul>
+                      </div>
+                  </td>
               </tr>
             </tbody>
         </table>
     </div>
+
     <script>
         Vue.component('navibar', {
             props: ['loginas'],
@@ -310,21 +340,25 @@
                 }
             }
         })
-        var k8sApp = new Vue({
-            el: "#k8sApp",
+
+        var nodeApp = new Vue({
+            el: "#nodeApp",
             data: {
-                version: "v1.21.1",
-                controllerNum: 1,
-                workerNum: 3,
-                k8sList: [],
+                nodeName: "",
+                userName: "root",
+                password: "",
+                address: "",
+                nodeRole: "compute",
+                nodeList: [],
                 selected: [],
+                nodeStatus: "info",
 		        selectAll: false
             },
             mounted: function() {
-                this.getAllk8s()
+                this.getAllNode()
             },
             methods: {
-                getAllk8s() {
+                getAllNode() {
                     try {
                         var loginInfo = getLoginInfo()
                     } catch (e) {
@@ -334,14 +368,14 @@
                     var token = loginInfo.token 
                     var baseurl = location.origin;
                     var that = this
-                    axios.get(baseurl + "/k8s", {
+                    axios.get(baseurl + "/node", {
                         headers: {
                             "Authorization": "Bearer "+ token
                         },
                     })
                     .then(function (response) {
                         console.log(response.data)
-                        that.convertK8sList(response.data)
+                        that.convertNodeList(response.data)
                     })
                     .catch(function (error) {
                         console.log(error)
@@ -351,32 +385,37 @@
                         alert(error.response.status); // show response
                     });
                 },
-                convertK8sList(k8sList) {
+                convertNodeList(nodeList) {
                     var that = this
-                    console.log("start convert k8s list")
-                    k8sList.forEach(k8s => {
-                      //vm web terminal
-                      k8s.orignName = k8s.name
-                      var url = location.origin + "/vm/" + k8s.hostVm + "/web-terminal"
-                      k8s.name = "<a href="+ url +">" + k8s.orignName + "</a>"
+                    console.log("start convert node list")
+                    nodeList.forEach(node => {
+                      //portmapping
+                      var result = ""
+                      for(var key in node.portMap) {
+                        var value = node.portMap[key];
+                        result = result + key + "->" + value + "<br>"
+                      }
+                      node.portMap = result
                       //add color
-                      switch(k8s.status) {
-                        case 'deleting':
-                          k8s.color = "warning"
+                      switch(node.status) {
+                        case 'overload':
+                          node.color = "warning"
                           break
-                        case 'bootvmFailed':
-                        case 'installFailed':
-                          k8s.color = "danger"
+                        case 'unhealth':
+                          node.color = "danger"
                           break
-                        case 'running':
+                        case 'failed':
+                          node.color = "danger"
+                          break
+                        case 'ready':
                         default:
-                          k8s.color = "default"
+                          node.color = "default"
                       }
                     })
-                    console.log(k8sList)
-                    that.k8sList = k8sList
+                    console.log(nodeList)
+                    that.nodeList = nodeList
                 },
-                k8sDelete() {
+                nodeAction(name, action) {
                     var that = this
                     try {
                         var loginInfo = getLoginInfo()
@@ -387,10 +426,10 @@
                     }
                     var token = loginInfo.token;
                     var baseurl = location.origin;
-                    for (const item of this.selected) {
-                        url = baseurl + "/k8s/" + item
-                        $.blockUI({timeout:   8000})
-                        axios.delete(url,
+                    var url = baseurl + "/node/" + name + "/" + action
+                    $.blockUI({timeout:   8000})
+                    axios.post(url,
+                            {},
                             {
                                 headers: {
                                     "Authorization": "Bearer "+ token
@@ -399,19 +438,23 @@
                         .then(function (response) {
                             console.log(response)
                             $.unblockUI()
-                            that.getAllk8s()
+                            that.$refs.getAllNodeInfo.click()
                         })
                         .catch(function (error) {
-                            console.log(error)
+                            console.log(error);
                             $.unblockUI()
                             if (error.response.status == 401) {
                                 vm.$refs.navibar.login()
                             }
                             alert(error.response.status); // show response
                         });
+                },
+                nodeDelete() {
+                    for (const item of this.selected) {
+                        this.nodeAction(item, "remove")
                     }
                 },
-                k8sCreate() {
+                nodeCreate() {
                     var that = this
                     try {
                         var loginInfo = getLoginInfo()
@@ -422,11 +465,13 @@
                     }
                     var token = loginInfo.token;
                     var baseurl = location.origin;
-                    var url = baseurl + "/k8s"
+                    var url = baseurl + "/node"
                     var payload = {
-                        "version": this.version,
-                        "numOfContronller": this.controllerNum,
-                        "numOfWorker": this.workerNum,
+                        "name": this.nodeName,
+                        "user": this.userName,
+                        "password": this.password,
+                        "ip": this.address,
+                        "role": this.nodeRole,
                     }
                     $.blockUI({timeout:   8000})
                     axios.post(url,
@@ -439,7 +484,7 @@
                         .then(function (response) {
                             console.log(response)
                             $.unblockUI()
-                            that.getAllk8s()
+                            that.getAllNode()
                         })
                         .catch(function (error) {
                             console.log(error)
@@ -453,13 +498,14 @@
                 select() {
 			        this.selected = [];
 			        if (!this.selectAll) {
-			    	    for (let i in this.k8sList) {
-				    	    this.selected.push(this.k8sList[i].orignName);
+			    	    for (let i in this.nodeList) {
+				    	    this.selected.push(this.nodeList[i].name);
 				        }
 			        }
 		        }
             }
         })
-    </script>
+
+</script>
 </body>
 </html>

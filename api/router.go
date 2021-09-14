@@ -34,6 +34,8 @@ func setupRouter() *gin.Engine {
 
 	//admin page(node, account management)
 	r.GET("/admin", AdminHandler)
+	r.GET("/admin-node", AdminNodeHandler)
+	r.GET("/admin-account", AdminAccountHandler)
 
 	//node related api
 	r.GET("/node", AuthorizeToken(), NodeRequestGetAllHandler)
