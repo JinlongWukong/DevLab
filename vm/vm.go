@@ -14,7 +14,7 @@ import (
 )
 
 //check parameters, return struct pointer if ok, otherwise return nil
-func NewVirtualMachine(name, flavor, vmType, hostname, rootPass string, cpu, mem, disk int32, Duration time.Duration) *VirtualMachine {
+func NewVirtualMachine(name, flavor, vmType, hostname, rootPass string, cpu, mem, disk int32, Duration time.Duration, addons []string) *VirtualMachine {
 
 	//There is a mapping bt flavor and cpu/memory
 	if flavor != "" {
@@ -58,6 +58,7 @@ func NewVirtualMachine(name, flavor, vmType, hostname, rootPass string, cpu, mem
 		Lifetime: Duration,
 		PortMap:  map[int]string{},
 		RootPass: rootPass,
+		Addons:   addons,
 	}
 }
 
@@ -256,7 +257,6 @@ func (myvm *VirtualMachine) InstallAddons() error {
 		"Port":     strings.Split(myvm.PortMap[22], ":")[0],
 		"Addons":   myvm.Addons,
 	})
-
 	log.Printf("Remote http call to install addons %v", myvm.Addons)
 	url := deployer.GetDeployerBaseUrl() + "/vm/addons"
 	err, _ := utils.HttpSendJsonData(url, "POST", payload)

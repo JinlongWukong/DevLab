@@ -82,6 +82,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 			vmRequest.Memory,
 			vmRequest.Disk,
 			time.Hour*24*time.Duration(vmRequest.Duration),
+			vmRequest.Addons,
 		)
 		if newVm != nil {
 			myAccount.AppendVM(newVm)
@@ -197,6 +198,9 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 
 				//task4: Install addons
 				go func(myVm *vm.VirtualMachine) {
+					if len(myVm.Addons) == 0 {
+						return
+					}
 					err = myVm.InstallAddons()
 					if err != nil {
 						err_msg := fmt.Sprintf("Addons %v on vm %v installation failed with error -> %v", myVm.Addons, myVm.Name, err.Error())

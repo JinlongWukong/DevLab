@@ -1,5 +1,6 @@
 #VSCode
 .VSCodeCounter
+.history
 
 #db files
 account.json

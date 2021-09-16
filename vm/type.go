@@ -58,15 +58,16 @@ type VirtualMachine struct {
 }
 
 type VmRequest struct {
-	Hostname string `form:"hostname" json:"hostname"`
-	RootPass string `form:"rootPass" json:"rootPass"`
-	Type     string `form:"type" json:"type" binding:"required"`
-	Flavor   string `form:"flavor" json:"flavor"`
-	CPU      int32  `form:"cpu" json:"cpu"`
-	Memory   int32  `form:"mem" json:"memory"`
-	Disk     int32  `form:"disk" json:"disk"`
-	Number   int32  `form:"numbers" json:"numbers" binding:"required,min=1,max=5"`
-	Duration int    `form:"duration" json:"duration" binding:"required"`
+	Hostname string   `form:"hostname" json:"hostname"`
+	RootPass string   `form:"rootPass" json:"rootPass"`
+	Type     string   `form:"type" json:"type" binding:"required"`
+	Flavor   string   `form:"flavor" json:"flavor"`
+	CPU      int32    `form:"cpu" json:"cpu"`
+	Memory   int32    `form:"mem" json:"memory"`
+	Disk     int32    `form:"disk" json:"disk"`
+	Number   int32    `form:"numbers" json:"numbers" binding:"required,min=1,max=5"`
+	Duration int      `form:"duration" json:"duration" binding:"required"`
+	Addons   []string `form:"addons" json:"addons"`
 }
 
 type VmRequestPortExpose struct {
