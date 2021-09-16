@@ -34,6 +34,28 @@
             text-align: left;
             vertical-align: middle;
         }
+
+        .checkbox-menu li label {
+            display: block;
+            padding: 3px 10px;
+            clear: both;
+            font-weight: normal;
+            line-height: 1.42857143;
+            color: rgb(109, 136, 226);
+            white-space: nowrap;
+            margin:0;
+            transition: background-color .4s ease;
+        }
+        .checkbox-menu li input {
+            margin: 0px 5px;
+            top: 2px;
+            position: relative;
+        }
+        
+        .checkbox-menu li label:hover,
+        .checkbox-menu li label:focus {
+            background-color: #b3e7b2;
+        }
     </style>
     <script src="/scripts/jquery.min.js"></script>
     <script src="/scripts/axios.min.js"></script>
@@ -206,6 +228,23 @@
                                 </select>
                             </div>
                             <br>
+                            <br>
+                            <label for="vmaddons" class="col-sm-2">Addons</label>
+                            <div class="dropdown col-sm-10">
+                                <input class="form-control dropdown-toggle" id="vmaddons" type="text" data-toggle="dropdown" placeholder="Select your addons here..." :value="addons">
+                                <ul class="dropdown-menu checkbox-menu allow-focus">
+                                    <li>
+                                        <label for="git"><input type="checkbox" id="git" value="git" v-model="addons">Git</label>
+                                    </li>
+                                    <li>
+                                        <label for="docker"><input type="checkbox" id="docker" value="docker" v-model="addons">Docker</label>
+                                    </li>
+                                    <li>
+                                        <label for="ansible"><input type="checkbox" id="ansible" value="ansible" v-model="addons">Ansible</label>
+                                    </li>
+                                </ul>
+                            </div>
+                            <br>
                         </div>
                     </form>
                 </div>
@@ -371,6 +410,7 @@
                 type: "centos7",
                 numbers: 1,
                 duration: 1,
+                addons: [],
                 vmList: [],
                 selected: [],
 		        selectAll: false
@@ -527,6 +567,7 @@
                         "flavor": this.flavor,
                         "numbers": this.numbers,
                         "duration": this.duration,
+                        "addons": this.addons
                     }
                     $.blockUI({timeout:   8000})
                     axios.post(url,

@@ -193,9 +193,22 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 					return
 				}
 				log.Printf("DNAT setup success for vm %v, port mapping -> %v:%v", myVm.Name, 22, myVm.PortMap[22])
-
-				//task4: Send Notification
 				myAccount.SendNotification(fmt.Sprintf("Your VM %v is ready to login using ssh %v -p %v ", myVm.Name, selectNode.IpAddress, sshPort))
+
+				//task4: Install addons
+				go func(myVm *vm.VirtualMachine) {
+					err = myVm.InstallAddons()
+					if err != nil {
+						err_msg := fmt.Sprintf("Addons %v on vm %v installation failed with error -> %v", myVm.Addons, myVm.Name, err.Error())
+						log.Println(err_msg)
+						myAccount.SendNotification(err_msg)
+						return
+					} else {
+						success_msg := fmt.Sprintf("Congratulations! addons %v on vm %v installation succeed", myVm.Addons, myVm.Name)
+						log.Println(success_msg)
+						myAccount.SendNotification(success_msg)
+					}
+				}(myVm)
 			}(newVm)
 
 		}

@@ -240,6 +240,34 @@ func (myvm *VirtualMachine) ActionDnatRule(port []int, action string) error {
 
 }
 
+func (myvm *VirtualMachine) InstallAddons() error {
+
+	mynode := node.GetNodeByName(myvm.Node)
+	if mynode == nil {
+		err := fmt.Errorf("Error: Node %v not found", myvm.Node)
+		log.Println(err)
+		return err
+	}
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"Address":  mynode.IpAddress,
+		"Passwd":   myvm.RootPass,
+		"Username": "root",
+		"Port":     strings.Split(myvm.PortMap[22], ":")[0],
+		"Addons":   myvm.Addons,
+	})
+
+	log.Printf("Remote http call to install addons %v", myvm.Addons)
+	url := deployer.GetDeployerBaseUrl() + "/vm/addons"
+	err, _ := utils.HttpSendJsonData(url, "POST", payload)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
 func (myvm *VirtualMachine) ChangeLifeTime(delta time.Duration) time.Duration {
 	myvm.lifeMutex.Lock()
 	defer myvm.lifeMutex.Unlock()
