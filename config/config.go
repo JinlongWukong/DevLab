@@ -11,6 +11,11 @@ type DatabaseConfig struct {
 	SyncPeriod int
 	//database format(json, gob)
 	Format string
+	//database compress and sftp period
+	CompressPeriod int
+	//sftp info
+	SftpPort                                     int
+	SftpHost, SftpUser, SftpPass, SftpRemotePath string
 }
 
 type NotificationConfig struct {

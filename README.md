@@ -11,6 +11,7 @@ This is a IPSaaS platform for develpers, Its basic idea is to give a web portal 
 - External Access(iptables dnat)
 - Auto vm Lifecycle Management
 - In-Memory Persistant
+- Remote db storage(sftp)
 - Webex/Telegram Events Notification
 - K8s Cluster Management
 - SaaS Management
