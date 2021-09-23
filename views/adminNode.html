@@ -79,7 +79,7 @@
                   <li><a href="https://github.com/JinlongWukong/DevLab#readme">Help</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                  <li><p id="accountLoggedID" class="navbar-text">{{ loginas }}</p></li>
+                  <li><i id="accountLoggedID" class="navbar-text">{{ loginas }}</i></li>
                   <li><a href="#" ref="openLogin" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
                   <li><a href="#" v-on:click="logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
                 </ul>
@@ -127,7 +127,7 @@
     <br><br><br>
     <div id="nodeApp">
         <div class="page-header text-info" style="margin-left: 10px;">
-            <h4>Node Table</h4>
+            <h4> <b>Node Table</b></h4>
         </div>
         <!--div class="well">Node Table</div-->
         <div class="btn-group pull-right" role="group" aria-label="...">
@@ -308,7 +308,7 @@
                             console.log(that.accountName)
                             window.localStorage.setItem("access_token", response.data.access_token)
                             window.localStorage.setItem("account", that.accountName)
-                            that.$emit('updateloginas', "Login as " + that.accountName)
+                            that.$emit('updateloginas', "Hello, " + that.accountName)
                             that.$refs.closeModal.click()
                         })
                         .catch(function (error) {
@@ -330,7 +330,7 @@
                 if (!account || !token) {
                     this.$refs.navibar.login()
                 } else {
-                    this.loginas = "Login as " + account
+                    this.loginas = "Hello, " + account
                 }            
             },
             methods: {
