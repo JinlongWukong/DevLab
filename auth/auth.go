@@ -11,7 +11,8 @@ import (
 var expiresIn int64
 
 func init() {
-	expiresIn = 86400
+	//86400 = 24hours
+	expiresIn = 86400 * 7
 }
 
 func OneTimePassGen(target string) string {
