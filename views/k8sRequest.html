@@ -363,12 +363,10 @@
                       switch(k8s.status) {
                         case 'deleting':
                           k8s.color = "warning"
-                          break
-                        case 'bootvmFailed':
-                        case 'installFailed':
+                        case 'bootvmFailed', 'installFailed':
                           k8s.color = "danger"
-                          break
                         case 'running':
+                          k8s.color = "default"
                         default:
                           k8s.color = "default"
                       }

@@ -421,18 +421,12 @@
                       saas.additional_infor = additional_result
                       //add color
                       switch(saas.status) {
-                        case 'stopped':
-                        case 'unknown':
-                        case 'deleting':
+                        case 'stopped', 'unknown', 'deleting':
                           saas.color = "warning"
-                          break
-                        case 'bootvmFailed':
-                        case 'installFailed':
-                        case 'error':
-                        case 'notFound':
+                        case 'bootvmFailed', 'installFailed', 'error','notFound':
                           saas.color = "danger"
-                          break
                         case 'running':
+                          saas.color = "default"
                         default:
                           saas.color = "default"
                       }
