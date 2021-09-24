@@ -400,10 +400,14 @@
                       switch(node.status) {
                         case 'overload':
                           node.color = "warning"
-                        case 'unhealth','failed':
+                          break
+                        case 'unhealth':
+                        case 'failed':
                           node.color = "danger"
+                          break
                         case 'ready':
                           node.color = "default"
+                          break
                         default:
                           node.color = "default"
                       }

@@ -468,10 +468,16 @@
                       vm.lifeTime = vm.lifeTime/3600000000000 + "h"
                       //add color
                       switch(vm.status) {
-                        case 'deleting','deleted':
+                        case 'deleting':
+                        case 'deleted':
                           vm.color = "warning"
-                        case 'init','scheduled','creating','running':
+                          break
+                        case 'init':
+                        case 'scheduled':
+                        case 'creating':
+                        case 'running':
                           vm.color = "default"
+                          break
                         default:
                           vm.color = "danger"
                       }
