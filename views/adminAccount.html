@@ -163,7 +163,7 @@
                             <br>
                             <label for="accountContract" class="col-sm-3 control-label">Contract</label>
                             <div class="col-sm-9">
-                                <input class="form-control" id="accountContract" v-model="contract" type="text">
+                                <input class="form-control" id="accountContract" v-model="contract" type="text" :disabled="contractNeeded">
                             </div>
                             <br>
                             <br>
@@ -297,15 +297,33 @@
             data: {
                 name: "",
                 contract: "",
+                contractNeeded: false,
                 role: "guest",
                 accountList: [],
                 selected: [],
 		        selectAll: false
             },
+            computed: {
+            },
             mounted: function() {
                 this.getAllAccount()
+                this.isContractNeeded()
             },
             methods: {
+                isContractNeeded() {
+                    var baseurl = location.origin;
+                    var that = this
+                    axios.get(baseurl + "/admin-notification-kind")
+                    .then(function (response) {
+                        console.log(response.data)
+                        if (response.data == "webex") {
+                            that.contractNeeded = true
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+                    });
+                },
                 getAllAccount() {
                     try {
                         var loginInfo = getLoginInfo()

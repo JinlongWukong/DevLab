@@ -93,3 +93,7 @@ func (n Notifier) Control(ctx context.Context, wg *sync.WaitGroup) {
 		}
 	}
 }
+
+func GetNotificationKind() string {
+	return notificationKind
+}

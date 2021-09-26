@@ -17,6 +17,7 @@ import (
 	"github.com/JinlongWukong/DevLab/db"
 	"github.com/JinlongWukong/DevLab/k8s"
 	"github.com/JinlongWukong/DevLab/node"
+	"github.com/JinlongWukong/DevLab/notification"
 	"github.com/JinlongWukong/DevLab/saas"
 	"github.com/JinlongWukong/DevLab/terminal"
 	"github.com/JinlongWukong/DevLab/vm"
@@ -38,6 +39,10 @@ func AdminNodeHandler(c *gin.Context) {
 
 func AdminAccountHandler(c *gin.Context) {
 	c.HTML(200, "adminAccount.html", nil)
+}
+
+func AdminNotificationKindHandler(c *gin.Context) {
+	c.String(200, notification.GetNotificationKind())
 }
 
 // Todo Page
