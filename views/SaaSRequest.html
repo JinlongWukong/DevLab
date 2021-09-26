@@ -399,6 +399,7 @@
                     .then(function (response) {
                         console.log(response.data)
                         that.softwareSupported = response.data
+                        that.softwareSupported.sort()
                     })
                     .catch(function (error) {
                         console.log(error)
