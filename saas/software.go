@@ -11,8 +11,14 @@ var backendMap = map[string]string{
 	"influxdb":   "container",
 	"prometheus": "container",
 	"grafana":    "container",
-	"nso":        "container",
-	"cxta":       "container",
+}
+
+func GetSupportedSoftware() []string {
+	keys := make([]string, 0, len(backendMap))
+	for k := range backendMap {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 //Factory a new software

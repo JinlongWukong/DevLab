@@ -155,14 +155,7 @@
                             <label for="kind" class="col-sm-4 control-label">Kind</label>
                             <div class="col-sm-8">
                               <select id="kind" class="form-control" v-model="kind">
-                                <option>jenkins</option>
-                                <option>mysql</option>
-                                <option>postgres</option>
-                                <option>mongodb</option>
-                                <option>influxdb</option>
-                                <option>redis</option>
-                                <option>prometheus</option>
-                                <option>grafana</option>
+                                <option v-for="item in softwareSupported" :value="item">{{ item }}</option>
                               </select>
                             </div>
                             <br>
@@ -359,6 +352,7 @@
             el: "#saasApp",
             data: {
                 kind: "jenkins",
+                softwareSupported: ['123', '234'],
                 version: "latest",
                 cpuNum: 2,
                 memSize: 2048,
@@ -368,6 +362,7 @@
             },
             mounted: function() {
                 this.getAllSaaS()
+                this.getAllSoftwareSupported()
             },
             methods: {
                 getAllSaaS() {
@@ -395,6 +390,18 @@
                             vm.$refs.navibar.login()
                         }
                         alert(error.response.status); // show response
+                    });
+                },
+                getAllSoftwareSupported() {
+                    var baseurl = location.origin;
+                    var that = this;
+                    axios.get(baseurl + "/saas/supported")
+                    .then(function (response) {
+                        console.log(response.data)
+                        that.softwareSupported = response.data
+                    })
+                    .catch(function (error) {
+                        console.log(error)
                     });
                 },
                 convertSaaSList(saasList) {

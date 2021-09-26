@@ -69,6 +69,7 @@ func setupRouter() *gin.Engine {
 
 	//SaaS related api
 	r.GET("/saas-request", SoftwareIndexHandler)
+	r.GET("/saas/supported", SoftwareSupportedListHandler)
 	r.GET("/saas", AuthorizeToken(), SoftwareRequestGetAllHandler)
 	r.GET("/saas/:name", AuthorizeToken(), SoftwareRequestGetByNameHandler)
 	r.POST("/saas", AuthorizeToken(), SoftwareRequestCreateHandler)

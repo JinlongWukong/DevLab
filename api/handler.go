@@ -539,6 +539,13 @@ func SoftwareRequestActionHandler(c *gin.Context) {
 
 }
 
+// Get all supported software
+// Return:
+//   200: success with software list
+func SoftwareSupportedListHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, saas.GetSupportedSoftware())
+}
+
 // Get all software info
 // Return:
 //   200: success with software info
