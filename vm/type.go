@@ -49,6 +49,7 @@ type VirtualMachine struct {
 	NoVnc        string         `json:"novnc"`
 	Type         string         `json:"type"`
 	Node         string         `json:"node"`
+	NodeAddress  string         `json:"nodeAddress"`
 	Lifetime     time.Duration  `json:"lifeTime"`
 	PortMap      map[int]string `json:"portMap"`
 	RootPass     string         `json:"rootPass"`

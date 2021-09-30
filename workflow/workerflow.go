@@ -117,6 +117,7 @@ func CreateVMs(myAccount *account.Account, vmRequest vm.VmRequest) ([]*vm.Virtua
 
 		for _, newVm := range newVmGroup {
 			newVm.Node = selectNode.Name
+			newVm.NodeAddress = selectNode.IpAddress
 			newVm.Status = vm.VmStatusScheduled
 		}
 
