@@ -450,7 +450,7 @@
                       //vm web terminal
                       vm.orignName = vm.name
                       var url = location.origin + "/vm/" + vm.name + "/web-terminal"
-                      vm.name = "<a href="+ url +">" + vm.name + "</a>"
+                      vm.name = "<a target=_blank href="+ url +">" + vm.name + "</a>"
                       //novnc
                       if (vm.novnc) {
                         vm.novnc = "<a href=" + vm.novnc + ">link</a>"

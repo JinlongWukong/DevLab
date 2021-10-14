@@ -412,7 +412,7 @@
                       //saas web terminal
                       saas.orignName = saas.name
                       var url = location.origin + "/container/" + saas.name + "/web-terminal"
-                      saas.name = "<a href="+ url +">" + saas.orignName + "</a>"
+                      saas.name = "<a target=_blank href="+ url +">" + saas.orignName + "</a>"
                       //portmapping
                       var result = ""
                       for(var key in saas.port_mapping) {
